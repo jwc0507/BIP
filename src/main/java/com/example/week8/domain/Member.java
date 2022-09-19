@@ -40,4 +40,8 @@ public class Member{
     @OneToMany (fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "friend")
     private List<FriendList> friends = new ArrayList<>();
 
+//    @JoinColumn
+//    @OneToOne
+//    private FriendList friendList;
+
 }
