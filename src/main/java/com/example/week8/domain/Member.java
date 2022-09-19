@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @Setter
 @Getter
-public class Member{
+public class Member extends Timestamped{
 
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
@@ -22,8 +22,11 @@ public class Member{
     @Column (nullable = false, unique = true)
     private String phoneNumber; // 핸드폰 번호
 
-    @Column (nullable = false, unique = true)
+    @Column (unique = true)
     private String email; // 이메일 주소
+
+    @Column (unique = true)
+    private String nickname; // 닉네임 (erd 추가)
 
     @Column (nullable = false)
     private double credit; // 신용점수
@@ -31,13 +34,21 @@ public class Member{
     @Column (nullable = false)
     private int point; // 포인트
 
+    @Column (nullable = false)
+    private String password;    // 비밀번호 (상수로 일단 넣기)
+
     @Column
     private String profileImageUrl; // 프로필이미지 url (erd에 추가해야함)
 
     @Column (nullable = false)
-    private Enum<Authority> userRole;     // 유저 권한 (erd에 추가해야함)
+    @Enumerated (EnumType.STRING)
+    private Authority userRole;     // 유저 권한 (erd에 추가해야함)
 
     @OneToMany (fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "friend")
     private List<FriendList> friends = new ArrayList<>();
+
+//    @JoinColumn
+//    @OneToOne
+//    private FriendList friendList;
 
 }
