@@ -56,11 +56,7 @@ public class MemberService {
 
         // 이미 있는 회원이라면 로그인메소드를 실행시킨다.
         Member member = isPresentMember(requestDto.getPhoneNumber());
-        if(member != null) {
-            // 있는 회원이라면
-            return login(member, response);
-        }
-        else {
+        if(member == null) {
             // 없는 회원이라면
             member = Member.builder()
                     .phoneNumber(phoneNumber)
@@ -70,9 +66,9 @@ public class MemberService {
                     .userRole(Authority.valueOf("ROLE_MEMBER"))
                     .build();
             memberRepository.save(member);
-
-            return ResponseDto.success("회원가입 완료");
         }
+        // 로그인 시키기
+        return login(member, response);
     }
 
     // 로그인하기
