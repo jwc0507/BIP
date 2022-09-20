@@ -21,11 +21,11 @@ public class FriendList {
     private Long id;
 
     @JoinColumn(name = "member_id", nullable = false)
-    @OneToOne (fetch = FetchType.LAZY)
+    @ManyToOne (fetch = FetchType.LAZY)
     private Member member;          // 기준이 되는 맴버
 
     @JoinColumn(name = "friend_id", nullable = false)
-    @ManyToOne (fetch = FetchType.LAZY)
+    @OneToOne (fetch = FetchType.LAZY)
     private Member friend;          // 기준 맴버의 친구들
 
 //    @JoinColumn

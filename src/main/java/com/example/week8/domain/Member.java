@@ -37,7 +37,7 @@ public class Member{
     @Column (nullable = false)
     private Enum<Authority> userRole;     // 유저 권한 (erd에 추가해야함)
 
-    @OneToMany (fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "friend")
+    @OneToMany (fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "member")
     private List<FriendList> friends = new ArrayList<>();
 
 //    @JoinColumn
