@@ -1,10 +1,18 @@
 package com.example.week8.security;
 
+<<<<<<< HEAD
 import com.example.week7project.domain.Member;
 import com.example.week7project.domain.RefreshToken;
 import com.example.week7project.domain.UserDetailsImpl;
 import com.example.week7project.dto.TokenDto;
 import com.example.week7project.repository.RefreshTokenRepository;
+=======
+import com.example.week8.domain.Member;
+import com.example.week8.domain.RefreshToken;
+import com.example.week8.domain.UserDetailsImpl;
+import com.example.week8.dto.TokenDto;
+import com.example.week8.repository.RefreshTokenRepository;
+>>>>>>> d1a873919683eaba670355b8b2bfee7d3ce6cf75
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -79,7 +87,10 @@ public class TokenProvider {
         return TokenDto.builder()
                 .grantType(BEARER_PREFIX)
                 .accessToken(accessToken)
+<<<<<<< HEAD
                 .accessTokenExpiresIn(accessTokenExpiresIn.getTime())
+=======
+>>>>>>> d1a873919683eaba670355b8b2bfee7d3ce6cf75
                 .refreshToken(refreshToken)
                 .build();
 
@@ -119,14 +130,14 @@ public class TokenProvider {
     }
 
     @Transactional
-    public String deleteRefreshToken(Member member) {
+
+    public boolean deleteRefreshToken(Member member) {
         RefreshToken refreshToken = isPresentRefreshToken(member);
         if (null == refreshToken) {
-            return ("TOKEN_NOT_FOUND" + "존재하지 않는 Token 입니다.");
+            return true;
         }
-
         refreshTokenRepository.delete(refreshToken);
-        return ("success");
+        return false;
     }
 
     public Authentication getAuthentication(HttpServletRequest request) {
