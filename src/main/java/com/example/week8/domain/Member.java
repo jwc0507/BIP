@@ -44,8 +44,8 @@ public class Member extends Timestamped{
     @Enumerated (EnumType.STRING)
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
 
-    @OneToMany (fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "friend")
-    private List<FriendList> friends = new ArrayList<>();
+    @OneToMany (fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "member")
+    private List<Friend> friendList = new ArrayList<>();
 
 //    @JoinColumn
 //    @OneToOne
