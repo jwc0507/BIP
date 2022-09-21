@@ -5,14 +5,13 @@ import com.example.week8.dto.request.DuplicationRequestDto;
 import com.example.week8.dto.request.EmailLoginRequestDto;
 import com.example.week8.dto.request.LoginRequestDto;
 import com.example.week8.dto.response.ResponseDto;
+import com.example.week8.service.KakaoOauthService;
 import com.example.week8.service.MemberService;
+import com.example.week8.service.NaverOauthService;
 import com.example.week8.service.SmsService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,6 +25,8 @@ import java.security.NoSuchAlgorithmException;
 public class MemberController {
     private final MemberService memberService;
     private final SmsService smsService;
+    private final KakaoOauthService kakaoOauthService;
+    private final NaverOauthService naverOauthService;
 
     // 로그인
     // 회원가입 후 자동 로그인을 시키고 로그인 결과로 닉네임과 이메일을 반환하게 추가 구현해야할듯. 만약 널값이라면 프론트에서 자동으로 닉네임 변경창으로 보내주면 좋을 것 같음.
@@ -34,11 +35,22 @@ public class MemberController {
         return memberService.createMember(requestDto, response);
     }
 
-    // 로그인
-    // 회원가입 후 자동 로그인을 시키고 로그인 결과로 닉네임과 이메일을 반환하게 추가 구현해야할듯. 만약 널값이라면 프론트에서 자동으로 닉네임 변경창으로 보내주면 좋을 것 같음.
+    // 이메일 로그인
     @RequestMapping (value = "/api/member/login/email", method = RequestMethod.POST)
     public ResponseDto<?> emailLogin(@RequestBody EmailLoginRequestDto requestDto, HttpServletResponse response) {
         return memberService.emailLogin(requestDto, response);
+    }
+
+    // 카카오 로그인
+    @RequestMapping (value = "/api/member/kakaologin", method = RequestMethod.GET)
+    public ResponseDto<?> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) throws JsonProcessingException {
+        return kakaoOauthService.kakaoLogin(code, response);
+    }
+
+    // 네이버 로그인
+    @RequestMapping (value = "/api/member/naverlogin", method = RequestMethod.GET)
+    public ResponseDto<?> naverlogin(@RequestParam("code") String code,@RequestParam("state") String state, HttpServletResponse response) throws JsonProcessingException {
+        return naverOauthService.naverlogin(code, state, response);
     }
 
     // 회원가입
