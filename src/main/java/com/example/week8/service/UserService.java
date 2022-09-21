@@ -34,7 +34,8 @@ public class UserService {
             return chkResponse;
 
         String newNickname = requestDto.getValue();
-        if (memberService.checkNickname(new DuplicationRequestDto(newNickname)).isSuccess()) {
+
+        if (memberService.checkNickname(DuplicationRequestDto.builder().value(newNickname).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
 
@@ -61,7 +62,7 @@ public class UserService {
             return chkResponse;
 
         String newPhoneNumber = requestDto.getValue();
-        if (memberService.checkPhoneNumber(new DuplicationRequestDto(newPhoneNumber)).isSuccess()) {
+        if (memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
 
@@ -98,7 +99,7 @@ public class UserService {
             return chkResponse;
 
         String newEmail = requestDto.getValue();
-        if (memberService.checkEmail(new DuplicationRequestDto(newEmail)).isSuccess()) {
+        if (memberService.checkEmail(DuplicationRequestDto.builder().value(newEmail).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
 
