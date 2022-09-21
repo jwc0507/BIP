@@ -36,7 +36,7 @@ public class FriendListController {
     }
 
     //친구 삭제
-    @RequestMapping(value = "api/friends/{memberId}")//ID로 바꾸기
+    @RequestMapping(value = "api/friends/{memberId}")//memberId로 변경
     public ResponseDto<?> deleteFriend(@PathVariable Long memberId, HttpServletRequest request){
         return friendService.deleteFriend(memberId, request);
     }
