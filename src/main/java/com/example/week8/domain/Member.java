@@ -40,6 +40,9 @@ public class Member extends Timestamped{
     @Column
     private String profileImageUrl; // 프로필이미지 url (erd에 추가해야함)
 
+    @Column
+    private int numOfDone; // 약속 이행 수 (erd 추가)
+
     @Column (nullable = false)
     @Enumerated (EnumType.STRING)
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
@@ -51,4 +54,15 @@ public class Member extends Timestamped{
 //    @OneToOne
 //    private FriendList friendList;
 
+    public void updateNickname(String name) {
+        this.nickname = name;
+    }
+
+    public void updatePhoneNumber(String number) {
+        this.phoneNumber = number;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
 }
