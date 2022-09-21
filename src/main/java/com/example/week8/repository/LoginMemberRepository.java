@@ -7,5 +7,5 @@ import java.util.Optional;
 
 
 public interface LoginMemberRepository extends JpaRepository<LoginMember, Long> {
-    Optional<LoginMember> findByPhoneNumber(String phoneNumber);    // 여러번 인증시도 할 수 있으므로
+    Optional<LoginMember> findByKeyValue(String key);    // 여러번 인증시도 할 수 있으므로
 }

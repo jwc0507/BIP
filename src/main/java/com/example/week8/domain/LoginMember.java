@@ -19,7 +19,7 @@ public class LoginMember {
     private Long id;
 
     @Column
-    private String phoneNumber;
+    private String keyValue;
 
     @Column
     private String authCode;
