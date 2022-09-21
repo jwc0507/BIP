@@ -201,12 +201,12 @@ public class MemberService {
         return stringBuilder.toString();
     }
 
-    // 전화번호 중복 검사
+    // 이미 있는 회원인지 체크 (프론트에서 뷰 넘길때 사용하기 위함)
     public ResponseDto<?> checkPhoneNumber(DuplicationRequestDto requestDto) {
         Optional<Member> optionalMember = memberRepository.findByPhoneNumber(requestDto.getValue());
         if (optionalMember.isPresent())
-            return ResponseDto.fail("중복된 전화번호 입니다.");
-        return ResponseDto.success("사용 가능한 전화번호 입니다.");
+            return ResponseDto.success(false);
+        return ResponseDto.success(true);
     }
 
     // 닉네임 중복 검사
