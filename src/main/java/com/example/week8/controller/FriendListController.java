@@ -31,13 +31,14 @@ public class FriendListController {
     //전화번호로 친구 추가
     @RequestMapping(value = "api/freinds/phonenumber", method = RequestMethod.POST)
     public ResponseDto<?> addFriendByPhoneNumber(@RequestBody FriendAdditionRequestDto friendAdditionRequestDto, HttpServletRequest request) {
+        System.out.println("전화번호로 친구 추가 컨트롤러");
         return friendService.addFriendByPhoneNumber(friendAdditionRequestDto, request);
     }
 
     //친구 삭제
-    @RequestMapping(value = "api/friends/{friendID}")
-    public ResponseDto<?> deleteFriend(@PathVariable Long friendID, HttpServletRequest request){
-        return friendService.deleteFriend(friendID, request);
+    @RequestMapping(value = "api/friends/{memberId}")//ID로 바꾸기
+    public ResponseDto<?> deleteFriend(@PathVariable Long memberId, HttpServletRequest request){
+        return friendService.deleteFriend(memberId, request);
     }
 
 }
