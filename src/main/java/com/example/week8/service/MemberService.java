@@ -8,6 +8,7 @@ import com.example.week8.dto.request.AuthRequestDto;
 import com.example.week8.dto.request.DuplicationRequestDto;
 import com.example.week8.dto.request.EmailLoginRequestDto;
 import com.example.week8.dto.request.LoginRequestDto;
+import com.example.week8.dto.response.LoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.LoginMemberRepository;
 import com.example.week8.repository.MemberRepository;
@@ -59,7 +60,6 @@ public class MemberService {
 //            return false;
 //        }
 //        redisUtil.deleteData(key);
-
 
         return true;
     }
@@ -116,7 +116,7 @@ public class MemberService {
 
         tokenToHeaders(tokenDto, response);
 
-        return ResponseDto.success("로그인 완료");
+        return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
 
     // 로그아웃
