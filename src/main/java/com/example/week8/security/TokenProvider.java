@@ -1,5 +1,4 @@
 package com.example.week8.security;
-
 import com.example.week8.domain.Member;
 import com.example.week8.domain.RefreshToken;
 import com.example.week8.domain.UserDetailsImpl;
@@ -57,7 +56,7 @@ public class TokenProvider {
 
         Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
         String accessToken = Jwts.builder()
-                .setSubject(member.getPhoneNumber())
+                .setSubject(member.getId().toString())
                 .claim(AUTHORITIES_KEY, member.getUserRole().toString())
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -69,7 +68,7 @@ public class TokenProvider {
                 .compact();
 
         RefreshToken refreshTokenObject = RefreshToken.builder()
-                .id(member.getPhoneNumber())
+                .id(member.getId().toString())
                 .member(member)
                 .keyValue(refreshToken)
                 .build();
@@ -118,6 +117,7 @@ public class TokenProvider {
     }
 
     @Transactional
+
     public boolean deleteRefreshToken(Member member) {
         RefreshToken refreshToken = isPresentRefreshToken(member);
         if (null == refreshToken) {
