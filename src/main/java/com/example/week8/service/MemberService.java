@@ -25,6 +25,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -42,16 +43,16 @@ public class MemberService {
     // 인증번호 확인
     private boolean chkValidCode(String key, String authCode) {
         // 인증번호 테이블에서 전화번호에 해당하는 인증번호 찾기
-        Optional<LoginMember> getLogin = loginMemberRepository.findByKeyValue(key);
+        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(key);
         if (getLogin.isEmpty())
             return false;
         // 여러개의 인증번호가 있을 수 있지만 마지막 값을 찾기 (코드 수정해서 첫 값만 가지게 됨)
-        String getAuthCode = getLogin.get().getAuthCode();
+        String getAuthCode = getLogin.get(0).getAuthCode();
         // 입력된 값과 DB의 인증번호가 같은지 확인
         if (!getAuthCode.equals(authCode))
             return false;
         // 인증완료되었다면 인증번호 테이블 비워주기
-        loginMemberRepository.deleteById(getLogin.get().getId());
+        loginMemberRepository.deleteById(getLogin.get(0).getId());
 
         // redis를 활용했을 때의 코드.
 //        String getKey = redisUtil.getData(key);
@@ -139,8 +140,10 @@ public class MemberService {
     // 인증번호 생성
     @Transactional
     public ResponseDto<?> sendAuthCode(AuthRequestDto requestDto) {
-        Optional<LoginMember> getLogin = loginMemberRepository.findByKeyValue(requestDto.getValue());
-        getLogin.ifPresent(loginMember -> loginMemberRepository.deleteById(loginMember.getId()));
+        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(requestDto.getValue());
+        for (LoginMember getLoginMember : getLogin) {
+            loginMemberRepository.deleteById(getLoginMember.getId());
+        }
         LoginMember loginMember = LoginMember.builder()
                 .authCode(generateCode())
                 .keyValue(requestDto.getValue())
