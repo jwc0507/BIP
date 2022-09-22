@@ -36,7 +36,7 @@ public class MemberService {
     private final LoginMemberRepository loginMemberRepository;
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
-    private final JavaMailSender javaMailSender;
+    //private final JavaMailSender javaMailSender;
   //  private final RedisUtil redisUtil;
 
 
@@ -158,6 +158,7 @@ public class MemberService {
     }
 
     // EMAIL 인증번호 발급
+    /*
     @Transactional
     public ResponseDto<?> sendEmailCode(AuthRequestDto requestDto) {
         // 등록된 이메일인지 확인
@@ -193,7 +194,7 @@ public class MemberService {
 
         return ResponseDto.success("인증번호 전송완료");
     }
-
+*/
 
     // 인증번호 생성
     private String generateCode() {

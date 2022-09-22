@@ -1,5 +1,4 @@
 package com.example.week8.security;
-
 import com.example.week8.domain.Member;
 import com.example.week8.domain.RefreshToken;
 import com.example.week8.domain.UserDetailsImpl;
@@ -118,6 +117,7 @@ public class TokenProvider {
     }
 
     @Transactional
+
     public boolean deleteRefreshToken(Member member) {
         RefreshToken refreshToken = isPresentRefreshToken(member);
         if (null == refreshToken) {
