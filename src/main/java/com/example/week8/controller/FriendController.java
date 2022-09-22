@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @RequiredArgsConstructor
 @RestController
-public class FriendListController {
+public class FriendController {
     private final FriendService friendService;
 
     //친구 목록 조회
@@ -39,4 +39,15 @@ public class FriendListController {
         return friendService.deleteFriend(memberId, request);
     }
 
+    // 친구검색
+    @RequestMapping (value = "/api/friends/search", method = RequestMethod.GET)
+    public ResponseDto<?> searchFriend(@RequestParam("q") String value, @RequestParam("type") String type, HttpServletRequest request) {
+        return friendService.searchFriend(value, type, request);
+    }
+
+    // 유저 검색
+    @RequestMapping (value = "/api/search", method = RequestMethod.GET)
+    public ResponseDto<?> searchMember(@RequestParam("q") String value, @RequestParam("type") String type, HttpServletRequest request) {
+        return friendService.searchMember(value, type, request);
+    }
 }
