@@ -34,7 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 public class KakaoOauthService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
-    private final UserDetailsServiceImpl userDetailsService;
 
     public ResponseDto<?> kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         // 1. "인가 코드"로 전체 response 요청
@@ -161,12 +160,11 @@ public class KakaoOauthService {
     private void forceLogin(Member kakaoUser, HttpServletResponse response) {
         // response header에 token 추가
         TokenDto token = tokenProvider.generateTokenDto(kakaoUser);
-        response.addHeader("Authorization", "BEARER" + " " + token.getAccessToken());
+        response.addHeader("Authorization", "Bearer " + token.getAccessToken());
         response.addHeader("RefreshToken", token.getRefreshToken());
 
-        // UserDetails userDetails = new UserDetailsImpl(kakaoUser);
-        UserDetails principal = userDetailsService.loadUserByUsername(kakaoUser.getId().toString());
-        Authentication authentication = new UsernamePasswordAuthenticationToken(principal, token.getAccessToken(), principal.getAuthorities());
+        UserDetails userDetails = new UserDetailsImpl(kakaoUser);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, token.getAccessToken(), userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
