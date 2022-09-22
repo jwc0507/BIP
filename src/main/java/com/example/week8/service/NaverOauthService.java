@@ -47,10 +47,7 @@ public class NaverOauthService {
         Member naverMember = registerNaverMemberIfNeeded(memberInfoDto);
 
         // 4. 강제 로그인 처리
-        forceLogin(naverMember);
-
-        // 5. response Header에 JWT 토큰 추가
-        naverMemberAuthorizationInput(naverMember, response);
+        forceLogin(naverMember, response);
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
                 .nickname(naverMember.getNickname())
@@ -170,16 +167,14 @@ public class NaverOauthService {
         return naverMember;
     }
 
-
-    private void naverMemberAuthorizationInput(Member naverMember, HttpServletResponse response) {
+    private void forceLogin(Member naverMember, HttpServletResponse response) {
+        // response header에 token 추가
         TokenDto token = tokenProvider.generateTokenDto(naverMember);
-        response.addHeader("Authorization", "BEARER" + " " + token.getAccessToken());
+        response.addHeader("Authorization", "Bearer " + token.getAccessToken());
         response.addHeader("RefreshToken", token.getRefreshToken());
-    }
 
-    private void forceLogin(Member naverMember) {
         UserDetails userDetails = new UserDetailsImpl(naverMember);
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, token.getAccessToken(), userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }
