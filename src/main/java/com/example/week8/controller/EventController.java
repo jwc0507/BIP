@@ -1,6 +1,7 @@
 package com.example.week8.controller;
 
 import com.example.week8.dto.EventRequestDto;
+import com.example.week8.dto.request.InviteMemberDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.EventService;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +49,15 @@ public class EventController {
     public ResponseDto<?> deleteEvent(@PathVariable Long eventId,
                                       HttpServletRequest request) {
         return eventService.deleteEvent(eventId, request);
+    }
+
+    /**
+     * 약속 초대(약속멤버 추가)
+     */
+    @PostMapping("/api/events/{eventId}")
+    public ResponseDto<?> inviteMember(@PathVariable Long eventId,
+                                       @RequestBody InviteMemberDto inviteMemberDto,
+                                       HttpServletRequest request) {
+        return eventService.inviteMember(eventId, inviteMemberDto, request);
     }
 }

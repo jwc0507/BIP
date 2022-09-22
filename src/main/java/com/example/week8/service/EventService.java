@@ -4,6 +4,8 @@ import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
 import com.example.week8.dto.EventRequestDto;
+import com.example.week8.dto.request.InviteMemberDto;
+import com.example.week8.dto.request.MemberDto;
 import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -37,7 +39,7 @@ public class EventService {
     /**
      * 약속 생성
      */
-    public ResponseDto<?> createEvent(@RequestBody EventRequestDto eventRequestDto,
+    public ResponseDto<?> createEvent(EventRequestDto eventRequestDto,
                                       HttpServletRequest request) {
 
         if (null == request.getHeader("RefreshToken")) {
@@ -211,6 +213,58 @@ public class EventService {
         return ResponseDto.success("약속이 삭제되었습니다.");
     }
 
+    /**
+     * 약속 초대(약속멤버 추가)
+     */
+    public ResponseDto<?> inviteMember(Long eventId,
+                                       InviteMemberDto inviteMemberDto,
+                                       HttpServletRequest request) {
+
+        if (null == request.getHeader("RefreshToken")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        if (null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        // 닉네임에 해당하는(초대할) 멤버 호출
+        Member member = isPresentMemberByNickname(inviteMemberDto.getNickname());
+        if (null == member) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        // 약속 호출
+        Event event = isPresentEvent(eventId);
+
+        // 약속 멤버 생성
+        EventMember tempEventMember = EventMember.createEventMember(member, event);
+        eventMemberRepository.save(tempEventMember);
+
+        // MemberResponseDto에 Member 담기
+        List<EventMember> findEventMemberList = eventMemberRepository.findAllByEventId(eventId);
+        List<MemberResponseDto> tempList = new ArrayList<>();
+        for (EventMember eventMember : findEventMemberList) {
+            Long memberId = eventMember.getMember().getId();
+            MemberResponseDto memberResponseDto = convertToDto(isPresentMember(memberId));
+            tempList.add(memberResponseDto);
+        }
+
+        return ResponseDto.success(
+                EventResponseDto.builder()
+                        .id(event.getId())
+                        .memberList(tempList)
+                        .title(event.getTitle())
+                        .eventDateTime(event.getEventDateTime())
+                        .place(event.getPlace())
+                        .createdAt(event.getCreatedAt())
+                        .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .content(event.getContent())
+                        .point(event.getPoint())
+                        .build()
+        );
+    }
+
     //== 추가 메서드 ==//
 
     /**
@@ -250,11 +304,20 @@ public class EventService {
     }
 
     /**
-     * 멤버 호출
+     * 멤버 호출 byId
      */
     @Transactional(readOnly = true)
     public Member isPresentMember(Long id) {
         Optional<Member> optionalMember = memberRepository.findById(id);
+        return optionalMember.orElse(null);
+    }
+
+    /**
+     * 멤버 호출 byNickname
+     */
+    @Transactional(readOnly = true)
+    public Member isPresentMemberByNickname(String nickname) {
+        Optional<Member> optionalMember = memberRepository.findByNickname(nickname);
         return optionalMember.orElse(null);
     }
 
@@ -266,6 +329,7 @@ public class EventService {
                 .id(member.getId())
                 .phoneNumber(member.getPhoneNumber())
                 .email(member.getEmail())
+                .nickname(member.getNickname())
                 .credit(member.getCredit())
                 .point(member.getPoint())
                 .profileImageUrl(member.getProfileImageUrl())
