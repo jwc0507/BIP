@@ -5,7 +5,6 @@ import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
 import com.example.week8.dto.EventRequestDto;
 import com.example.week8.dto.request.InviteMemberDto;
-import com.example.week8.dto.request.MemberDto;
 import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -116,7 +115,7 @@ public class EventService {
         if (null == event) {
             return ResponseDto.fail("ID_NOT_FOUND");
         }
-        if (validateMember(event, member)) {
+        if (validateEventMember(event, member)) {
             return ResponseDto.fail("NO_EVENTMEMBER");
         }
 
@@ -203,7 +202,7 @@ public class EventService {
         }
 
         // 멤버 유효성 검사
-        if (validateMember(event, member)) {
+        if (validateEventMember(event, member)) {
             return ResponseDto.fail("NO_EVENTMEMBER");
         }
 
@@ -265,14 +264,54 @@ public class EventService {
         );
     }
 
+    /**
+     * 약속 탈퇴
+     */
+    public ResponseDto<?> exitEvent(Long eventId, HttpServletRequest request) {
+
+        if (null == request.getHeader("RefreshToken")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        if (null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        // 멤버 호출
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        // 약속 호출
+        Event event = isPresentEvent(eventId);
+
+        // 약속 멤버 호출
+        EventMember eventMember = isPresentEventMember(event, member);
+
+        // 약속 멤버 삭제
+        eventMemberRepository.deleteById(eventMember.getId());
+
+        return ResponseDto.success("약속에서 탈퇴했습니다.");
+    }
+
+    
     //== 추가 메서드 ==//
 
     /**
      * eventMember 유효성 검사
      */
-    public boolean validateMember(Event event, Member member) {
+    public boolean validateEventMember(Event event, Member member) {
         Optional<EventMember> findEventMember = eventMemberRepository.findByEventIdAndMemberId(event.getId(), member.getId());
         return findEventMember.isEmpty();
+    }
+
+    /**
+     * eventMember 호출
+     */
+    public EventMember isPresentEventMember(Event event, Member member) {
+        Optional<EventMember> optionalEventMember = eventMemberRepository.findByEventIdAndMemberId(event.getId(), member.getId());
+        return optionalEventMember.orElse(null);
     }
 
     /**
@@ -335,5 +374,4 @@ public class EventService {
                 .profileImageUrl(member.getProfileImageUrl())
                 .build();
     }
-
 }

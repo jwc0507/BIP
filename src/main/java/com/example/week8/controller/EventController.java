@@ -60,4 +60,13 @@ public class EventController {
                                        HttpServletRequest request) {
         return eventService.inviteMember(eventId, inviteMemberDto, request);
     }
+
+    /**
+     * 약속 탈퇴
+     */
+    @DeleteMapping("api/events/exit/{eventId}")
+    public ResponseDto<?> exitEvent(@PathVariable Long eventId,
+                                    HttpServletRequest request) {
+        return eventService.exitEvent(eventId, request);
+    }
 }
