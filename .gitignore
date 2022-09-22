@@ -28,6 +28,10 @@ out/
 
 ### custom ignore files ###
 application-aws.properties
+memberTest.http
+serviceTest.http
+friendTest.http
+
 
 ### NetBeans ###
 /nbproject/private/
