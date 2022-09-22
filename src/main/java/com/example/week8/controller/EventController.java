@@ -32,4 +32,12 @@ public class EventController {
                                       HttpServletRequest request) {
         return eventService.updateEvent(eventId,requestDto, request);
     }
+
+    /**
+     * 약속 단건 조회
+     */
+    @GetMapping("/api/events/{eventId}")
+    public ResponseDto<?> getEvent(@PathVariable Long eventId) {
+        return eventService.getEvent(eventId);
+    }
 }

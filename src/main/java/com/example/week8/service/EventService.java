@@ -9,6 +9,7 @@ import com.example.week8.dto.response.MemberResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.EventMemberRepository;
 import com.example.week8.repository.EventRepository;
+import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.Optional;
 @Transactional
 public class EventService {
 
+    private final MemberRepository memberRepository;
     private final EventRepository eventRepository;
     private final EventMemberRepository eventMemberRepository;
     private final TokenProvider tokenProvider;
@@ -86,7 +88,6 @@ public class EventService {
         );
     }
 
-
     /**
      * 약속 수정
      */
@@ -141,7 +142,43 @@ public class EventService {
     }
 
     /**
-     * eventMemver 유효성 검사
+     * 약속 단건 조회
+     */
+    @Transactional(readOnly = true)
+    public ResponseDto<?> getEvent(Long eventId) {
+
+        Event event = isPresentEvent(eventId);
+        if (null == event) {
+            return ResponseDto.fail("NOT_FOUND");
+        }
+
+        // MemberResponseDto에 Member 담기
+        List<EventMember> findEventMemberList = eventMemberRepository.findAllByEventId(eventId);
+        List<MemberResponseDto> tempList = new ArrayList<>();
+        for (EventMember eventMember : findEventMemberList) {
+            Long memberId = eventMember.getMember().getId();
+            MemberResponseDto memberResponseDto = convertToDto(isPresentMember(memberId));
+            tempList.add(memberResponseDto);
+        }
+
+        return ResponseDto.success(
+                EventResponseDto.builder()
+                        .id(event.getId())
+                        .memberList(tempList)
+                        .title(event.getTitle())
+                        .eventDateTime(event.getEventDateTime())
+                        .place(event.getPlace())
+                        .createdAt(event.getCreatedAt())
+                        .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .content(event.getContent())
+                        .point(event.getPoint())
+                        .build()
+        );
+
+    }
+
+    /**
+     * eventMember 유효성 검사
      */
     public boolean validateMember(Event event, Member member) {
         Optional<EventMember> findEventMember = eventMemberRepository.findByEventIdAndMemberId(event.getId(), member.getId());
@@ -174,6 +211,15 @@ public class EventService {
     public Event isPresentEvent(Long id) {
         Optional<Event> optionalEvent = eventRepository.findById(id);
         return optionalEvent.orElse(null);
+    }
+
+    /**
+     * 멤버 호출
+     */
+    @Transactional(readOnly = true)
+    public Member isPresentMember(Long id) {
+        Optional<Member> optionalMember = memberRepository.findById(id);
+        return optionalMember.orElse(null);
     }
 
     /**
