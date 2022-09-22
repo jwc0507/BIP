@@ -5,6 +5,7 @@ import com.example.week8.domain.UserDetailsImpl;
 import com.example.week8.domain.enums.Authority;
 import com.example.week8.dto.NaverMemberInfoDto;
 import com.example.week8.dto.TokenDto;
+import com.example.week8.dto.response.OauthLoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
@@ -26,7 +27,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -52,7 +52,10 @@ public class NaverOauthService {
         // 5. response Header에 JWT 토큰 추가
         naverMemberAuthorizationInput(naverMember, response);
 
-        return ResponseDto.success(memberInfoDto);
+        return ResponseDto.success(OauthLoginResponseDto.builder()
+                .phoneNumber(naverMember.getPhoneNumber())
+                .email(naverMember.getEmail())
+                .build());
     }
 
     private String getAccessToken(String code, String state) throws JsonProcessingException {
@@ -143,9 +146,7 @@ public class NaverOauthService {
                 chkExistMember = true;
             }
             if (!chkExistMember) {
-                String randomString = UUID.randomUUID().toString();
                 naverMember = Member.builder()
-                        .nickname((nickname+ randomString))
                         .naverId(naverId)
                         .email(email)
                         .profileImageUrl(imgUrl)

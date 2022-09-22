@@ -5,6 +5,7 @@ import com.example.week8.domain.UserDetailsImpl;
 import com.example.week8.domain.enums.Authority;
 import com.example.week8.dto.KakaoMemberInfoDto;
 import com.example.week8.dto.TokenDto;
+import com.example.week8.dto.response.OauthLoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
@@ -26,7 +27,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.UUID;
 
 
 @RequiredArgsConstructor
@@ -51,7 +51,10 @@ public class KakaoOauthService {
         // 5. response Header에 JWT 토큰 추가
         kakaoUsersAuthorizationInput(kakaoUser, response);
 
-        return ResponseDto.success(kakaoMemberInfo);
+        return ResponseDto.success(OauthLoginResponseDto.builder()
+                .phoneNumber(kakaoUser.getPhoneNumber())
+                .email(kakaoUser.getEmail())
+                .build());
 
     }
 
@@ -135,9 +138,7 @@ public class KakaoOauthService {
                 chkExistMember = true;
             }
             if (!chkExistMember) {
-                String randomString = UUID.randomUUID().toString();
                 kakaoUser = Member.builder()
-                        .nickname((nickname+randomString))
                         .kakaoId(kakaoId)
                         .email(email)
                         .profileImageUrl(imageUrl)
