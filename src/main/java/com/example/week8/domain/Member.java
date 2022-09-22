@@ -73,4 +73,7 @@ public class Member extends Timestamped{
     public void updateEmail(String email) {
         this.email = email;
     }
+    public void updateProfileImageUrl (String url) {
+        this.profileImageUrl = url;
+    }
 }
