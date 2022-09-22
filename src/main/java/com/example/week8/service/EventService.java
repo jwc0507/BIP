@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +35,7 @@ public class EventService {
     /**
      * 약속 생성
      */
-    public ResponseDto<?> createEvent(@RequestBody EventRequestDto requestDto,
+    public ResponseDto<?> createEvent(@RequestBody EventRequestDto eventRequestDto,
                                       HttpServletRequest request) {
 
         if (null == request.getHeader("RefreshToken")) {
@@ -53,11 +54,11 @@ public class EventService {
 
         // 약속 생성
         Event event = Event.builder()
-                .title(requestDto.getTitle())
-                .eventDateTime(stringToLocalDateTime(requestDto.getEventDateTime()))
-                .place(requestDto.getPlace())
-                .content(requestDto.getContent())
-                .point(requestDto.getPoint())
+                .title(eventRequestDto.getTitle())
+                .eventDateTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()))
+                .place(eventRequestDto.getPlace())
+                .content(eventRequestDto.getContent())
+                .point(eventRequestDto.getPoint())
                 .build();
         eventRepository.save(event);
 
@@ -65,17 +66,9 @@ public class EventService {
         EventMember eventMember = EventMember.createEventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
         eventMemberRepository.save(eventMember);
 
-
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
-        MemberResponseDto memberResponseDto = MemberResponseDto.builder()
-                .id(member.getId())
-                .phoneNumber(member.getPhoneNumber())
-                .email(member.getEmail())
-                .credit(member.getCredit())
-                .point(member.getPoint())
-                .profileImageUrl(member.getProfileImageUrl())
-                .build();
+        MemberResponseDto memberResponseDto = convertToDto(member);
         list.add(memberResponseDto);
 
         return ResponseDto.success(
@@ -91,7 +84,68 @@ public class EventService {
                         .point(event.getPoint())
                         .build()
         );
+    }
 
+
+    /**
+     * 약속 수정
+     */
+    public ResponseDto<?> updateEvent(Long eventId,
+                                      @RequestBody EventRequestDto eventRequestDto,
+                                      HttpServletRequest request) {
+
+        if (null == request.getHeader("RefreshToken")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        if (null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        // 엔티티 조회
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        // 약속 호출
+        Event event = isPresentEvent(eventId);
+        if (null == event) {
+            return ResponseDto.fail("ID_NOT_FOUND");
+        }
+        if (validateMember(event, member)) {
+            return ResponseDto.fail("NO_EVENTMEMBER");
+        }
+
+        // 약속 수정
+        event.updateEvent(eventRequestDto);
+
+        // MemberResponseDto에 Member 담기
+        List<MemberResponseDto> list = new ArrayList<>();
+        MemberResponseDto memberResponseDto = convertToDto(member);
+        list.add(memberResponseDto);
+
+        return ResponseDto.success(
+                EventResponseDto.builder()
+                        .id(event.getId())
+                        .memberList(list)
+                        .title(event.getTitle())
+                        .eventDateTime(event.getEventDateTime())
+                        .place(event.getPlace())
+                        .createdAt(event.getCreatedAt())
+                        .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .content(event.getContent())
+                        .point(event.getPoint())
+                        .build()
+        );
+    }
+
+    /**
+     * eventMemver 유효성 검사
+     */
+    public boolean validateMember(Event event, Member member) {
+        Optional<EventMember> findEventMember = eventMemberRepository.findByEventIdAndMemberId(event.getId(), member.getId());
+        return findEventMember.isEmpty();
     }
 
     /**
@@ -111,6 +165,29 @@ public class EventService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
 
         return LocalDateTime.parse(dateStr, formatter);
+    }
+
+    /**
+     * 약속 호출
+     */
+    @Transactional(readOnly = true)
+    public Event isPresentEvent(Long id) {
+        Optional<Event> optionalEvent = eventRepository.findById(id);
+        return optionalEvent.orElse(null);
+    }
+
+    /**
+     * Member를 MemberResponseDto로 변환
+     */
+    public MemberResponseDto convertToDto(Member member) {
+        return MemberResponseDto.builder()
+                .id(member.getId())
+                .phoneNumber(member.getPhoneNumber())
+                .email(member.getEmail())
+                .credit(member.getCredit())
+                .point(member.getPoint())
+                .profileImageUrl(member.getProfileImageUrl())
+                .build();
     }
 
 }

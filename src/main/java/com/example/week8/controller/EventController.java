@@ -4,9 +4,7 @@ import com.example.week8.dto.EventRequestDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.EventService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -20,7 +18,18 @@ public class EventController {
      * 약속 생성
      */
     @PostMapping("/api/events")
-    public ResponseDto<?> createEvent(@RequestBody EventRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> createEvent(@RequestBody EventRequestDto requestDto,
+                                      HttpServletRequest request) {
         return eventService.createEvent(requestDto, request);
+    }
+
+    /**
+     * 약속 수정
+     */
+    @PutMapping("/api/events/{eventId}")
+    public ResponseDto<?> updateEvent(@PathVariable Long eventId,
+                                      @RequestBody EventRequestDto requestDto,
+                                      HttpServletRequest request) {
+        return eventService.updateEvent(eventId,requestDto, request);
     }
 }
