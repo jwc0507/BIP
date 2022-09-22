@@ -35,4 +35,10 @@ public class UserController {
     public ResponseDto<?> updateEmail(@RequestBody UpdateMemberRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
         return userService.setEmail(requestDto, request);
     }
+
+    // 회원정보 불러오기
+    @RequestMapping(value = "/api/user", method = RequestMethod.GET)
+    public ResponseDto<?> getInfo(HttpServletRequest request) {
+        return userService.getMemberInfo(request);
+    }
 }
