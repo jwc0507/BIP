@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -36,7 +37,7 @@ public class MemberService {
     private final LoginMemberRepository loginMemberRepository;
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
-    //private final JavaMailSender javaMailSender;
+    private final JavaMailSender javaMailSender;
   //  private final RedisUtil redisUtil;
 
 
@@ -158,7 +159,6 @@ public class MemberService {
     }
 
     // EMAIL 인증번호 발급
-    /*
     @Transactional
     public ResponseDto<?> sendEmailCode(AuthRequestDto requestDto) {
         // 등록된 이메일인지 확인
@@ -194,7 +194,6 @@ public class MemberService {
 
         return ResponseDto.success("인증번호 전송완료");
     }
-*/
 
     // 인증번호 생성
     private String generateCode() {
@@ -210,6 +209,11 @@ public class MemberService {
         Optional<Member> optionalMember = memberRepository.findByPhoneNumber(requestDto.getValue());
         if (optionalMember.isPresent())
             return ResponseDto.success(false);
+
+        String regExp = "(^02|[0-9]{3})([0-9]{3,4})([0-9]{4})$";
+        if (!Pattern.matches(regExp, requestDto.getValue()))
+            return ResponseDto.fail("전화번호 형식을 지켜주세요.");
+
         return ResponseDto.success(true);
     }
 
@@ -218,6 +222,11 @@ public class MemberService {
         Optional<Member> optionalMember = memberRepository.findByNickname(requestDto.getValue());
         if (optionalMember.isPresent())
             return ResponseDto.fail("중복된 닉네임 입니다.");
+
+        String regExp = "^[가-힣a-zA-Z0-9]*$";
+        if (!Pattern.matches(regExp, requestDto.getValue()))
+            return ResponseDto.fail("한글,대소문자,숫자만 입력해주세요.");
+
         return ResponseDto.success("사용 가능한 닉네임 입니다.");
     }
 
@@ -226,6 +235,11 @@ public class MemberService {
         Optional<Member> optionalMember = memberRepository.findByEmail(requestDto.getValue());
         if (optionalMember.isPresent())
             return ResponseDto.fail("사용중인 이메일 입니다.");
+
+        String regExp = "^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$";
+        if (!Pattern.matches(regExp, requestDto.getValue()))
+            return ResponseDto.fail("이메일 양식을 지켜주세요.");
+
         return ResponseDto.success("사용 가능한 이메일 입니다.");
     }
 
