@@ -5,6 +5,8 @@ import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -16,16 +18,17 @@ public class Event extends Timestamped{
 
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
+    @Column(name = "EVENT_ID")
     private Long id; // 약속 id
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    private List<EventMember> EventMemberList = new ArrayList<>();
 
     @Column (nullable = false)
     private String title; // 약속 이름
 
     @Column
-    private LocalDate eventDate; // 날짜
-
-    @Column (nullable = false)
-    private LocalDateTime eventTime; //시간
+    private LocalDateTime eventDateTime; // 약속 시간
 
     @Column
     private String place; // 장소
