@@ -8,6 +8,7 @@ import com.example.week8.dto.request.AuthRequestDto;
 import com.example.week8.dto.request.DuplicationRequestDto;
 import com.example.week8.dto.request.EmailLoginRequestDto;
 import com.example.week8.dto.request.LoginRequestDto;
+import com.example.week8.dto.response.LoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.LoginMemberRepository;
 import com.example.week8.repository.MemberRepository;
@@ -24,6 +25,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -41,16 +43,16 @@ public class MemberService {
     // 인증번호 확인
     private boolean chkValidCode(String key, String authCode) {
         // 인증번호 테이블에서 전화번호에 해당하는 인증번호 찾기
-        Optional<LoginMember> getLogin = loginMemberRepository.findByKeyValue(key);
+        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(key);
         if (getLogin.isEmpty())
             return false;
         // 여러개의 인증번호가 있을 수 있지만 마지막 값을 찾기 (코드 수정해서 첫 값만 가지게 됨)
-        String getAuthCode = getLogin.get().getAuthCode();
+        String getAuthCode = getLogin.get(0).getAuthCode();
         // 입력된 값과 DB의 인증번호가 같은지 확인
         if (!getAuthCode.equals(authCode))
             return false;
         // 인증완료되었다면 인증번호 테이블 비워주기
-        loginMemberRepository.deleteById(getLogin.get().getId());
+        loginMemberRepository.deleteById(getLogin.get(0).getId());
 
         // redis를 활용했을 때의 코드.
 //        String getKey = redisUtil.getData(key);
@@ -59,7 +61,6 @@ public class MemberService {
 //            return false;
 //        }
 //        redisUtil.deleteData(key);
-
 
         return true;
     }
@@ -116,7 +117,7 @@ public class MemberService {
 
         tokenToHeaders(tokenDto, response);
 
-        return ResponseDto.success("로그인 완료");
+        return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
 
     // 로그아웃
@@ -139,8 +140,10 @@ public class MemberService {
     // 인증번호 생성
     @Transactional
     public ResponseDto<?> sendAuthCode(AuthRequestDto requestDto) {
-        Optional<LoginMember> getLogin = loginMemberRepository.findByKeyValue(requestDto.getValue());
-        getLogin.ifPresent(loginMember -> loginMemberRepository.deleteById(loginMember.getId()));
+        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(requestDto.getValue());
+        for (LoginMember getLoginMember : getLogin) {
+            loginMemberRepository.deleteById(getLoginMember.getId());
+        }
         LoginMember loginMember = LoginMember.builder()
                 .authCode(generateCode())
                 .keyValue(requestDto.getValue())
@@ -202,12 +205,12 @@ public class MemberService {
         return stringBuilder.toString();
     }
 
-    // 전화번호 중복 검사
+    // 이미 있는 회원인지 체크 (프론트에서 뷰 넘길때 사용하기 위함)
     public ResponseDto<?> checkPhoneNumber(DuplicationRequestDto requestDto) {
         Optional<Member> optionalMember = memberRepository.findByPhoneNumber(requestDto.getValue());
         if (optionalMember.isPresent())
-            return ResponseDto.fail("중복된 전화번호 입니다.");
-        return ResponseDto.success("사용 가능한 전화번호 입니다.");
+            return ResponseDto.success(false);
+        return ResponseDto.success(true);
     }
 
     // 닉네임 중복 검사

@@ -19,7 +19,13 @@ public class Member extends Timestamped{
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id; // 멤버id
 
-    @Column (nullable = false, unique = true)
+    @Column (unique = true)
+    private Long kakaoId;   // 카카오id
+
+    @Column (unique = true)
+    private String naverId;   // 네이버
+
+    @Column (unique = true)
     private String phoneNumber; // 핸드폰 번호
 
     @Column (unique = true)

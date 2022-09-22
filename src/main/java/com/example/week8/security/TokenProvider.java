@@ -56,7 +56,7 @@ public class TokenProvider {
 
         Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
         String accessToken = Jwts.builder()
-                .setSubject(member.getPhoneNumber())
+                .setSubject(member.getId().toString())
                 .claim(AUTHORITIES_KEY, member.getUserRole().toString())
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -68,7 +68,7 @@ public class TokenProvider {
                 .compact();
 
         RefreshToken refreshTokenObject = RefreshToken.builder()
-                .id(member.getPhoneNumber())
+                .id(member.getId().toString())
                 .member(member)
                 .keyValue(refreshToken)
                 .build();
