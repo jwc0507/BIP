@@ -223,9 +223,9 @@ public class MemberService {
         if (optionalMember.isPresent())
             return ResponseDto.fail("중복된 닉네임 입니다.");
 
-        String regExp = "^[가-힣a-zA-Z0-9]*$";
+        String regExp = "^[가-힣a-zA-Z0-9]{2,10}$";
         if (!Pattern.matches(regExp, requestDto.getValue()))
-            return ResponseDto.fail("한글,대소문자,숫자만 입력해주세요.");
+            return ResponseDto.fail("2~10자리 한글,대소문자,숫자만 입력해주세요.");
 
         return ResponseDto.success("사용 가능한 닉네임 입니다.");
     }
