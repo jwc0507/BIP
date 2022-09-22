@@ -1,8 +1,11 @@
 package com.example.week8.service;
+
 import com.example.week8.domain.Friend;
 import com.example.week8.domain.Member;
+import com.example.week8.domain.enums.SearchType;
 import com.example.week8.dto.request.FriendAdditionRequestDto;
 import com.example.week8.dto.response.FriendInfoResponseDto;
+import com.example.week8.dto.response.MemberSearchResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.FriendRepository;
 import com.example.week8.repository.MemberRepository;
@@ -26,10 +29,10 @@ public class FriendService {
 
     //친구 목록 조회
     @Transactional
-    public ResponseDto<?> getFriendList(HttpServletRequest request){
+    public ResponseDto<?> getFriendList(HttpServletRequest request) {
 
         ResponseDto<?> chkResponse = validateCheck(request);
-        if(!chkResponse.isSuccess())
+        if (!chkResponse.isSuccess())
             return chkResponse;
         Member member = (Member) chkResponse.getData();
         /*
@@ -40,12 +43,11 @@ public class FriendService {
          */
         List<Friend> friendList = friendRepository.findAllByOwner(member);
         List<FriendInfoResponseDto> friendInfoResponseDtoList = new ArrayList<>();
-        for(Friend friend : friendList)
-        {
+        for (Friend friend : friendList) {
             friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
-                            .nickname(friend.getFriend().getNickname())
-                            .creditScore(friend.getFriend().getCredit())
-                            .build()
+                    .nickname(friend.getFriend().getNickname())
+                    .creditScore(friend.getFriend().getCredit())
+                    .build()
             );
         }
         return ResponseDto.success(friendInfoResponseDtoList);
@@ -55,13 +57,13 @@ public class FriendService {
     @Transactional
     public ResponseDto<?> addFriendByNickname(FriendAdditionRequestDto friendAdditionRequestDto, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
-        if(!chkResponse.isSuccess())
+        if (!chkResponse.isSuccess())
             return chkResponse;
 
         Member member = (Member) chkResponse.getData();
         //nickname으로 검색한 member
         Member findedMember = memberRepository.findByNickname(friendAdditionRequestDto.getValue()).orElse(null);
-        if(findedMember == null)
+        if (findedMember == null)
             return ResponseDto.fail("닉네임 친구찾기 실패");
 
         //Friend type의 객체 생성
@@ -74,22 +76,22 @@ public class FriendService {
         friendRepository.save(newFriend);
 
         return ResponseDto.success(FriendInfoResponseDto.builder()
-                        .nickname(newFriend.getFriend().getNickname())
-                        .creditScore(newFriend.getFriend().getCredit())
-                        .build());
+                .nickname(newFriend.getFriend().getNickname())
+                .creditScore(newFriend.getFriend().getCredit())
+                .build());
     }
 
     //휴대전화번호로 친구 추가
     @Transactional
     public ResponseDto<?> addFriendByPhoneNumber(FriendAdditionRequestDto friendAdditionRequestDto, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
-        if(!chkResponse.isSuccess())
+        if (!chkResponse.isSuccess())
             return chkResponse;
 
         Member member = (Member) chkResponse.getData();
         //phoneNumber로 검색한 member
         Member findedMember = memberRepository.findByPhoneNumber(friendAdditionRequestDto.getValue()).orElse(null);
-        if(findedMember == null)
+        if (findedMember == null)
             return ResponseDto.fail("전화번호 친구찾기 실패");
 
         //Friend type으로 새 친구 객체 생성
@@ -111,21 +113,21 @@ public class FriendService {
     @Transactional
     public ResponseDto<?> deleteFriend(Long friendId, HttpServletRequest request) { //friendId = 친구의 memberId
         ResponseDto<?> chkResponse = validateCheck(request);
-        if(!chkResponse.isSuccess())
+        if (!chkResponse.isSuccess())
             return chkResponse;
 
         Member member = (Member) chkResponse.getData();
         Member findedMember = memberRepository.findById(friendId).get();
         Friend friend = isPresentFriend(member, findedMember);
-        if(friend==null)
+        if (friend == null)
             return ResponseDto.fail("친구삭제 실패");
 
         friendRepository.delete(friend);
         return ResponseDto.success("친구삭제가 완료되었습니다.");
     }
 
-    private Friend isPresentFriend(Member owner, Member friend){
-        Optional<Friend> findedFriend = friendRepository.findByOwnerAndFriend(owner,friend);
+    private Friend isPresentFriend(Member owner, Member friend) {
+        Optional<Friend> findedFriend = friendRepository.findByOwnerAndFriend(owner, friend);
         return findedFriend.orElse(null);
     }
 
@@ -148,5 +150,70 @@ public class FriendService {
             return null;
         }
         return tokenProvider.getMemberFromAuthentication();
+    }
+
+    // 친구검색
+    public ResponseDto<?> searchFriend(String value, String type, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = (Member) chkResponse.getData();
+
+        Member findedMember;
+        // 닉네임으로 검색
+        if (type.equals(SearchType.name.toString())) {
+            findedMember = memberRepository.findByNickname(value).orElse(null);
+            if (findedMember == null)
+                return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
+        }
+        // 전화번호로 검색
+        else if (type.equals(SearchType.phone.toString())) {
+            findedMember = memberRepository.findByPhoneNumber(value).orElse(null);
+            if (findedMember == null)
+                return ResponseDto.fail("전화번호를 찾을 수 없습니다.");
+        }
+        else {
+            return ResponseDto.fail("검색 타입 에러");
+        }
+
+        Friend friend = isPresentFriend(member, findedMember);
+        if (friend == null)
+            return ResponseDto.fail("친구리스트에 없는 멤버입니다.");
+
+        return ResponseDto.success(MemberSearchResponseDto.builder()
+                .id(findedMember.getId())
+                .nickname(findedMember.getNickname())
+                .profileImgUrl(findedMember.getProfileImageUrl())
+                .build());
+    }
+
+    // 유저 검색
+    public ResponseDto<?> searchMember(String value, String type, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        Member findedMember;
+        // 닉네임으로 검색
+        if (type.equals(SearchType.name.toString())) {
+            findedMember = memberRepository.findByNickname(value).orElse(null);
+            if (findedMember == null)
+                return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
+        }
+        // 전화번호로 검색
+        else if (type.equals(SearchType.phone.toString())) {
+            findedMember = memberRepository.findByPhoneNumber(value).orElse(null);
+            if (findedMember == null)
+                return ResponseDto.fail("전화번호를 찾을 수 없습니다.");
+        }
+        else {
+            return ResponseDto.fail("검색 타입 에러");
+        }
+        return ResponseDto.success(MemberSearchResponseDto.builder()
+                .id(findedMember.getId())
+                .nickname(findedMember.getNickname())
+                .profileImgUrl(findedMember.getProfileImageUrl())
+                .build());
+
     }
 }
