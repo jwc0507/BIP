@@ -174,8 +174,44 @@ public class EventService {
                         .point(event.getPoint())
                         .build()
         );
-
     }
+
+    /**
+     * 약속 삭제
+     */
+    public ResponseDto<?> deleteEvent(Long eventId, HttpServletRequest request) {
+
+        if (null == request.getHeader("RefreshToken")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        if (null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        // 엔티티 조회
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        Event event = isPresentEvent(eventId);
+        if (null == event) {
+            return ResponseDto.fail("ID_NOT_FOUND");
+        }
+
+        // 멤버 유효성 검사
+        if (validateMember(event, member)) {
+            return ResponseDto.fail("NO_EVENTMEMBER");
+        }
+
+        // 약속 삭제, 약속과 연관된 약속멤버도 함께 삭제됨
+        eventRepository.deleteById(eventId);
+
+        return ResponseDto.success("약속이 삭제되었습니다.");
+    }
+
+    //== 추가 메서드 ==//
 
     /**
      * eventMember 유효성 검사

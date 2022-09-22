@@ -24,7 +24,7 @@ public class Event extends Timestamped{
     @Column(name = "EVENT_ID")
     private Long id; // 약속 id
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)  // 약속이 삭제되면 해당 약속과 연관된 EventMember도 고아가 되어 삭제됨
     private List<EventMember> eventMemberList = new ArrayList<>();
 
     @Column (nullable = false)

@@ -40,4 +40,13 @@ public class EventController {
     public ResponseDto<?> getEvent(@PathVariable Long eventId) {
         return eventService.getEvent(eventId);
     }
+
+    /**
+     * 약속 삭제
+     */
+    @DeleteMapping("/api/events/{eventId}")
+    public ResponseDto<?> deleteEvent(@PathVariable Long eventId,
+                                      HttpServletRequest request) {
+        return eventService.deleteEvent(eventId, request);
+    }
 }
