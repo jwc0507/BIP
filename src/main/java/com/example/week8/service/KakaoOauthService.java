@@ -46,12 +46,10 @@ public class KakaoOauthService {
         Member kakaoUser = registerKakaoUserIfNeeded(kakaoMemberInfo);
 
         // 4. 강제 로그인 처리
-        forceLogin(kakaoUser);
-
-        // 5. response Header에 JWT 토큰 추가
-        kakaoUsersAuthorizationInput(kakaoUser, response);
+        forceLogin(kakaoUser, response);
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
+                .nickname(kakaoUser.getNickname())
                 .phoneNumber(kakaoUser.getPhoneNumber())
                 .email(kakaoUser.getEmail())
                 .build());
@@ -159,17 +157,16 @@ public class KakaoOauthService {
         return kakaoUser;
     }
 
-    private void forceLogin(Member kakaoUser) {
+    private void forceLogin(Member kakaoUser, HttpServletResponse response) {
+        // response header에 token 추가
+        TokenDto token = tokenProvider.generateTokenDto(kakaoUser);
+        response.addHeader("Authorization", "Bearer " + token.getAccessToken());
+        response.addHeader("RefreshToken", token.getRefreshToken());
+
         UserDetails userDetails = new UserDetailsImpl(kakaoUser);
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, token.getAccessToken(), userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    private void kakaoUsersAuthorizationInput(Member kakaoUser, HttpServletResponse response) {
-        // response header에 token 추가
-        TokenDto token = tokenProvider.generateTokenDto(kakaoUser);
-        response.addHeader("Authorization", "BEARER" + " " + token.getAccessToken());
-        response.addHeader("RefreshToken", token.getRefreshToken());
-    }
 }
 

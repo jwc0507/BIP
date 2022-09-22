@@ -189,4 +189,20 @@ public class UserService {
                     .numOfDone(member.getNumOfDone())
                     .build());
     }
+
+    // 회원탈퇴
+    @Transactional
+    public ResponseDto<?> deleteMember(HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        tokenProvider.deleteRefreshToken(member);
+
+        memberRepository.deleteById(member.getId());
+
+        return ResponseDto.success("회원탈퇴 완료");
+    }
 }
