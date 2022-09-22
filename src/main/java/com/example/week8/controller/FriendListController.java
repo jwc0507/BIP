@@ -19,8 +19,6 @@ public class FriendListController {
     @RequestMapping(value = "api/friends", method= RequestMethod.GET)
     public ResponseDto<?> getFriendList(HttpServletRequest request) { return friendService.getFriendList(request); }
 
-    // Q. API명세서를 보면, '닉네임으로 친구 추가'와 '전화번호로 친구 추가' API의 requestDto가 다른데,
-    // 이럴 경우 requestDto를 각각 하나씩 만들어줘야하는가? 아니면, requestDto를 하나만 만들고, 그 안에 '닉네임'과 '전화번호' 멤버를 정의해야 하는가?
 
     //닉네임으로 친구 추가
     @RequestMapping(value = "api/frineds/nickname", method= RequestMethod.POST)
@@ -36,7 +34,7 @@ public class FriendListController {
     }
 
     //친구 삭제
-    @RequestMapping(value = "api/friends/{memberId}")//memberId로 변경
+    @RequestMapping(value = "api/friends/{memberId}")//memberId=삭제하고자 하는 친구의 memeberId
     public ResponseDto<?> deleteFriend(@PathVariable Long memberId, HttpServletRequest request){
         return friendService.deleteFriend(memberId, request);
     }

@@ -9,6 +9,7 @@ import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import net.bytebuddy.asm.Advice;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -34,16 +35,11 @@ public class FriendService {
         ResponseDto<?> chkResponse = validateCheck(request);
         if(!chkResponse.isSuccess())
             return chkResponse;
-        System.out.println("1");
+
         Member member = (Member) chkResponse.getData();
-        /*
-        System.out.println("2");
-        List<Friend> friendList = member.getFriendList(); //friendRepository 활용해서 db에서 find 하지 않고, member의 friendList를 get하는 방식으로 코딩해도 정상 작동하겠지?
-        System.out.println("0번째 친구의 ownerID : "+ friendList.get(0).getOwner());
-        System.out.println("1번째 친구의 ownerID : "+ friendList.get(1).getOwner());
-         */
         List<Friend> friendList = friendRepository.findAllByOwner(member);
         List<FriendInfoResponseDto> friendInfoResponseDtoList = new ArrayList<>();
+
         for(Friend friend : friendList)
         {
             friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
@@ -66,6 +62,9 @@ public class FriendService {
         Member member = (Member) chkResponse.getData();
         //nickname으로 검색한 member
         Optional<Member> findedMember = memberRepository.findByNickname(friendAdditionRequestDto.getValue());
+
+        if(findedMember.orElse(null) == null) {
+            return ResponseDto.fail("친구 검색 실패");}
 
         //Friend type의 객체 생성
         Friend newFriend = Friend.builder()
@@ -92,6 +91,9 @@ public class FriendService {
         Member member = (Member) chkResponse.getData();
         //phoneNumber로 검색한 member
         Optional<Member> findedMember = memberRepository.findByPhoneNumber(friendAdditionRequestDto.getValue());
+
+        if(findedMember.orElse(null)==null)
+            return ResponseDto.fail("친구 검색 실패");
 
         //Friend type으로 새 친구 객체 생성
         Friend newFriend = Friend.builder()
