@@ -52,6 +52,7 @@ public class KakaoOauthService {
         kakaoUsersAuthorizationInput(kakaoUser, response);
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
+                .nickname(kakaoUser.getNickname())
                 .phoneNumber(kakaoUser.getPhoneNumber())
                 .email(kakaoUser.getEmail())
                 .build());

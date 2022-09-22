@@ -53,6 +53,7 @@ public class NaverOauthService {
         naverMemberAuthorizationInput(naverMember, response);
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
+                .nickname(naverMember.getNickname())
                 .phoneNumber(naverMember.getPhoneNumber())
                 .email(naverMember.getEmail())
                 .build());
