@@ -71,6 +71,10 @@ public class FriendService {
         if (findedMember == null)
             return ResponseDto.fail("닉네임 친구찾기 실패");
 
+        // 본인에 친구걸수 없음
+        if(Objects.equals(member.getId(), findedMember.getId()))
+            return ResponseDto.fail("본인을 친구등록 할 수 없습니다.");
+
         // 이미 친구인지 확인
         Optional<?> chkExist = friendRepository.findByOwnerAndFriend(member, findedMember);
         if (chkExist.isPresent())
@@ -104,6 +108,10 @@ public class FriendService {
         Member findedMember = memberRepository.findByPhoneNumber(friendAdditionRequestDto.getValue()).orElse(null);
         if (findedMember == null)
             return ResponseDto.fail("전화번호 친구찾기 실패");
+
+        // 본인에 친구걸수 없음
+        if(Objects.equals(member.getId(), findedMember.getId()))
+            return ResponseDto.fail("본인을 친구등록 할 수 없습니다.");
 
         // 이미 친구인지 확인
         Optional<?> chkExist = friendRepository.findByOwnerAndFriend(member, findedMember);
