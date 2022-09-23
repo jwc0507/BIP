@@ -25,6 +25,9 @@ public class Event extends Timestamped{
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)  // 약속이 삭제되면 해당 약속과 연관된 EventMember도 고아가 되어 삭제됨
     private List<EventMember> eventMemberList = new ArrayList<>();
 
+    @OneToOne
+    private Member master; // 방장 (Event에서는 방장이 누구인지 궁금하지만 member에서는 자기가 방장인지 궁금하지는 않다 = 단방향)
+
     @Column (nullable = false)
     private String title; // 약속 이름
 
@@ -58,5 +61,10 @@ public class Event extends Timestamped{
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
 
         return LocalDateTime.parse(dateStr, formatter);
+    }
+
+    // 방장 위임
+    public void changeMaster(Member member) {
+        this.master = member;
     }
 }
