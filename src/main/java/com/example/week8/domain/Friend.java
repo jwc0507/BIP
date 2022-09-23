@@ -12,7 +12,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Builder
 @Getter
-public class Friend {
+public class Friend implements Comparable<Friend> {
 
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
@@ -25,6 +25,19 @@ public class Friend {
     @JoinColumn(name = "friend_id", nullable = false)
     @OneToOne (fetch = FetchType.LAZY)
     private Member friend;          // 기준 맴버의 친구들
+
+    // 별명
+    @Column
+    private String secondName;
+
+    @Override
+    public int compareTo(Friend o) {
+        return this.getFriend().getNickname().compareTo(o.getFriend().getNickname());
+    }
+
+    public void setSecondName(String secondName) {
+        this.secondName = secondName;
+    }
 
 //    @JoinColumn
 //    @OneToMany

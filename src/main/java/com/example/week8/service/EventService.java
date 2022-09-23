@@ -3,9 +3,7 @@ package com.example.week8.service;
 import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
-import com.example.week8.dto.request.DateRequestDto;
-import com.example.week8.dto.request.EventRequestDto;
-import com.example.week8.dto.request.InviteMemberDto;
+import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.EventListDto;
 import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
@@ -24,9 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -49,20 +47,18 @@ public class EventService {
         if (null == request.getHeader("RefreshToken")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         if (null == request.getHeader("Authorization")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         // 엔티티 조회
         Member member = validateMember(request);
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
-
         // 약속 생성
         Event event = Event.builder()
                 .title(eventRequestDto.getTitle())
+                .master(member)
                 .eventDateTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()))
                 .place(eventRequestDto.getPlace())
                 .content(eventRequestDto.getContent())
@@ -104,25 +100,23 @@ public class EventService {
         if (null == request.getHeader("RefreshToken")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         if (null == request.getHeader("Authorization")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         // 엔티티 조회
         Member member = validateMember(request);
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
-
         // 약속 호출
         Event event = isPresentEvent(eventId);
         if (null == event) {
             return ResponseDto.fail("ID_NOT_FOUND");
         }
-        if (validateEventMember(event, member)) {
-            return ResponseDto.fail("NO_EVENTMEMBER");
-        }
+        // 약속 수정은 방장만 할 수 있게
+        if (!isMaster(event, member))
+            return ResponseDto.fail("방장이 아닙니다.");
+
 
         // 약속 수정
         event.updateEvent(eventRequestDto);
@@ -158,17 +152,14 @@ public class EventService {
         if (null == request.getHeader("RefreshToken")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         if (null == request.getHeader("Authorization")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         // 엔티티 조회
         Member member = validateMember(request);
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
-
         LocalDateTime dateTime = stringToLocalDateTime(dateRequestDto.getEventDateTime());  // 사용자가 조회 요청한 날짜
 
         List<EventMember> eventMemberList = eventMemberRepository.findAllByMemberId(member.getId());
@@ -221,12 +212,25 @@ public class EventService {
      * 약속 단건 조회
      */
     @Transactional(readOnly = true)
-    public ResponseDto<?> getEvent(Long eventId) {
+    public ResponseDto<?> getEvent(Long eventId, HttpServletRequest request) {
 
+        if (null == request.getHeader("RefreshToken")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+        if (null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
         Event event = isPresentEvent(eventId);
         if (null == event) {
             return ResponseDto.fail("NOT_FOUND");
         }
+        if(eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).isEmpty())
+            return ResponseDto.fail("약속 참여자가 아닙니다.");
+
 
         // MemberResponseDto에 Member 담기
         List<EventMember> findEventMemberList = eventMemberRepository.findAllByEventId(eventId);
@@ -260,30 +264,26 @@ public class EventService {
         if (null == request.getHeader("RefreshToken")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         if (null == request.getHeader("Authorization")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         // 엔티티 조회
         Member member = validateMember(request);
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
-
+        // 약속 호출
         Event event = isPresentEvent(eventId);
         if (null == event) {
             return ResponseDto.fail("ID_NOT_FOUND");
         }
+        // 약속 수정은 방장만 할 수 있게
+        if (!isMaster(event, member))
+            return ResponseDto.fail("방장이 아닙니다.");
 
-        // 멤버 유효성 검사
-        if (validateEventMember(event, member)) {
-            return ResponseDto.fail("NO_EVENTMEMBER");
-        }
 
         // 약속 삭제, 약속과 연관된 약속멤버도 함께 삭제됨
         eventRepository.deleteById(eventId);
-
         return ResponseDto.success("약속이 삭제되었습니다.");
     }
 
@@ -294,25 +294,28 @@ public class EventService {
                                        InviteMemberDto inviteMemberDto,
                                        HttpServletRequest request) {
 
-        if (null == request.getHeader("RefreshToken")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
 
-        if (null == request.getHeader("Authorization")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
+        if(eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).isEmpty())
+            return ResponseDto.fail("약속 참여자가 아닙니다.");
 
         // 닉네임에 해당하는(초대할) 멤버 호출
-        Member member = isPresentMemberByNickname(inviteMemberDto.getNickname());
-        if (null == member) {
+        Member guest = isPresentMemberByNickname(inviteMemberDto.getNickname());
+        if (null == guest) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
+        if(eventMemberRepository.findByEventIdAndMemberId(eventId, guest.getId()).isPresent())
+            return ResponseDto.fail("이미 참여하고 있는 회원입니다.");
 
         // 약속 호출
         Event event = isPresentEvent(eventId);
 
         // 약속 멤버 생성
-        EventMember tempEventMember = EventMember.createEventMember(member, event);
+        EventMember tempEventMember = EventMember.createEventMember(guest, event);
         eventMemberRepository.save(tempEventMember);
 
         // MemberResponseDto에 Member 담기
@@ -347,17 +350,14 @@ public class EventService {
         if (null == request.getHeader("RefreshToken")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         if (null == request.getHeader("Authorization")) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-
         // 멤버 호출
         Member member = validateMember(request);
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
-
         // 약속 호출
         Event event = isPresentEvent(eventId);
 
@@ -376,6 +376,100 @@ public class EventService {
 
     
     //== 추가 메서드 ==//
+
+
+    // 방장 확인 api
+    public ResponseDto<?> chkMaster(Long eventId, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        // 약속 호출
+        Event event = isPresentEvent(eventId);
+        if (null == event) {
+            return ResponseDto.fail("ID_NOT_FOUND");
+        }
+        if (!isMaster(event, member))
+            return ResponseDto.fail("방장이 아닙니다.");
+        return ResponseDto.success(true);
+    }
+
+    // 방장확인 api2
+    private boolean isMaster(Event event, Member member) {
+        return event.getMaster().getId().equals(member.getId());
+    }
+
+    // 방장 위임
+    @Transactional
+    public ResponseDto<?> changeMaster(Long eventId, MasterRequestDto requestDto, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        // 방장확인 (약속방 참여자인지도 같이 확인 가능)
+        Event event = isPresentEvent(eventId);
+        if (null == event) {
+            return ResponseDto.fail("약속을 찾을 수 없습니다");
+        }
+        if (!isMaster(event, member))
+            return ResponseDto.fail("방장이 아닙니다.");
+
+        Member target = memberRepository.findById(requestDto.getTargetId()).orElse(null);
+        if (target == null)
+            return ResponseDto.fail("해당 사용자를 찾을 수 없습니다.");
+
+        if(Objects.equals(target.getId(), member.getId()))
+            return ResponseDto.fail("본인에게 위임할 수 없습니다.");
+
+        // 위임할 사람이 참여자인지 체크
+        EventMember eventMember = isPresentEventMember(event, target);
+        if (eventMember == null)
+            return ResponseDto.fail("해당 사용자가 약속 참여자가 아닙니다.");
+
+        event.changeMaster(target);
+
+        return ResponseDto.success("위임완료");
+
+    }
+
+    // 맴버 추방
+    @Transactional
+    public ResponseDto<?> kickMember(Long eventId, MasterRequestDto requestDto, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        // 방장확인 (약속방 참여자인지도 같이 확인 가능)
+        Event event = isPresentEvent(eventId);
+        if (null == event) {
+            return ResponseDto.fail("약속을 찾을 수 없습니다");
+        }
+        if (!isMaster(event, member))
+            return ResponseDto.fail("방장이 아닙니다.");
+
+        Member target = memberRepository.findById(requestDto.getTargetId()).orElse(null);
+        if (target == null)
+            return ResponseDto.fail("해당 사용자를 찾을 수 없습니다.");
+
+        if(Objects.equals(target.getId(), member.getId()))
+            return ResponseDto.fail("본인을 추방시킬 수 없습니다.");
+
+        // 추방당할 사람이 참여자인지 체크
+        EventMember eventMember = isPresentEventMember(event, target);
+        if (eventMember == null)
+            return ResponseDto.fail("해당 사용자가 약속 참여자가 아닙니다.");
+
+        eventMemberRepository.deleteById(eventMember.getId());
+
+        return ResponseDto.success("추방완료");
+
+    }
 
     /**
      * eventMember 유효성 검사
@@ -452,5 +546,19 @@ public class EventService {
                 .point(member.getPoint())
                 .profileImageUrl(member.getProfileImageUrl())
                 .build();
+    }
+
+    private ResponseDto<?> validateCheck(HttpServletRequest request) {
+
+        // RefreshToken 및 Authorization 유효성 검사
+        if (null == request.getHeader("RefreshToken") || null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("로그인이 필요합니다.");
+        }
+        Member member = validateMember(request);
+        // token 정보 유효성 검사
+        if (null == member) {
+            return ResponseDto.fail("Token이 유효하지 않습니다.");
+        }
+        return ResponseDto.success(member);
     }
 }
