@@ -1,6 +1,8 @@
 package com.example.week8.controller;
 
+import com.example.week8.dto.request.EmailLoginRequestDto;
 import com.example.week8.dto.request.ImgUrlRequestDto;
+import com.example.week8.dto.request.LoginRequestDto;
 import com.example.week8.dto.request.MemberInfoRequestDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.UserService;
@@ -27,13 +29,13 @@ public class UserController {
 
     // 전화번호 변경
     @RequestMapping(value = "/api/user/phonenumber", method = RequestMethod.PUT)
-    public ResponseDto<?> updatePhoneNumber(@RequestBody MemberInfoRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseDto<?> updatePhoneNumber(@RequestBody LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
         return userService.setPhoneNumber(requestDto, request, response);
     }
 
     // 이메일 설정
     @RequestMapping(value = "/api/user/email", method = RequestMethod.PUT)
-    public ResponseDto<?> updateEmail(@RequestBody MemberInfoRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> updateEmail(@RequestBody EmailLoginRequestDto requestDto, HttpServletRequest request) {
         return userService.setEmail(requestDto, request);
     }
 
