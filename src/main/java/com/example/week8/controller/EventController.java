@@ -50,8 +50,8 @@ public class EventController {
      * 약속 단건 조회
      */
     @GetMapping("/api/events/{eventId}")
-    public ResponseDto<?> getEvent(@PathVariable Long eventId) {
-        return eventService.getEvent(eventId);
+    public ResponseDto<?> getEvent(@PathVariable Long eventId , HttpServletRequest request) {
+        return eventService.getEvent(eventId, request);
     }
 
     /**
