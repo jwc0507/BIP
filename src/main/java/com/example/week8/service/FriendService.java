@@ -4,6 +4,7 @@ import com.example.week8.domain.Friend;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.enums.SearchType;
 import com.example.week8.dto.request.FriendAdditionRequestDto;
+import com.example.week8.dto.request.FriendSecondNameRequsetDto;
 import com.example.week8.dto.response.FriendInfoResponseDto;
 import com.example.week8.dto.response.MemberSearchResponseDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -15,9 +16,8 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
 
 @RequiredArgsConstructor
 @Service
@@ -42,15 +42,19 @@ public class FriendService {
         System.out.println("1번째 친구의 ownerID : "+ friendList.get(1).getOwner());
          */
         List<Friend> friendList = friendRepository.findAllByOwner(member);
-        List<FriendInfoResponseDto> friendInfoResponseDtoList = new ArrayList<>();
+
+        Collections.sort(friendList);
+        List<MemberSearchResponseDto> memberSearchResponseDtos = new ArrayList<>();
         for (Friend friend : friendList) {
-            friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
+            memberSearchResponseDtos.add(MemberSearchResponseDto.builder()
+                    .id(friend.getFriend().getId())
                     .nickname(friend.getFriend().getNickname())
+                    .profileImgUrl(friend.getFriend().getProfileImageUrl())
                     .creditScore(friend.getFriend().getCredit())
                     .build()
             );
         }
-        return ResponseDto.success(friendInfoResponseDtoList);
+        return ResponseDto.success(memberSearchResponseDtos);
     }
 
     //닉네임으로 친구 추가
@@ -59,12 +63,18 @@ public class FriendService {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
 
-        Member member = (Member) chkResponse.getData();
         //nickname으로 검색한 member
         Member findedMember = memberRepository.findByNickname(friendAdditionRequestDto.getValue()).orElse(null);
         if (findedMember == null)
             return ResponseDto.fail("닉네임 친구찾기 실패");
+
+        // 이미 친구인지 확인
+        Optional<?> chkExist = friendRepository.findByOwnerAndFriend(member, findedMember);
+        if (chkExist.isPresent())
+            return ResponseDto.fail("이미 친구등록된 상대입니다.");
 
         //Friend type의 객체 생성
         Friend newFriend = Friend.builder()
@@ -87,12 +97,18 @@ public class FriendService {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
 
-        Member member = (Member) chkResponse.getData();
         //phoneNumber로 검색한 member
         Member findedMember = memberRepository.findByPhoneNumber(friendAdditionRequestDto.getValue()).orElse(null);
         if (findedMember == null)
             return ResponseDto.fail("전화번호 친구찾기 실패");
+
+        // 이미 친구인지 확인
+        Optional<?> chkExist = friendRepository.findByOwnerAndFriend(member, findedMember);
+        if (chkExist.isPresent())
+            return ResponseDto.fail("이미 친구등록된 상대입니다.");
 
         //Friend type으로 새 친구 객체 생성
         Friend newFriend = Friend.builder()
@@ -171,8 +187,7 @@ public class FriendService {
             findedMember = memberRepository.findByPhoneNumber(value).orElse(null);
             if (findedMember == null)
                 return ResponseDto.fail("전화번호를 찾을 수 없습니다.");
-        }
-        else {
+        } else {
             return ResponseDto.fail("검색 타입 에러");
         }
 
@@ -184,6 +199,7 @@ public class FriendService {
                 .id(findedMember.getId())
                 .nickname(findedMember.getNickname())
                 .profileImgUrl(findedMember.getProfileImageUrl())
+                .creditScore(findedMember.getCredit())
                 .build());
     }
 
@@ -205,15 +221,42 @@ public class FriendService {
             findedMember = memberRepository.findByPhoneNumber(value).orElse(null);
             if (findedMember == null)
                 return ResponseDto.fail("전화번호를 찾을 수 없습니다.");
-        }
-        else {
+        } else {
             return ResponseDto.fail("검색 타입 에러");
         }
         return ResponseDto.success(MemberSearchResponseDto.builder()
                 .id(findedMember.getId())
                 .nickname(findedMember.getNickname())
                 .profileImgUrl(findedMember.getProfileImageUrl())
+                .creditScore(findedMember.getCredit())
                 .build());
 
+    }
+
+    @Transactional
+    // 별명넣기
+    public ResponseDto<?> setSecondName(FriendSecondNameRequsetDto requsetDto, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        Member getFriend = memberRepository.findByNickname(requsetDto.getFriendNickname()).orElse(null);
+        if (getFriend == null)
+            return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
+
+        Friend friend = isPresentFriend(member, getFriend);
+        if (friend == null)
+            return ResponseDto.fail("친구리스트에 없는 멤버입니다.");
+
+        friend.setSecondName(requsetDto.getSecondName());
+
+        return ResponseDto.success(MemberSearchResponseDto.builder()
+                .id(friend.getFriend().getId())
+                .nickname(friend.getSecondName())
+                .profileImgUrl(friend.getFriend().getProfileImageUrl())
+                .creditScore(friend.getFriend().getCredit())
+                .build());
     }
 }
