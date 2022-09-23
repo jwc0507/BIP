@@ -1,11 +1,9 @@
 package com.example.week8.domain;
 
-import com.example.week8.dto.EventRequestDto;
-import com.example.week8.time.Time;
+import com.example.week8.dto.request.EventRequestDto;
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
