@@ -35,7 +35,7 @@ public class UserService {
 
         String newNickname = requestDto.getValue();
 
-        if (!memberService.checkNickname(DuplicationRequestDto.builder().value(newNickname).build()).isSuccess()) {
+        if (memberService.checkNickname(DuplicationRequestDto.builder().value(newNickname).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
 

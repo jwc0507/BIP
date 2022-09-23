@@ -9,4 +9,5 @@ public class MemberSearchResponseDto {
     private Long id;
     private String nickname;
     private String profileImgUrl;
+    private double creditScore;
 }

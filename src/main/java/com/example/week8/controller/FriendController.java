@@ -1,6 +1,7 @@
 package com.example.week8.controller;
 
 import com.example.week8.dto.request.FriendAdditionRequestDto;
+import com.example.week8.dto.request.FriendSecondNameRequestDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.FriendService;
 import lombok.RequiredArgsConstructor;
@@ -49,5 +50,11 @@ public class FriendController {
     @RequestMapping (value = "/api/search", method = RequestMethod.GET)
     public ResponseDto<?> searchMember(@RequestParam("q") String value, @RequestParam("type") String type, HttpServletRequest request) {
         return friendService.searchMember(value, type, request);
+    }
+
+    // 친구 별명 추가
+    @RequestMapping (value = "/api/friends/secondName", method = RequestMethod.PUT)
+    public ResponseDto<?> setSecondName(@RequestBody FriendSecondNameRequestDto requestDto, HttpServletRequest request) {
+        return friendService.setSecondName(requestDto, request);
     }
 }
