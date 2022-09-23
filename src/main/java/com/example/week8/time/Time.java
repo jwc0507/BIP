@@ -15,6 +15,9 @@ public class Time {
         // 현재 시각
         LocalDateTime now = LocalDateTime.now();
 
+        long tempDiffTime = localDateTime.until(now, ChronoUnit.SECONDS);
+        if (tempDiffTime > 0) return "이미 지난 약속입니다.";
+
         // 현재(now) - 입력값(localDateTime; 약속시간)
         // 즉, 음수이므로 절댓값 처리
         long diffTime = Math.abs(localDateTime.until(now, ChronoUnit.SECONDS));
@@ -41,5 +44,13 @@ public class Time {
         }
         diffTime = diffTime / TIME_MAXIMUM.MONTH;
         return diffTime + "년 후";
+    }
+
+    public static long getLastTime(LocalDateTime localDateTime) {
+        // 현재 시각
+        LocalDateTime now = LocalDateTime.now();
+
+        // 현재(now) - 입력값(localDateTime; 약속시간)
+        return localDateTime.until(now, ChronoUnit.SECONDS);
     }
 }

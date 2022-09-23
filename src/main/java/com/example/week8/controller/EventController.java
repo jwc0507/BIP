@@ -1,5 +1,6 @@
 package com.example.week8.controller;
 
+import com.example.week8.dto.request.DateRequestDto;
 import com.example.week8.dto.request.EventRequestDto;
 import com.example.week8.dto.request.InviteMemberDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -32,6 +33,17 @@ public class EventController {
                                       @RequestBody EventRequestDto requestDto,
                                       HttpServletRequest request) {
         return eventService.updateEvent(eventId,requestDto, request);
+    }
+
+    /**
+     * 약속 목록 조회
+     * unit: day, week, month
+     */
+    @GetMapping("/api/events/list/{unit}")
+    public ResponseDto<?> getAllEvent(@PathVariable String unit,
+                                      @RequestBody DateRequestDto dateRequestDto,
+                                      HttpServletRequest request) {
+        return eventService.getAllEvent(unit, dateRequestDto, request);
     }
 
     /**
