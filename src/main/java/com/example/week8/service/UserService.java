@@ -23,6 +23,7 @@ public class UserService {
     private final TokenProvider tokenProvider;
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final FileService fileService;
 
     // 닉네임 변경
     @Transactional
@@ -182,19 +183,20 @@ public class UserService {
         // 이미지url재등록
         member.updateProfileImageUrl(requestDto.getImgUrl());
 
-//        if (getImgUrl != null)
-            // s3에서 기존 url 파일을 삭제하는 구문 필요 (이미지 업로드 기능 구현 후 추가함)
+        // s3에서 기존 url 파일을 삭제하는 구문 필요 (이미지 업로드 기능 구현 후 추가함)
+        if (getImgUrl != null) {
+            fileService.deleteFile(getImgUrl);
+        }
 
-
-            return ResponseDto.success(UpdateMemberResponseDto.builder()
-                    .nickname(member.getNickname())
-                    .phoneNumber(member.getPhoneNumber())
-                    .email(member.getEmail())
-                    .profileImgUrl(member.getProfileImageUrl())
-                    .point(member.getPoint())
-                    .creditScore(member.getCredit())
-                    .numOfDone(member.getNumOfDone())
-                    .build());
+        return ResponseDto.success(UpdateMemberResponseDto.builder()
+                .nickname(member.getNickname())
+                .phoneNumber(member.getPhoneNumber())
+                .email(member.getEmail())
+                .profileImgUrl(member.getProfileImageUrl())
+                .point(member.getPoint())
+                .creditScore(member.getCredit())
+                .numOfDone(member.getNumOfDone())
+                .build());
     }
 
     // 회원탈퇴
