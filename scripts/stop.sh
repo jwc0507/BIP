@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-PROJECT_ROOT="/home/ubuntu/app2"
+PROJECT_ROOT="/home/ubuntu/app3"
 JAR_FILE="$PROJECT_ROOT/spring-app.jar"
 
 DEPLOY_LOG="$PROJECT_ROOT/deploy.log"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-PROJECT_ROOT="/home/ubuntu/app2"
+PROJECT_ROOT="/home/ubuntu/app3"
 JAR_FILE="$PROJECT_ROOT/spring-app.jar"
 
 APP_LOG="$PROJECT_ROOT/application.log"
@@ -16,7 +16,7 @@ cp $PROJECT_ROOT/build/libs/*.jar $JAR_FILE
 # jar 파일 실행
 echo "$TIME_NOW > $JAR_FILE 파일 실행" >> $DEPLOY_LOG
 nohup java -jar \
-                        -Dspring.config.location=classpath:/application.properties,/home/ubuntu/app2/application-aws.properties \
+                        -Dspring.config.location=classpath:/application.properties,/home/ubuntu/app3/application-aws.properties \
                         $JAR_FILE > $APP_LOG 2> $ERROR_LOG &
 
 CURRENT_PID=$(pgrep -f $JAR_FILE)

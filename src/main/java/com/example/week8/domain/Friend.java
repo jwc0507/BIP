@@ -20,7 +20,7 @@ public class Friend {
 
     @JoinColumn(name = "member_id", nullable = false)
     @ManyToOne (fetch = FetchType.LAZY)
-    private Member member;          // 기준이 되는 맴버
+    private Member owner;          // 기준이 되는 맴버
 
     @JoinColumn(name = "friend_id", nullable = false)
     @OneToOne (fetch = FetchType.LAZY)
