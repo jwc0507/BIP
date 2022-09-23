@@ -42,7 +42,7 @@ public class MemberService {
 
 
     // 인증번호 확인
-    private boolean chkValidCode(String key, String authCode) {
+    public boolean chkValidCode(String key, String authCode) {
         // 인증번호 테이블에서 전화번호에 해당하는 인증번호 찾기
         List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(key);
         if (getLogin.isEmpty())
