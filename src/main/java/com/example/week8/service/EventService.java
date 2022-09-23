@@ -3,8 +3,10 @@ package com.example.week8.service;
 import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
+import com.example.week8.dto.request.DateRequestDto;
 import com.example.week8.dto.request.EventRequestDto;
 import com.example.week8.dto.request.InviteMemberDto;
+import com.example.week8.dto.response.EventListDto;
 import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -142,6 +145,76 @@ public class EventService {
                         .point(event.getPoint())
                         .build()
         );
+    }
+
+    /**
+     * 약속 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public ResponseDto<?> getAllEvent(String unit,
+                                      DateRequestDto dateRequestDto,
+                                      HttpServletRequest request) {
+
+        if (null == request.getHeader("RefreshToken")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        if (null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("MEMBER_NOT_FOUND");
+        }
+
+        // 엔티티 조회
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        LocalDateTime dateTime = stringToLocalDateTime(dateRequestDto.getEventDateTime());  // 사용자가 조회 요청한 날짜
+
+        List<EventMember> eventMemberList = eventMemberRepository.findAllByMemberId(member.getId());
+        List<EventListDto> tempList = new ArrayList<>();
+        for (EventMember eventMember : eventMemberList) {
+
+            Event event = isPresentEvent(eventMember.getEvent().getId());
+            LocalDateTime eventDateTime = event.getEventDateTime();
+
+            if (unit.equals("day")) {
+                if (eventDateTime.getYear() == dateTime.getYear()
+                        && eventDateTime.getDayOfYear() == dateTime.getDayOfYear()) {
+                    tempList.add(convertToDto(event));
+                }
+            }
+            else if (unit.equals("week")) {
+                LocalDateTime dateTimeAfterAWeek = dateTime.plusDays(6);
+                if (eventDateTime.getYear() == dateTime.getYear()
+                        && dateTime.getDayOfYear() <= eventDateTime.getDayOfYear()
+                        && eventDateTime.getDayOfYear() <= dateTimeAfterAWeek.getDayOfYear() ) {
+                    tempList.add(convertToDto(event));
+                }
+            }
+            else if (unit.equals("month")) {
+                if (eventDateTime.getYear() == dateTime.getYear()
+                        && dateTime.getMonth() == eventDateTime.getMonth()) {
+                    tempList.add(convertToDto(event));
+                }
+            }
+        }
+
+        return ResponseDto.success(tempList);
+    }
+
+    /**
+     * Event를 EventListDto로 변환
+     */
+    public EventListDto convertToDto(Event event) {
+        return EventListDto.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .eventDateTime(event.getEventDateTime())
+                .place(event.getPlace())
+                .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
+                .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                .build();
     }
 
     /**
