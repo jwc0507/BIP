@@ -2,9 +2,7 @@ package com.example.week8.service;
 
 import com.example.week8.domain.Member;
 import com.example.week8.dto.TokenDto;
-import com.example.week8.dto.request.DuplicationRequestDto;
-import com.example.week8.dto.request.ImgUrlRequestDto;
-import com.example.week8.dto.request.MemberInfoRequestDto;
+import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.dto.response.UpdateMemberResponseDto;
 import com.example.week8.repository.MemberRepository;
@@ -36,7 +34,7 @@ public class UserService {
 
         String newNickname = requestDto.getValue();
 
-        if (memberService.checkNickname(DuplicationRequestDto.builder().value(newNickname).build()).isSuccess()) {
+        if (!memberService.checkNickname(DuplicationRequestDto.builder().value(newNickname).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
 
@@ -56,13 +54,18 @@ public class UserService {
 
     // 전화번호 변경
     @Transactional
-    public ResponseDto<?> setPhoneNumber(MemberInfoRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseDto<?> setPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
         //== token 유효성 검사 ==//
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
 
-        String newPhoneNumber = requestDto.getValue();
+        String newPhoneNumber = requestDto.getPhoneNumber();
+
+        if (!memberService.chkValidCode(newPhoneNumber, requestDto.getAuthCode()))
+            return ResponseDto.fail("인증실패 코드를 재발급해주세요");
+
+
         if (memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
@@ -93,13 +96,17 @@ public class UserService {
 
     // 이메일 설정
     @Transactional
-    public ResponseDto<?> setEmail(MemberInfoRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> setEmail(EmailLoginRequestDto requestDto, HttpServletRequest request) {
         //== token 유효성 검사 ==//
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
 
-        String newEmail = requestDto.getValue();
+        String newEmail = requestDto.getEmail();
+
+        if (memberService.chkValidCode(newEmail, requestDto.getAuthCode()))
+            return ResponseDto.fail("인증실패 코드를 재발급해주세요");
+
         if (memberService.checkEmail(DuplicationRequestDto.builder().value(newEmail).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
