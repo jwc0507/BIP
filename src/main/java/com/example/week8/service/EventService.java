@@ -3,9 +3,7 @@ package com.example.week8.service;
 import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
-import com.example.week8.dto.request.DateRequestDto;
-import com.example.week8.dto.request.EventRequestDto;
-import com.example.week8.dto.request.InviteMemberDto;
+import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.EventListDto;
 import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
@@ -26,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -404,7 +403,7 @@ public class EventService {
 
     // 방장 위임
     @Transactional
-    public ResponseDto<?> changeMaster(Long newId, Long eventId, HttpServletRequest request) {
+    public ResponseDto<?> changeMaster(Long eventId, MasterRequestDto requestDto, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
@@ -419,15 +418,19 @@ public class EventService {
         if (!isMaster(event, member))
             return ResponseDto.fail("방장이 아닙니다.");
 
-        // 위임받을 사람이 참여자인지 체크
-        if(eventMemberRepository.findByEventIdAndMemberId(eventId, newId).isEmpty())
-            return ResponseDto.fail("약속 참여자가 아닙니다.");
+        Member target = memberRepository.findById(requestDto.getTargetId()).orElse(null);
+        if (target == null)
+            return ResponseDto.fail("해당 사용자를 찾을 수 없습니다.");
 
-        // 방장 위임
-        Member newMember = memberRepository.findById(newId).orElse(null);
-        if (newMember == null)
-            return ResponseDto.fail("위임자 id가 유효하지 않습니다.");
-        event.changeMaster(newMember);
+        if(Objects.equals(target.getId(), member.getId()))
+            return ResponseDto.fail("본인에게 위임할 수 없습니다.");
+
+        // 위임할 사람이 참여자인지 체크
+        EventMember eventMember = isPresentEventMember(event, target);
+        if (eventMember == null)
+            return ResponseDto.fail("해당 사용자가 약속 참여자가 아닙니다.");
+
+        event.changeMaster(target);
 
         return ResponseDto.success("위임완료");
 
@@ -435,7 +438,7 @@ public class EventService {
 
     // 맴버 추방
     @Transactional
-    public ResponseDto<?> kickMember(Long targetId, Long eventId, HttpServletRequest request) {
+    public ResponseDto<?> kickMember(Long eventId, MasterRequestDto requestDto, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
@@ -450,9 +453,12 @@ public class EventService {
         if (!isMaster(event, member))
             return ResponseDto.fail("방장이 아닙니다.");
 
-        Member target = memberRepository.findById(targetId).orElse(null);
+        Member target = memberRepository.findById(requestDto.getTargetId()).orElse(null);
         if (target == null)
             return ResponseDto.fail("해당 사용자를 찾을 수 없습니다.");
+
+        if(Objects.equals(target.getId(), member.getId()))
+            return ResponseDto.fail("본인을 추방시킬 수 없습니다.");
 
         // 추방당할 사람이 참여자인지 체크
         EventMember eventMember = isPresentEventMember(event, target);

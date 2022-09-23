@@ -4,7 +4,7 @@ import com.example.week8.domain.Friend;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.enums.SearchType;
 import com.example.week8.dto.request.FriendAdditionRequestDto;
-import com.example.week8.dto.request.FriendSecondNameRequsetDto;
+import com.example.week8.dto.request.FriendSecondNameRequestDto;
 import com.example.week8.dto.response.FriendInfoResponseDto;
 import com.example.week8.dto.response.MemberSearchResponseDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -235,14 +235,14 @@ public class FriendService {
 
     @Transactional
     // 별명넣기
-    public ResponseDto<?> setSecondName(FriendSecondNameRequsetDto requsetDto, HttpServletRequest request) {
+    public ResponseDto<?> setSecondName(FriendSecondNameRequestDto requestDto, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-        Member getFriend = memberRepository.findByNickname(requsetDto.getFriendNickname()).orElse(null);
+        Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
         if (getFriend == null)
             return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
 
@@ -250,7 +250,7 @@ public class FriendService {
         if (friend == null)
             return ResponseDto.fail("친구리스트에 없는 멤버입니다.");
 
-        friend.setSecondName(requsetDto.getSecondName());
+        friend.setSecondName(requestDto.getSecondName());
 
         return ResponseDto.success(MemberSearchResponseDto.builder()
                 .id(friend.getFriend().getId())

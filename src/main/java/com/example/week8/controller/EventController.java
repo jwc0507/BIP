@@ -1,8 +1,6 @@
 package com.example.week8.controller;
 
-import com.example.week8.dto.request.DateRequestDto;
-import com.example.week8.dto.request.EventRequestDto;
-import com.example.week8.dto.request.InviteMemberDto;
+import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.EventService;
 import lombok.RequiredArgsConstructor;
@@ -80,5 +78,23 @@ public class EventController {
     public ResponseDto<?> exitEvent(@PathVariable Long eventId,
                                     HttpServletRequest request) {
         return eventService.exitEvent(eventId, request);
+    }
+
+    // 방장 확인
+    @RequestMapping (value = "/api/event/master/check/{eventId}", method = RequestMethod.POST)
+    public ResponseDto<?> setSecondName(@PathVariable Long eventId, HttpServletRequest request) {
+        return eventService.chkMaster(eventId, request);
+    }
+
+    // 방장 위임
+    @RequestMapping (value = "/api/event/master/{eventId}", method = RequestMethod.POST)
+    public ResponseDto<?> setSecondName(@PathVariable Long eventId, @RequestBody MasterRequestDto requestDto, HttpServletRequest request) {
+        return eventService.changeMaster(eventId, requestDto, request);
+    }
+
+    // 약속 맴버 추방
+    @RequestMapping (value = "/api/event/master/{eventId}", method = RequestMethod.DELETE)
+    public ResponseDto<?> kickMember(@PathVariable Long eventId, @RequestBody MasterRequestDto requestDto, HttpServletRequest request) {
+        return eventService.kickMember(eventId, requestDto, request);
     }
 }
