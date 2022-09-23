@@ -31,7 +31,7 @@ application-aws.properties
 memberTest.http
 serviceTest.http
 friendTest.http
-
+eventTest.http
 
 ### NetBeans ###
 /nbproject/private/
