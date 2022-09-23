@@ -1,6 +1,6 @@
 package com.example.week8.controller;
 
-import com.example.week8.dto.EventRequestDto;
+import com.example.week8.dto.request.EventRequestDto;
 import com.example.week8.dto.request.InviteMemberDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.EventService;
