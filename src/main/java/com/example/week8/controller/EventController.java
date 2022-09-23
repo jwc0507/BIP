@@ -81,7 +81,7 @@ public class EventController {
     }
 
     // 방장 확인
-    @RequestMapping (value = "/api/event/master/check/{eventId}", method = RequestMethod.POST)
+    @RequestMapping (value = "/api/event/master/check/{eventId}", method = RequestMethod.GET)
     public ResponseDto<?> setSecondName(@PathVariable Long eventId, HttpServletRequest request) {
         return eventService.chkMaster(eventId, request);
     }
