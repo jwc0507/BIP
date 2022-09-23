@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface EventMemberRepository extends JpaRepository<EventMember, Long> {
     Optional<EventMember> findByEventIdAndMemberId(Long eventId, Long memberId);
     List<EventMember> findAllByEventId(Long eventId);
+    List<EventMember> findAllByMemberId(Long memberId);
 }
