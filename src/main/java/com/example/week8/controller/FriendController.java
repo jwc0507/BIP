@@ -53,7 +53,7 @@ public class FriendController {
     }
 
     // 친구 별명 추가
-    @RequestMapping (value = "/api/friends/secondName", method = RequestMethod.POST)
+    @RequestMapping (value = "/api/friends/secondName", method = RequestMethod.PUT)
     public ResponseDto<?> setSecondName(@RequestBody FriendSecondNameRequestDto requestDto, HttpServletRequest request) {
         return friendService.setSecondName(requestDto, request);
     }
