@@ -3,7 +3,7 @@ package com.example.week8.service;
 import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
-import com.example.week8.dto.EventRequestDto;
+import com.example.week8.dto.request.EventRequestDto;
 import com.example.week8.dto.request.InviteMemberDto;
 import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
@@ -14,6 +14,7 @@ import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,6 +29,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class EventService {
 
     private final MemberRepository memberRepository;
@@ -288,6 +290,10 @@ public class EventService {
 
         // 약속 멤버 호출
         EventMember eventMember = isPresentEventMember(event, member);
+        if(eventMember == null) {
+            log.info("약속에 참여하지 않은 회원입니다, line : 294");
+            return ResponseDto.fail("약속에 참여하지 않은 회원입니다.");
+        }
 
         // 약속 멤버 삭제
         eventMemberRepository.deleteById(eventMember.getId());
