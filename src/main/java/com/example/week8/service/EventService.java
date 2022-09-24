@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,12 +45,10 @@ public class EventService {
     public ResponseDto<?> createEvent(EventRequestDto eventRequestDto,
                                       HttpServletRequest request) {
 
-        if (null == request.getHeader("RefreshToken")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
-        if (null == request.getHeader("Authorization")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
         // 엔티티 조회
         Member member = validateMember(request);
         if (null == member) {
@@ -97,12 +96,10 @@ public class EventService {
                                       @RequestBody EventRequestDto eventRequestDto,
                                       HttpServletRequest request) {
 
-        if (null == request.getHeader("RefreshToken")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
-        if (null == request.getHeader("Authorization")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
         // 엔티티 조회
         Member member = validateMember(request);
         if (null == member) {
@@ -146,21 +143,19 @@ public class EventService {
      */
     @Transactional(readOnly = true)
     public ResponseDto<?> getAllEvent(String unit,
-                                      DateRequestDto dateRequestDto,
+                                      String inputDate,
                                       HttpServletRequest request) {
 
-        if (null == request.getHeader("RefreshToken")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
-        if (null == request.getHeader("Authorization")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
         // 엔티티 조회
         Member member = validateMember(request);
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
-        LocalDateTime dateTime = stringToLocalDateTime(dateRequestDto.getEventDateTime());  // 사용자가 조회 요청한 날짜
+        LocalDateTime queryDate = stringToLocalDateTime(inputDate);  // 사용자가 조회 요청한 날짜
 
         List<EventMember> eventMemberList = eventMemberRepository.findAllByMemberId(member.getId());
         List<EventListDto> tempList = new ArrayList<>();
@@ -170,22 +165,19 @@ public class EventService {
             LocalDateTime eventDateTime = event.getEventDateTime();
 
             if (unit.equals("day")) {
-                if (eventDateTime.getYear() == dateTime.getYear()
-                        && eventDateTime.getDayOfYear() == dateTime.getDayOfYear()) {
+                if (eventDateTime.getYear() == queryDate.getYear()
+                        && eventDateTime.getDayOfYear() == queryDate.getDayOfYear()) {
                     tempList.add(convertToDto(event));
                 }
             }
             else if (unit.equals("week")) {
-                LocalDateTime dateTimeAfterAWeek = dateTime.plusDays(6);
-                if (eventDateTime.getYear() == dateTime.getYear()
-                        && dateTime.getDayOfYear() <= eventDateTime.getDayOfYear()
-                        && eventDateTime.getDayOfYear() <= dateTimeAfterAWeek.getDayOfYear() ) {
+                if (ChronoUnit.DAYS.between(queryDate, eventDateTime) < 7) {
                     tempList.add(convertToDto(event));
                 }
             }
             else if (unit.equals("month")) {
-                if (eventDateTime.getYear() == dateTime.getYear()
-                        && dateTime.getMonth() == eventDateTime.getMonth()) {
+                if (eventDateTime.getYear() == queryDate.getYear()
+                        && queryDate.getMonth() == eventDateTime.getMonth()) {
                     tempList.add(convertToDto(event));
                 }
             }
@@ -195,31 +187,15 @@ public class EventService {
     }
 
     /**
-     * Event를 EventListDto로 변환
-     */
-    public EventListDto convertToDto(Event event) {
-        return EventListDto.builder()
-                .id(event.getId())
-                .title(event.getTitle())
-                .eventDateTime(event.getEventDateTime())
-                .place(event.getPlace())
-                .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
-                .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
-                .build();
-    }
-
-    /**
      * 약속 단건 조회
      */
     @Transactional(readOnly = true)
     public ResponseDto<?> getEvent(Long eventId, HttpServletRequest request) {
 
-        if (null == request.getHeader("RefreshToken")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
-        if (null == request.getHeader("Authorization")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
         Member member = validateMember(request);
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
@@ -261,12 +237,10 @@ public class EventService {
      */
     public ResponseDto<?> deleteEvent(Long eventId, HttpServletRequest request) {
 
-        if (null == request.getHeader("RefreshToken")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
-        if (null == request.getHeader("Authorization")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
         // 엔티티 조회
         Member member = validateMember(request);
         if (null == member) {
@@ -347,12 +321,10 @@ public class EventService {
      */
     public ResponseDto<?> exitEvent(Long eventId, HttpServletRequest request) {
 
-        if (null == request.getHeader("RefreshToken")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
-        if (null == request.getHeader("Authorization")) {
-            return ResponseDto.fail("MEMBER_NOT_FOUND");
-        }
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
         // 멤버 호출
         Member member = validateMember(request);
         if (null == member) {
@@ -548,6 +520,23 @@ public class EventService {
                 .build();
     }
 
+    /**
+     * Event를 EventListDto로 변환
+     */
+    public EventListDto convertToDto(Event event) {
+        return EventListDto.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .eventDateTime(event.getEventDateTime())
+                .place(event.getPlace())
+                .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
+                .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                .build();
+    }
+
+    /**
+     * 토큰 유효성 검사
+     */
     private ResponseDto<?> validateCheck(HttpServletRequest request) {
 
         // RefreshToken 및 Authorization 유효성 검사
