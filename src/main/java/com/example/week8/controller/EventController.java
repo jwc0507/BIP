@@ -38,7 +38,10 @@ public class EventController {
      * unit: day, week, month
      */
     @GetMapping("/api/events/list")
-    public ResponseDto<?> getAllEvent(@RequestParam("unit") String unit, @RequestParam("querydate") String inputDate, HttpServletRequest request) {
+    public ResponseDto<?> getAllEvent(@RequestParam("unit") String unit,
+                                      @RequestParam("querydate") String inputDate,
+                                      HttpServletRequest request) {
+
         return eventService.getAllEvent(unit, inputDate, request);
     }
 
