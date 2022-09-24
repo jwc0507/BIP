@@ -37,11 +37,12 @@ public class EventController {
      * 약속 목록 조회
      * unit: day, week, month
      */
-    @GetMapping("/api/events/list/{unit}")
-    public ResponseDto<?> getAllEvent(@PathVariable String unit,
-                                      @RequestBody DateRequestDto dateRequestDto,
+    @GetMapping("/api/events/list")
+    public ResponseDto<?> getAllEvent(@RequestParam("unit") String unit,
+                                      @RequestParam("querydate") String inputDate,
                                       HttpServletRequest request) {
-        return eventService.getAllEvent(unit, dateRequestDto, request);
+
+        return eventService.getAllEvent(unit, inputDate, request);
     }
 
     /**
