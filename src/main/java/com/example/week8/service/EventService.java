@@ -146,7 +146,7 @@ public class EventService {
      */
     @Transactional(readOnly = true)
     public ResponseDto<?> getAllEvent(String unit,
-                                      DateRequestDto dateRequestDto,
+                                      String inputDate,
                                       HttpServletRequest request) {
 
         if (null == request.getHeader("RefreshToken")) {
@@ -160,7 +160,7 @@ public class EventService {
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
-        LocalDateTime dateTime = stringToLocalDateTime(dateRequestDto.getEventDateTime());  // 사용자가 조회 요청한 날짜
+        LocalDateTime queryDate = stringToLocalDateTime(inputDate);  // 사용자가 조회 요청한 날짜
 
         List<EventMember> eventMemberList = eventMemberRepository.findAllByMemberId(member.getId());
         List<EventListDto> tempList = new ArrayList<>();
@@ -170,22 +170,22 @@ public class EventService {
             LocalDateTime eventDateTime = event.getEventDateTime();
 
             if (unit.equals("day")) {
-                if (eventDateTime.getYear() == dateTime.getYear()
-                        && eventDateTime.getDayOfYear() == dateTime.getDayOfYear()) {
+                if (eventDateTime.getYear() == queryDate.getYear()
+                        && eventDateTime.getDayOfYear() == queryDate.getDayOfYear()) {
                     tempList.add(convertToDto(event));
                 }
             }
             else if (unit.equals("week")) {
-                LocalDateTime dateTimeAfterAWeek = dateTime.plusDays(6);
-                if (eventDateTime.getYear() == dateTime.getYear()
-                        && dateTime.getDayOfYear() <= eventDateTime.getDayOfYear()
+                LocalDateTime dateTimeAfterAWeek = queryDate.plusDays(6);
+                if (eventDateTime.getYear() == queryDate.getYear()
+                        && queryDate.getDayOfYear() <= eventDateTime.getDayOfYear()
                         && eventDateTime.getDayOfYear() <= dateTimeAfterAWeek.getDayOfYear() ) {
                     tempList.add(convertToDto(event));
                 }
             }
             else if (unit.equals("month")) {
-                if (eventDateTime.getYear() == dateTime.getYear()
-                        && dateTime.getMonth() == eventDateTime.getMonth()) {
+                if (eventDateTime.getYear() == queryDate.getYear()
+                        && queryDate.getMonth() == eventDateTime.getMonth()) {
                     tempList.add(convertToDto(event));
                 }
             }
