@@ -3,10 +3,9 @@ package com.example.week8.dto.response;
 import lombok.Builder;
 import lombok.Getter;
 
-@Builder
 @Getter
-public class OauthLoginResponseDto {
+@Builder
+public class MasterInfoResponseDto {
+    private Long id;
     private String nickname;
-    private String phoneNumber;
-    private String email;
 }

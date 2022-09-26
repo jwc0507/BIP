@@ -5,8 +5,9 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class OauthLoginResponseDto {
+public class MemberSearchResponseDto {
+    private Long id;
     private String nickname;
-    private String phoneNumber;
-    private String email;
+    private String profileImgUrl;
+    private double creditScore;
 }

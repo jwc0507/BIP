@@ -2,8 +2,7 @@ package com.example.week8.service;
 
 import com.example.week8.domain.Member;
 import com.example.week8.dto.TokenDto;
-import com.example.week8.dto.request.DuplicationRequestDto;
-import com.example.week8.dto.request.UpdateMemberRequestDto;
+import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.dto.response.UpdateMemberResponseDto;
 import com.example.week8.repository.MemberRepository;
@@ -24,10 +23,11 @@ public class UserService {
     private final TokenProvider tokenProvider;
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final FileService fileService;
 
     // 닉네임 변경
     @Transactional
-    public ResponseDto<?> setNickname(UpdateMemberRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> setNickname(MemberInfoRequestDto requestDto, HttpServletRequest request) {
         //== token 유효성 검사 ==//
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -55,13 +55,18 @@ public class UserService {
 
     // 전화번호 변경
     @Transactional
-    public ResponseDto<?> setPhoneNumber(UpdateMemberRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseDto<?> setPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
         //== token 유효성 검사 ==//
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
 
-        String newPhoneNumber = requestDto.getValue();
+        String newPhoneNumber = requestDto.getPhoneNumber();
+
+        if (!memberService.chkValidCode(newPhoneNumber, requestDto.getAuthCode()))
+            return ResponseDto.fail("인증실패 코드를 재발급해주세요");
+
+
         if (memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
@@ -92,13 +97,17 @@ public class UserService {
 
     // 이메일 설정
     @Transactional
-    public ResponseDto<?> setEmail(UpdateMemberRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> setEmail(EmailLoginRequestDto requestDto, HttpServletRequest request) {
         //== token 유효성 검사 ==//
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
 
-        String newEmail = requestDto.getValue();
+        String newEmail = requestDto.getEmail();
+
+        if (memberService.chkValidCode(newEmail, requestDto.getAuthCode()))
+            return ResponseDto.fail("인증실패 코드를 재발급해주세요");
+
         if (memberService.checkEmail(DuplicationRequestDto.builder().value(newEmail).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
@@ -139,5 +148,70 @@ public class UserService {
             return ResponseDto.fail("Token이 유효하지 않습니다.");
         }
         return ResponseDto.success(member);
+    }
+
+    // 유저 정보 보기
+    public ResponseDto<?> getMemberInfo(HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        return ResponseDto.success(UpdateMemberResponseDto.builder()
+                .nickname(member.getNickname())
+                .phoneNumber(member.getPhoneNumber())
+                .email(member.getEmail())
+                .profileImgUrl(member.getProfileImageUrl())
+                .point(member.getPoint())
+                .creditScore(member.getCredit())
+                .numOfDone(member.getNumOfDone())
+                .build());
+    }
+
+    // 프로필 사진 업데이트
+    @Transactional
+    public ResponseDto<?> setProfileImg(ImgUrlRequestDto requestDto, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        String getImgUrl = member.getProfileImageUrl();
+
+        // 이미지url재등록
+        member.updateProfileImageUrl(requestDto.getImgUrl());
+
+        // s3에서 기존 url 파일을 삭제하는 구문 필요 (이미지 업로드 기능 구현 후 추가함)
+        if (getImgUrl != null) {
+            fileService.deleteFile(getImgUrl);
+        }
+
+        return ResponseDto.success(UpdateMemberResponseDto.builder()
+                .nickname(member.getNickname())
+                .phoneNumber(member.getPhoneNumber())
+                .email(member.getEmail())
+                .profileImgUrl(member.getProfileImageUrl())
+                .point(member.getPoint())
+                .creditScore(member.getCredit())
+                .numOfDone(member.getNumOfDone())
+                .build());
+    }
+
+    // 회원탈퇴
+    @Transactional
+    public ResponseDto<?> deleteMember(HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        tokenProvider.deleteRefreshToken(member);
+
+        memberRepository.deleteById(member.getId());
+
+        return ResponseDto.success("회원탈퇴 완료");
     }
 }
