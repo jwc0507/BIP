@@ -89,6 +89,15 @@ public class EventController {
         return eventService.checkin(eventId, request);
     }
 
+    /**
+     * 컨펌(방장만)
+     */
+    @PutMapping("api/events/confirm/{eventId}")
+    public ResponseDto<?> confirm(@PathVariable Long eventId,
+                                  HttpServletRequest request) {
+        return eventService.confirm(eventId, request);
+    }
+
     // 방장 확인
     @RequestMapping (value = "/api/events/master/check/{eventId}", method = RequestMethod.GET)
     public ResponseDto<?> setSecondName(@PathVariable Long eventId, HttpServletRequest request) {

@@ -34,7 +34,7 @@ public class CheckinMember {
     public CheckinMember(Event event, Member member) {
         this.event = event;
         this.member = member;
-        this.attendance = Attendance.noshow;
+        this.attendance = Attendance.NOSHOW;
     }
 
 }
