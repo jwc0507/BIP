@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -171,8 +170,12 @@ public class EventService {
                         && eventDateTime.getDayOfYear() == queryDate.getDayOfYear()) {
                     tempList.add(convertToDto(event));
                 }
-            } else if (unit.equals("week")) {
-                if (ChronoUnit.DAYS.between(queryDate, eventDateTime) < 7) {
+            }
+            else if (unit.equals("week")) {
+                if (eventDateTime.getYear() == queryDate.getYear()
+                        && queryDate.getDayOfYear() <= eventDateTime.getDayOfYear()
+                        && eventDateTime.getDayOfYear() <= queryDate.plusDays(6).getDayOfYear()) {
+
                     tempList.add(convertToDto(event));
                 }
             } else if (unit.equals("month")) {

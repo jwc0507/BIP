@@ -41,7 +41,6 @@ public class EventController {
     public ResponseDto<?> getAllEvent(@RequestParam("unit") String unit,
                                       @RequestParam("querydate") String inputDate,
                                       HttpServletRequest request) {
-
         return eventService.getAllEvent(unit, inputDate, request);
     }
 
