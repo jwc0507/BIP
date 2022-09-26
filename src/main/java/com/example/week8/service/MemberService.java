@@ -83,7 +83,7 @@ public class MemberService {
             member = Member.builder()
                     .phoneNumber(phoneNumber)
                     .point(1000000)
-                    .getPointOnDay(0)
+                    .pointOnDay(0)
                     .credit(100.0)
                     .password("@")
                     .numOfDone(0)

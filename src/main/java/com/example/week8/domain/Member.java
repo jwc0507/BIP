@@ -57,7 +57,7 @@ public class Member extends Timestamped{
     private int numOfSelfEvent; // 자신과의 약속 이행 수 (erd 추가)
 
     @Column
-    private int getPointOnDay; // 오늘 벌어들인 포인트양 (12시마다 초기화)
+    private int pointOnDay; // 오늘 벌어들인 포인트양 (12시마다 초기화)
 
     @Column (nullable = false)
     @Enumerated (EnumType.STRING)
