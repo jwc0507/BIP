@@ -171,7 +171,9 @@ public class EventService {
                 }
             }
             else if (unit.equals("week")) {
-                if (ChronoUnit.DAYS.between(queryDate, eventDateTime) < 7) {
+                if (eventDateTime.getYear() == queryDate.getYear()
+                        && queryDate.getDayOfYear() <= eventDateTime.getDayOfYear()
+                        && eventDateTime.getDayOfYear() <= queryDate.plusDays(6).getDayOfYear()) {
                     tempList.add(convertToDto(event));
                 }
             }
