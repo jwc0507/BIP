@@ -35,6 +35,14 @@ public class EventService {
     private final EventMemberRepository eventMemberRepository;
     private final TokenProvider tokenProvider;
 
+
+    // 날짜 체크 api
+    public ResponseDto<?> chkDateTime(DuplicationRequestDto requestDto) {
+        if(Time.diffTime(stringToLocalDateTime(requestDto.getValue()), LocalDateTime.now()))
+            return ResponseDto.fail(false);
+        return ResponseDto.fail(true);
+    }
+
     /**
      * 약속 생성
      */
@@ -50,6 +58,10 @@ public class EventService {
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
+
+        if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
+            return ResponseDto.fail("지나간 날짜 입니다.");
+
         // 약속 생성
         Event event = Event.builder()
                 .title(eventRequestDto.getTitle())
