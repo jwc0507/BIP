@@ -17,7 +17,7 @@ public class Scheduler {
     
         List<Member> memberList = memberRepository.findAll();
         for(Member curMember : memberList){
-            curMember.setFirstLogin(false); //첫 로그인 유무 초기화
+            curMember.setFirstLogin(false); //첫 로그인 여부 초기화
             curMember.setPointOnDay(0L);   //일일 획득 포인트 초기화
         }
     }

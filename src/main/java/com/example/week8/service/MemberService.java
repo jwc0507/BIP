@@ -90,6 +90,11 @@ public class MemberService {
                     .build();
             memberRepository.save(member);
         }
+        if(member.isFirstLogin()) {
+            member.setPoint(member.getPoint() + 100);
+            member.setFirstLogin(false);
+        }
+
         // 로그인 시키기
         return login(member, response);
     }
