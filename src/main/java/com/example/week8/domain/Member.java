@@ -20,6 +20,8 @@ public class Member extends Timestamped{
     @Column(name = "MEMBER_ID")
     private Long id; // 멤버id
 
+//    @OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
+//    private CheckinMember checkinMember;
 
     @Column (unique = true)
     private Long kakaoId;   // 카카오id

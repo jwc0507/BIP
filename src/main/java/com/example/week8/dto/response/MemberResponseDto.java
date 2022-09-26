@@ -1,12 +1,11 @@
 package com.example.week8.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.example.week8.domain.enums.Attendance;
+import lombok.*;
 
 @Builder
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class MemberResponseDto {
@@ -18,5 +17,6 @@ public class MemberResponseDto {
     private double credit;
     private int point;
     private String profileImageUrl;
+    private Attendance attendance;
 
 }
