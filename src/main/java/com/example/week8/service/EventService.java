@@ -84,7 +84,7 @@ public class EventService {
         eventRepository.save(event);
 
         // 약속 멤버 생성
-        EventMember eventMember = EventMember.createEventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
+        EventMember eventMember = new EventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
         eventMemberRepository.save(eventMember);
 
         // MemberResponseDto에 Member 담기
@@ -334,7 +334,7 @@ public class EventService {
         Event event = isPresentEvent(eventId);
 
         // 약속 멤버 생성
-        EventMember tempEventMember = EventMember.createEventMember(guest, event);
+        EventMember tempEventMember = new EventMember(guest, event);
         eventMemberRepository.save(tempEventMember);
 
         // 체크인멤버 생성 - 초대하는 사람 것
