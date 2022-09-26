@@ -503,7 +503,7 @@ public class EventService {
                 case "ontime":
                     addCreditScore = MAG_DONE_CREDIT * 0.1 * (1);
                     point = checkinMember.getEvent().getPoint();
-                    if(checkinMember.getMember().getGetPointOnDay() > 1000)
+                    if(checkinMember.getMember().getPointOnDay() > 1000)
                         point = 0;  // 하루에 벌 수 있는 포인트는 1000점 제한
                     break;
                 case "late":
