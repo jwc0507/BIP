@@ -34,6 +34,43 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventMemberRepository eventMemberRepository;
     private final TokenProvider tokenProvider;
+    private final int MAG_DONE_CREDIT = 1;  // 약속완료 신용도 증감 배율 (1이 기본)
+
+
+    // 신용도, 포인트 증감
+    public ResponseDto<?> calculateCredit(Long eventId, HttpServletRequest request) {
+        // 있는 이벤트인지 확인
+        Event getEvent = isPresentEvent(eventId);
+        if(getEvent==null)
+            return ResponseDto.fail("이벤트 id가 유효하지 않습니다.");
+
+        // 이벤트 마스터인지 확인 (호출하는 곳이 이벤트 완료 메소드라면 굳이 필요없는 메소드)
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("토큰으로 멤버정보를 찾을 수 없습니다");
+        }
+        if(!isMaster(getEvent, member)) {
+            return ResponseDto.fail("방장이 아닙니다.");
+        }
+
+        // 이벤트 참여자만큼 루프를 돌기
+        List<EventMember> getEventMember = eventMemberRepository.findAllByEventId(eventId);
+
+        // 참여자가 한명일 경우(자신과의 약속)
+        if(getEventMember.size() == 1) {
+            // 자신과의 약속 카운터 올려주기
+        }
+
+        // 이벤트 참여자가 잘 참여했는지 확인 (정상, 지각)
+        double addCreditScore  = MAG_DONE_CREDIT * 0.1 * (1);
+
+        // 참여자들에게 신용도 수여 (신용도 , 포인트 )
+
+
+        // 결과 출력
+        return ResponseDto.success("구현완료");
+
+    }
 
 
     // 날짜 체크 api
