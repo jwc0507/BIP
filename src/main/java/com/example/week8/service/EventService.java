@@ -45,42 +45,6 @@ public class EventService {
     private final int MAG_DONE_CREDIT = 1;  // 약속완료 신용도 증감 배율 (1이 기본)
 
 
-    // 신용도, 포인트 증감
-    public ResponseDto<?> calculateCredit(Long eventId, HttpServletRequest request) {
-        // 있는 이벤트인지 확인
-        Event getEvent = isPresentEvent(eventId);
-        if(getEvent==null)
-            return ResponseDto.fail("이벤트 id가 유효하지 않습니다.");
-
-        // 이벤트 마스터인지 확인 (호출하는 곳이 이벤트 완료 메소드라면 굳이 필요없는 메소드)
-        Member member = validateMember(request);
-        if (null == member) {
-            return ResponseDto.fail("토큰으로 멤버정보를 찾을 수 없습니다");
-        }
-        if(!isMaster(getEvent, member)) {
-            return ResponseDto.fail("방장이 아닙니다.");
-        }
-
-        // 이벤트 참여자만큼 루프를 돌기
-        List<EventMember> getEventMember = eventMemberRepository.findAllByEventId(eventId);
-
-        // 참여자가 한명일 경우(자신과의 약속)
-        if(getEventMember.size() == 1) {
-            // 자신과의 약속 카운터 올려주기
-        }
-
-        // 이벤트 참여자가 잘 참여했는지 확인 (정상, 지각)
-        double addCreditScore  = MAG_DONE_CREDIT * 0.1 * (1);
-
-        // 참여자들에게 신용도 수여 (신용도 , 포인트 )
-
-
-        // 결과 출력
-        return ResponseDto.success("구현완료");
-
-    }
-
-
     // 날짜 체크 api
     public ResponseDto<?> chkDateTime(DuplicationRequestDto requestDto) {
         if(Time.diffTime(stringToLocalDateTime(requestDto.getValue()), LocalDateTime.now()))
@@ -106,6 +70,9 @@ public class EventService {
 
         if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
             return ResponseDto.fail("지나간 날짜 입니다.");
+
+        if(eventRequestDto.getPoint() > 1000)
+            return ResponseDto.fail("최대로 걸 수 있는 포인트는 1000점입니다");
 
         // 약속 생성
         Event event = Event.builder()
@@ -222,35 +189,38 @@ public class EventService {
             Event event = isPresentEvent(eventMember.getEvent().getId());
             LocalDateTime eventDateTime = event.getEventDateTime();
 
-            if (unit.equals("day")) {
-                if (eventDateTime.getYear() == queryDate.getYear()
-                        && eventDateTime.getDayOfYear() == queryDate.getDayOfYear()) {
-                    tempList.add(convertToDto(event));
-                }
-            }
-            else if (unit.equals("week")) {
-                if (eventDateTime.getYear() == queryDate.getYear()
-                        && queryDate.getDayOfYear() <= eventDateTime.getDayOfYear()
-                        && eventDateTime.getDayOfYear() <= queryDate.plusDays(6).getDayOfYear()) {
-
-                    tempList.add(convertToDto(event));
-                }
-            } else if (unit.equals("month")) {
-                if (eventDateTime.getYear() == queryDate.getYear()
-                        && queryDate.getMonth() == eventDateTime.getMonth()) {
-                    if (chkDay == 0)
-                        chkDay = eventDateTime.getDayOfMonth();
-                    if (chkDay != eventDateTime.getDayOfMonth()) {
-                        monthEventListDtoList.add(MonthEventListDto.builder()
-                                .eventDateTime(Time.serializeDate(lastEventDate))
-                                .numberOfEventInToday(dateEventCounter)
-                                .build());
-                        chkDay = eventDateTime.getDayOfMonth();
-                        dateEventCounter = 0;
+            switch (unit) {
+                case "day":
+                    if (eventDateTime.getYear() == queryDate.getYear()
+                            && eventDateTime.getDayOfYear() == queryDate.getDayOfYear()) {
+                        tempList.add(convertToDto(event));
                     }
-                    dateEventCounter++;
-                    lastEventDate = eventDateTime;
-                }
+                    break;
+                case "week":
+                    if (eventDateTime.getYear() == queryDate.getYear()
+                            && queryDate.getDayOfYear() <= eventDateTime.getDayOfYear()
+                            && eventDateTime.getDayOfYear() <= queryDate.plusDays(6).getDayOfYear()) {
+
+                        tempList.add(convertToDto(event));
+                    }
+                    break;
+                case "month":
+                    if (eventDateTime.getYear() == queryDate.getYear()
+                            && queryDate.getMonth() == eventDateTime.getMonth()) {
+                        if (chkDay == 0)
+                            chkDay = eventDateTime.getDayOfMonth();
+                        if (chkDay != eventDateTime.getDayOfMonth()) {
+                            monthEventListDtoList.add(MonthEventListDto.builder()
+                                    .eventDateTime(Time.serializeDate(lastEventDate))
+                                    .numberOfEventInToday(dateEventCounter)
+                                    .build());
+                            chkDay = eventDateTime.getDayOfMonth();
+                            dateEventCounter = 0;
+                        }
+                        dateEventCounter++;
+                        lastEventDate = eventDateTime;
+                    }
+                    break;
             }
         }
         if (unit.equals("month")) {
@@ -470,6 +440,69 @@ public class EventService {
         }
         return ResponseDto.success(memberResponseDtoList);
     }
+
+
+    // 신용도, 포인트 증감
+    // 호출하는 곳에서 얼마나 정보르 주는지에 따라 메소드가 달라 질 수 있음.
+    @Transactional
+    public ResponseDto<?> calculateCredit(Long eventId, HttpServletRequest request) {
+        // 있는 이벤트인지 확인
+        Event getEvent = isPresentEvent(eventId);
+        if(getEvent==null)
+            return ResponseDto.fail("이벤트 id가 유효하지 않습니다.");
+
+        // 이벤트 마스터인지 확인 (호출하는 곳이 이벤트 완료 메소드(약속컨펌)라면 굳이 필요없는 메소드)
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("토큰으로 멤버정보를 찾을 수 없습니다");
+        }
+        if(!isMaster(getEvent, member)) {
+            return ResponseDto.fail("방장이 아닙니다.");
+        }
+
+        // 체크인 멤버리스트 들고오기 (체크인멤버 = 이벤트참여자)
+        List<CheckinMember> findCheckinMemberList = checkinMemberRepository.findAllByEventId(eventId);
+
+        // 참여자가 한명일 경우(자신과의 약속)
+        if(findCheckinMemberList.size() == 1) {
+            // 자신과의 약속 카운터 올려주기
+            findCheckinMemberList.get(0).getMember().updateSelfEvent();
+            return ResponseDto.success("결산완료");
+        }
+
+        // 신용도, 포인트 결산
+        double addCreditScore = 0;
+        int point = 0;
+        for(CheckinMember checkinMember : findCheckinMemberList) {
+            // 이벤트 참여자가 잘 참여했는지 확인 (정상, 지각)
+            switch (checkinMember.getAttendance().toString()) {
+                case "ontime":
+                    addCreditScore = MAG_DONE_CREDIT * 0.1 * (1);
+                    point = checkinMember.getEvent().getPoint();
+                    if(checkinMember.getMember().getGetPointOnDay() > 1000)
+                        point = 0;  // 하루에 벌 수 있는 포인트는 1000점 제한
+                    break;
+                case "late":
+                    addCreditScore = MAG_DONE_CREDIT * 0.1 * (0);
+                    point = 0;
+                    break;
+                case "noshow":
+                    addCreditScore = MAG_DONE_CREDIT * 0.1 * (-1);
+                    point = (checkinMember.getEvent().getPoint()*-1);   // 다시 물어봐야함 건만큼 뺏기는것이 맞는건가?
+                    break;
+            }
+            // 신용도 업데이트
+            checkinMember.getMember().updateCreditScore(addCreditScore);
+
+            // 포인트 업데이트
+            checkinMember.getMember().updatePoint(point);
+
+        }
+        // 결과 출력
+        return ResponseDto.success("결산완료");
+
+    }
+
 
     /**
      * 약속 컴펌
