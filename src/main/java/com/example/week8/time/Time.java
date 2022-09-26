@@ -53,4 +53,14 @@ public class Time {
         // 현재(now) - 입력값(localDateTime; 약속시간)
         return localDateTime.until(now, ChronoUnit.SECONDS);
     }
+
+    public static String serializeDate(LocalDateTime localDateTime) {
+        StringBuilder result = new StringBuilder();
+        String[] splitDate = localDateTime.toString().split("T|:| ");
+        for(String s : splitDate) {
+            result.append(s).append("-");
+        }
+
+        return result.append("00").toString();
+    }
 }
