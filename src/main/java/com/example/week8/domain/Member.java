@@ -48,10 +48,16 @@ public class Member extends Timestamped{
     private String password;    // 비밀번호 (상수로 일단 넣기)
 
     @Column
-    private String profileImageUrl; // 프로필이미지 url (erd에 추가해야함)
+    private String profileImageUrl; // 프로필이미지 url
 
     @Column
-    private int numOfDone; // 약속 이행 수 (erd 추가)
+    private int numOfDone; // 약속 이행 수
+
+    @Column
+    private int numOfSelfEvent; // 자신과의 약속 이행 수 (erd 추가)
+
+    @Column
+    private int getPointOnDay; // 오늘 벌어들인 포인트양 (12시마다 초기화)
 
     @Column (nullable = false)
     @Enumerated (EnumType.STRING)
@@ -79,5 +85,8 @@ public class Member extends Timestamped{
     }
     public void updatePoint(int point) {
         this.point += point;
+    }
+    public void updateSelfEvent () {
+        this.numOfSelfEvent++;
     }
 }
