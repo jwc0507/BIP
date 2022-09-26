@@ -17,9 +17,17 @@ public class Member extends Timestamped{
 
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
+    @Column(name = "MEMBER_ID")
     private Long id; // 멤버id
 
-    @Column (nullable = false, unique = true)
+
+    @Column (unique = true)
+    private Long kakaoId;   // 카카오id
+
+    @Column (unique = true)
+    private String naverId;   // 네이버
+
+    @Column (unique = true)
     private String phoneNumber; // 핸드폰 번호
 
     @Column (unique = true)
@@ -47,14 +55,8 @@ public class Member extends Timestamped{
     @Enumerated (EnumType.STRING)
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
 
-
-    @OneToMany (fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "owner")
+    @OneToMany (fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "owner")
     private List<Friend> friendList = new ArrayList<>();
-
-
-//    @JoinColumn
-//    @OneToOne
-//    private FriendList friendList;
 
     public void updateNickname(String name) {
         this.nickname = name;
@@ -66,5 +68,8 @@ public class Member extends Timestamped{
 
     public void updateEmail(String email) {
         this.email = email;
+    }
+    public void updateProfileImageUrl (String url) {
+        this.profileImageUrl = url;
     }
 }

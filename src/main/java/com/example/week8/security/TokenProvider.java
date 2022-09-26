@@ -34,8 +34,8 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 30 * 6;            //30분
-    private static final long REFRESH_TOKEN_EXPRIRE_TIME = 1000 * 60 * 60 * 24 * 7;     //7일
+    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 20;            //30분
+    private static final long REFRESH_TOKEN_EXPRIRE_TIME = 1000 * 60 * 60 * 24 * 20;     //7일
 
     private final Key key;
 
@@ -56,7 +56,7 @@ public class TokenProvider {
 
         Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
         String accessToken = Jwts.builder()
-                .setSubject(member.getPhoneNumber())
+                .setSubject(member.getId().toString())
                 .claim(AUTHORITIES_KEY, member.getUserRole().toString())
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -68,7 +68,7 @@ public class TokenProvider {
                 .compact();
 
         RefreshToken refreshTokenObject = RefreshToken.builder()
-                .id(member.getPhoneNumber())
+                .id(member.getId().toString())
                 .member(member)
                 .keyValue(refreshToken)
                 .build();

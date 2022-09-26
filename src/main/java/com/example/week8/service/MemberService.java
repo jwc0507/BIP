@@ -8,6 +8,7 @@ import com.example.week8.dto.request.AuthRequestDto;
 import com.example.week8.dto.request.DuplicationRequestDto;
 import com.example.week8.dto.request.EmailLoginRequestDto;
 import com.example.week8.dto.request.LoginRequestDto;
+import com.example.week8.dto.response.LoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.LoginMemberRepository;
 import com.example.week8.repository.MemberRepository;
@@ -24,7 +25,9 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -34,23 +37,23 @@ public class MemberService {
     private final LoginMemberRepository loginMemberRepository;
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
-    //private final JavaMailSender javaMailSender;
+   // private final JavaMailSender javaMailSender;
   //  private final RedisUtil redisUtil;
 
 
     // 인증번호 확인
-    private boolean chkValidCode(String key, String authCode) {
+    public boolean chkValidCode(String key, String authCode) {
         // 인증번호 테이블에서 전화번호에 해당하는 인증번호 찾기
-        Optional<LoginMember> getLogin = loginMemberRepository.findByKeyValue(key);
+        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(key);
         if (getLogin.isEmpty())
             return false;
         // 여러개의 인증번호가 있을 수 있지만 마지막 값을 찾기 (코드 수정해서 첫 값만 가지게 됨)
-        String getAuthCode = getLogin.get().getAuthCode();
+        String getAuthCode = getLogin.get(0).getAuthCode();
         // 입력된 값과 DB의 인증번호가 같은지 확인
         if (!getAuthCode.equals(authCode))
             return false;
         // 인증완료되었다면 인증번호 테이블 비워주기
-        loginMemberRepository.deleteById(getLogin.get().getId());
+        loginMemberRepository.deleteById(getLogin.get(0).getId());
 
         // redis를 활용했을 때의 코드.
 //        String getKey = redisUtil.getData(key);
@@ -59,7 +62,6 @@ public class MemberService {
 //            return false;
 //        }
 //        redisUtil.deleteData(key);
-
 
         return true;
     }
@@ -116,7 +118,7 @@ public class MemberService {
 
         tokenToHeaders(tokenDto, response);
 
-        return ResponseDto.success("로그인 완료");
+        return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
 
     // 로그아웃
@@ -139,8 +141,10 @@ public class MemberService {
     // 인증번호 생성
     @Transactional
     public ResponseDto<?> sendAuthCode(AuthRequestDto requestDto) {
-        Optional<LoginMember> getLogin = loginMemberRepository.findByKeyValue(requestDto.getValue());
-        getLogin.ifPresent(loginMember -> loginMemberRepository.deleteById(loginMember.getId()));
+        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(requestDto.getValue());
+        for (LoginMember getLoginMember : getLogin) {
+            loginMemberRepository.deleteById(getLoginMember.getId());
+        }
         LoginMember loginMember = LoginMember.builder()
                 .authCode(generateCode())
                 .keyValue(requestDto.getValue())
@@ -153,9 +157,8 @@ public class MemberService {
 
         return ResponseDto.success(loginMember.getAuthCode());
     }
-
+/*
     // EMAIL 인증번호 발급
-    /*
     @Transactional
     public ResponseDto<?> sendEmailCode(AuthRequestDto requestDto) {
         // 등록된 이메일인지 확인
@@ -192,7 +195,6 @@ public class MemberService {
         return ResponseDto.success("인증번호 전송완료");
     }
 */
-
     // 인증번호 생성
     private String generateCode() {
         StringBuilder stringBuilder = new StringBuilder();
@@ -202,12 +204,17 @@ public class MemberService {
         return stringBuilder.toString();
     }
 
-    // 전화번호 중복 검사
+    // 이미 있는 회원인지 체크 (프론트에서 뷰 넘길때 사용하기 위함)
     public ResponseDto<?> checkPhoneNumber(DuplicationRequestDto requestDto) {
         Optional<Member> optionalMember = memberRepository.findByPhoneNumber(requestDto.getValue());
         if (optionalMember.isPresent())
-            return ResponseDto.fail("중복된 전화번호 입니다.");
-        return ResponseDto.success("사용 가능한 전화번호 입니다.");
+            return ResponseDto.success(false);
+
+        String regExp = "(^02|[0-9]{3})([0-9]{3,4})([0-9]{4})$";
+        if (!Pattern.matches(regExp, requestDto.getValue()))
+            return ResponseDto.fail("전화번호 형식을 지켜주세요.");
+
+        return ResponseDto.success(true);
     }
 
     // 닉네임 중복 검사
@@ -215,6 +222,11 @@ public class MemberService {
         Optional<Member> optionalMember = memberRepository.findByNickname(requestDto.getValue());
         if (optionalMember.isPresent())
             return ResponseDto.fail("중복된 닉네임 입니다.");
+
+        String regExp = "^[가-힣a-zA-Z0-9]{2,10}$";
+        if (!Pattern.matches(regExp, requestDto.getValue()))
+            return ResponseDto.fail("2~10자리 한글,대소문자,숫자만 입력해주세요.");
+
         return ResponseDto.success("사용 가능한 닉네임 입니다.");
     }
 
@@ -223,6 +235,11 @@ public class MemberService {
         Optional<Member> optionalMember = memberRepository.findByEmail(requestDto.getValue());
         if (optionalMember.isPresent())
             return ResponseDto.fail("사용중인 이메일 입니다.");
+
+        String regExp = "^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$";
+        if (!Pattern.matches(regExp, requestDto.getValue()))
+            return ResponseDto.fail("이메일 양식을 지켜주세요.");
+
         return ResponseDto.success("사용 가능한 이메일 입니다.");
     }
 

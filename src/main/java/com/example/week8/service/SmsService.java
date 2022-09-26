@@ -1,10 +1,11 @@
-package com.example.week8.service;
+/*package com.example.week8.service;
 
 import com.example.week8.dto.MessageDto;
 import com.example.week8.dto.request.AuthRequestDto;
 import com.example.week8.dto.request.SmsRequestDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.dto.response.SmsResponseDto;
+import com.example.week8.service.MemberService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-/*
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -122,5 +123,4 @@ public class SmsService {
     }
 
 }
-
 */
