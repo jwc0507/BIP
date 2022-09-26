@@ -20,6 +20,11 @@ public class Member extends Timestamped{
     @Column(name = "MEMBER_ID")
     private Long id; // 멤버id
 
+    @Column(name = "FIRST_LOGIN")
+    private boolean firstLogin; //첫 로그인 여부
+
+    @Column(name = "POINT_ON_DAY")
+    private Long pointOnDay;
 
     @Column (unique = true)
     private Long kakaoId;   // 카카오id
