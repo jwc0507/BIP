@@ -11,6 +11,7 @@ import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.CheckinMemberRepository;
+import com.example.week8.dto.response.*;
 import com.example.week8.repository.EventMemberRepository;
 import com.example.week8.repository.EventRepository;
 import com.example.week8.repository.MemberRepository;
@@ -25,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +43,14 @@ public class EventService {
     private final CheckinMemberRepository checkinMemberRepository;
     private final TokenProvider tokenProvider;
 
+
+    // 날짜 체크 api
+    public ResponseDto<?> chkDateTime(DuplicationRequestDto requestDto) {
+        if(Time.diffTime(stringToLocalDateTime(requestDto.getValue()), LocalDateTime.now()))
+            return ResponseDto.fail(false);
+        return ResponseDto.fail(true);
+    }
+
     /**
      * 약속 생성
      */
@@ -58,6 +66,10 @@ public class EventService {
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
+
+        if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
+            return ResponseDto.fail("지나간 날짜 입니다.");
+
         // 약속 생성
         Event event = Event.builder()
                 .title(eventRequestDto.getTitle())
@@ -83,7 +95,7 @@ public class EventService {
                         .id(event.getId())
                         .memberList(list)
                         .title(event.getTitle())
-                        .eventDateTime(event.getEventDateTime())
+                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
@@ -132,7 +144,7 @@ public class EventService {
                         .id(event.getId())
                         .memberList(list)
                         .title(event.getTitle())
-                        .eventDateTime(event.getEventDateTime())
+                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
@@ -163,6 +175,11 @@ public class EventService {
 
         List<EventMember> eventMemberList = eventMemberRepository.findAllByMemberId(member.getId());
         List<EventListDto> tempList = new ArrayList<>();
+        List<MonthEventListDto> monthEventListDtoList = new ArrayList<>();
+        int chkDay = 0;
+        int dateEventCounter = 0;
+        LocalDateTime lastEventDate = queryDate;
+
         for (EventMember eventMember : eventMemberList) {
 
             Event event = isPresentEvent(eventMember.getEvent().getId());
@@ -175,18 +192,37 @@ public class EventService {
                 }
             }
             else if (unit.equals("week")) {
-                if (ChronoUnit.DAYS.between(queryDate, eventDateTime) < 7) {
+                if (eventDateTime.getYear() == queryDate.getYear()
+                        && queryDate.getDayOfYear() <= eventDateTime.getDayOfYear()
+                        && eventDateTime.getDayOfYear() <= queryDate.plusDays(6).getDayOfYear()) {
+
                     tempList.add(convertToDto(event));
                 }
-            }
-            else if (unit.equals("month")) {
+            } else if (unit.equals("month")) {
                 if (eventDateTime.getYear() == queryDate.getYear()
                         && queryDate.getMonth() == eventDateTime.getMonth()) {
-                    tempList.add(convertToDto(event));
+                    if (chkDay == 0)
+                        chkDay = eventDateTime.getDayOfMonth();
+                    if (chkDay != eventDateTime.getDayOfMonth()) {
+                        monthEventListDtoList.add(MonthEventListDto.builder()
+                                .eventDateTime(Time.serializeDate(lastEventDate))
+                                .numberOfEventInToday(dateEventCounter)
+                                .build());
+                        chkDay = eventDateTime.getDayOfMonth();
+                        dateEventCounter = 0;
+                    }
+                    dateEventCounter++;
+                    lastEventDate = eventDateTime;
                 }
             }
         }
-
+        if (unit.equals("month")) {
+            monthEventListDtoList.add(MonthEventListDto.builder()
+                    .eventDateTime(Time.serializeDate(lastEventDate))
+                    .numberOfEventInToday(dateEventCounter)
+                    .build());
+            return ResponseDto.success(monthEventListDtoList);
+        }
         return ResponseDto.success(tempList);
     }
 
@@ -208,7 +244,7 @@ public class EventService {
         if (null == event) {
             return ResponseDto.fail("약속이 존재하지 않습니다.");
         }
-        if(eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).isEmpty())
+        if (eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).isEmpty())
             return ResponseDto.fail("약속 참여자가 아닙니다.");
 
 
@@ -226,7 +262,7 @@ public class EventService {
                         .id(event.getId())
                         .memberList(tempList)
                         .title(event.getTitle())
-                        .eventDateTime(event.getEventDateTime())
+                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
@@ -278,7 +314,7 @@ public class EventService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-        if(eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).isEmpty())
+        if (eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).isEmpty())
             return ResponseDto.fail("약속 참여자가 아닙니다.");
 
         // 닉네임에 해당하는(초대할) 멤버 호출
@@ -286,7 +322,7 @@ public class EventService {
         if (null == guest) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
-        if(eventMemberRepository.findByEventIdAndMemberId(eventId, guest.getId()).isPresent())
+        if (eventMemberRepository.findByEventIdAndMemberId(eventId, guest.getId()).isPresent())
             return ResponseDto.fail("이미 참여하고 있는 회원입니다.");
 
         // 약속 호출
@@ -310,7 +346,7 @@ public class EventService {
                         .id(event.getId())
                         .memberList(tempList)
                         .title(event.getTitle())
-                        .eventDateTime(event.getEventDateTime())
+                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
@@ -339,7 +375,7 @@ public class EventService {
 
         // 약속 멤버 호출
         EventMember eventMember = isPresentEventMember(event, member);
-        if(eventMember == null) {
+        if (eventMember == null) {
             log.info("약속에 참여하지 않은 회원입니다, line : 294");
             return ResponseDto.fail("약속에 참여하지 않은 회원입니다.");
         }
@@ -401,7 +437,7 @@ public class EventService {
     /**
      * 약속 컴펌
      */
-    
+
     //== 추가 메서드 ==//
 
 
@@ -418,9 +454,11 @@ public class EventService {
         if (null == event) {
             return ResponseDto.fail("ID_NOT_FOUND");
         }
-        if (!isMaster(event, member))
-            return ResponseDto.fail("방장이 아닙니다.");
-        return ResponseDto.success(true);
+        Member master = event.getMaster();
+        return ResponseDto.success(MasterInfoResponseDto.builder()
+                .id(master.getId())
+                .nickname(master.getNickname())
+                .build());
     }
 
     // 방장확인 api2
@@ -449,7 +487,7 @@ public class EventService {
         if (target == null)
             return ResponseDto.fail("해당 사용자를 찾을 수 없습니다.");
 
-        if(Objects.equals(target.getId(), member.getId()))
+        if (Objects.equals(target.getId(), member.getId()))
             return ResponseDto.fail("본인에게 위임할 수 없습니다.");
 
         // 위임할 사람이 참여자인지 체크
@@ -484,7 +522,7 @@ public class EventService {
         if (target == null)
             return ResponseDto.fail("해당 사용자를 찾을 수 없습니다.");
 
-        if(Objects.equals(target.getId(), member.getId()))
+        if (Objects.equals(target.getId(), member.getId()))
             return ResponseDto.fail("본인을 추방시킬 수 없습니다.");
 
         // 추방당할 사람이 참여자인지 체크
@@ -591,7 +629,7 @@ public class EventService {
         return EventListDto.builder()
                 .id(event.getId())
                 .title(event.getTitle())
-                .eventDateTime(event.getEventDateTime())
+                .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                 .place(event.getPlace())
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
                 .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
