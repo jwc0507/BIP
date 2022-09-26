@@ -81,6 +81,15 @@ public class EventController {
         return eventService.exitEvent(eventId, request);
     }
 
+    /**
+     * 체크인
+     */
+    @PostMapping("api/events/checkin/{eventId}")
+    public ResponseDto<?> checkin(@PathVariable Long eventId,
+                                    HttpServletRequest request) {
+        return eventService.checkin(eventId, request);
+    }
+
     // 방장 확인
     @RequestMapping (value = "/api/event/master/check/{eventId}", method = RequestMethod.GET)
     public ResponseDto<?> setSecondName(@PathVariable Long eventId, HttpServletRequest request) {

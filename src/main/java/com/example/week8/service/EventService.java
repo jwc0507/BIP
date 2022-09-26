@@ -1,13 +1,16 @@
 package com.example.week8.service;
 
+import com.example.week8.domain.CheckinMember;
 import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
+import com.example.week8.domain.enums.Attendance;
 import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.EventListDto;
 import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
 import com.example.week8.dto.response.ResponseDto;
+import com.example.week8.repository.CheckinMemberRepository;
 import com.example.week8.repository.EventMemberRepository;
 import com.example.week8.repository.EventRepository;
 import com.example.week8.repository.MemberRepository;
@@ -37,6 +40,7 @@ public class EventService {
     private final MemberRepository memberRepository;
     private final EventRepository eventRepository;
     private final EventMemberRepository eventMemberRepository;
+    private final CheckinMemberRepository checkinMemberRepository;
     private final TokenProvider tokenProvider;
 
     /**
@@ -202,7 +206,7 @@ public class EventService {
         }
         Event event = isPresentEvent(eventId);
         if (null == event) {
-            return ResponseDto.fail("NOT_FOUND");
+            return ResponseDto.fail("약속이 존재하지 않습니다.");
         }
         if(eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).isEmpty())
             return ResponseDto.fail("약속 참여자가 아닙니다.");
@@ -346,6 +350,57 @@ public class EventService {
         return ResponseDto.success("약속에서 탈퇴했습니다.");
     }
 
+    /**
+     * 체크인
+     */
+    public ResponseDto<?> checkin(Long eventId, HttpServletRequest request) {
+
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 멤버 호출
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        // 약속 참여자 여부 확인
+        if (eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).isEmpty())
+            return ResponseDto.fail("약속 참여자가 아닙니다.");
+
+        // 중복 체크인 방지
+        if (checkinMemberRepository.findByMemberId(member.getId()).isPresent())
+            return ResponseDto.fail("이미 체크인 했습니다.");
+
+        // 약속 호출
+        Event event = isPresentEvent(eventId);
+
+        // 체크인 멤버 객체 생성
+        CheckinMember checkinMember = new CheckinMember(event, member);
+
+        // 체크인 시각에 따른 출석 상태 지정
+        if (LocalDateTime.now().isBefore(event.getEventDateTime())) {
+            checkinMember.setAttendance(Attendance.ontime);
+        } else checkinMember.setAttendance(Attendance.late);
+
+        checkinMemberRepository.save(checkinMember);
+
+        // 해당 이벤트에 대한 체크인멤버 전체 호출
+        List<CheckinMember> findCheckinMemberList = checkinMemberRepository.findAllByEventId(eventId);
+
+        List<MemberResponseDto> memberResponseDtoList = new ArrayList<>();
+        for (CheckinMember tempCheckinMember : findCheckinMemberList) {
+            MemberResponseDto memberResponseDto = convertToDto(tempCheckinMember.getMember());
+            memberResponseDto.setAttendance(checkinMember.getAttendance());
+            memberResponseDtoList.add(memberResponseDto);
+        }
+        return ResponseDto.success(memberResponseDtoList);
+    }
+
+    /**
+     * 약속 컴펌
+     */
     
     //== 추가 메서드 ==//
 
@@ -485,6 +540,15 @@ public class EventService {
     public Event isPresentEvent(Long id) {
         Optional<Event> optionalEvent = eventRepository.findById(id);
         return optionalEvent.orElse(null);
+    }
+
+    /**
+     * 체크인멤버 호출
+     */
+    @Transactional(readOnly = true)
+    public CheckinMember isPresentCheckinMember(Long eventId) {
+        Optional<CheckinMember> optionalCheckinMember = checkinMemberRepository.findByEventId(eventId);
+        return optionalCheckinMember.orElse(null);
     }
 
     /**
