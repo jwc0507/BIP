@@ -37,7 +37,7 @@ public class MemberService {
     private final LoginMemberRepository loginMemberRepository;
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
-    private final JavaMailSender javaMailSender;
+   // private final JavaMailSender javaMailSender;
   //  private final RedisUtil redisUtil;
 
 
@@ -92,6 +92,11 @@ public class MemberService {
                     .build();
             memberRepository.save(member);
         }
+        if(member.isFirstLogin()) {
+            member.setPoint(member.getPoint() + 100);
+            member.setFirstLogin(false);
+        }
+
         // 로그인 시키기
         return login(member, response);
     }
@@ -159,7 +164,7 @@ public class MemberService {
 
         return ResponseDto.success(loginMember.getAuthCode());
     }
-
+/*
     // EMAIL 인증번호 발급
     @Transactional
     public ResponseDto<?> sendEmailCode(AuthRequestDto requestDto) {
@@ -196,7 +201,7 @@ public class MemberService {
 
         return ResponseDto.success("인증번호 전송완료");
     }
-
+*/
     // 인증번호 생성
     private String generateCode() {
         StringBuilder stringBuilder = new StringBuilder();

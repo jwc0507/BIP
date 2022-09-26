@@ -34,13 +34,8 @@ public class FriendService {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
+
         Member member = (Member) chkResponse.getData();
-        /*
-        System.out.println("2");
-        List<Friend> friendList = member.getFriendList(); //friendRepository 활용해서 db에서 find 하지 않고, member의 friendList를 get하는 방식으로 코딩해도 정상 작동하겠지?
-        System.out.println("0번째 친구의 ownerID : "+ friendList.get(0).getOwner());
-        System.out.println("1번째 친구의 ownerID : "+ friendList.get(1).getOwner());
-         */
         List<Friend> friendList = friendRepository.findAllByOwner(member);
 
         Collections.sort(friendList);
@@ -52,6 +47,7 @@ public class FriendService {
                     .profileImgUrl(friend.getFriend().getProfileImageUrl())
                     .creditScore(friend.getFriend().getCredit())
                     .build()
+
             );
         }
         return ResponseDto.success(memberSearchResponseDtos);
@@ -80,6 +76,7 @@ public class FriendService {
         if (chkExist.isPresent())
             return ResponseDto.fail("이미 친구등록된 상대입니다.");
 
+
         //Friend type의 객체 생성
         Friend newFriend = Friend.builder()
                 .owner(member)
@@ -90,7 +87,9 @@ public class FriendService {
         friendRepository.save(newFriend);
 
         return ResponseDto.success(FriendInfoResponseDto.builder()
+                .id(newFriend.getFriend().getId())
                 .nickname(newFriend.getFriend().getNickname())
+                .profileImgUrl(newFriend.getFriend().getProfileImageUrl())
                 .creditScore(newFriend.getFriend().getCredit())
                 .build());
     }
@@ -118,6 +117,7 @@ public class FriendService {
         if (chkExist.isPresent())
             return ResponseDto.fail("이미 친구등록된 상대입니다.");
 
+
         //Friend type으로 새 친구 객체 생성
         Friend newFriend = Friend.builder()
                 .owner(member)
@@ -128,7 +128,9 @@ public class FriendService {
         friendRepository.save(newFriend);
 
         return ResponseDto.success(FriendInfoResponseDto.builder()
+                .id(newFriend.getFriend().getId())
                 .nickname(newFriend.getFriend().getNickname())
+                .profileImgUrl(newFriend.getFriend().getProfileImageUrl())
                 .creditScore(newFriend.getFriend().getCredit())
                 .build());
     }
