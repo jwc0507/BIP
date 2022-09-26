@@ -82,10 +82,12 @@ public class MemberService {
             // 없는 회원이라면
             member = Member.builder()
                     .phoneNumber(phoneNumber)
-                    .point(1000)
+                    .point(1000000)
+                    .pointOnDay(0)
                     .credit(100.0)
                     .password("@")
                     .numOfDone(0)
+                    .numOfSelfEvent(0)
                     .userRole(Authority.valueOf("ROLE_MEMBER"))
                     .build();
             memberRepository.save(member);
