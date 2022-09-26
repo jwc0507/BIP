@@ -102,7 +102,7 @@ public class EventController {
     }
 
     // 약속 맴버 추방
-    @RequestMapping (value = "/api/events/master/{eventId}", method = RequestMethod.DELETE)
+    @RequestMapping (value = "/api/events/master/deport/{eventId}", method = RequestMethod.POST)
     public ResponseDto<?> kickMember(@PathVariable Long eventId, @RequestBody MasterRequestDto requestDto, HttpServletRequest request) {
         return eventService.kickMember(eventId, requestDto, request);
     }
