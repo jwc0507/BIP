@@ -469,20 +469,7 @@ public class EventService {
     // 신용도, 포인트 증감
     // 호출하는 곳에서 얼마나 정보르 주는지에 따라 메소드가 달라 질 수 있음.
     @Transactional
-    public ResponseDto<?> calculateCredit(Long eventId, HttpServletRequest request) {
-        // 있는 이벤트인지 확인
-        Event getEvent = isPresentEvent(eventId);
-        if(getEvent==null)
-            return ResponseDto.fail("이벤트 id가 유효하지 않습니다.");
-
-        // 이벤트 마스터인지 확인 (호출하는 곳이 이벤트 완료 메소드(약속컨펌)라면 굳이 필요없는 메소드)
-        Member member = validateMember(request);
-        if (null == member) {
-            return ResponseDto.fail("토큰으로 멤버정보를 찾을 수 없습니다");
-        }
-        if(!isMaster(getEvent, member)) {
-            return ResponseDto.fail("방장이 아닙니다.");
-        }
+    public boolean calculateCredit(Long eventId) {
 
         // 체크인 멤버리스트 들고오기 (체크인멤버 = 이벤트참여자)
         List<CheckinMember> findCheckinMemberList = checkinMemberRepository.findAllByEventId(eventId);
@@ -491,39 +478,46 @@ public class EventService {
         if(findCheckinMemberList.size() == 1) {
             // 자신과의 약속 카운터 올려주기
             findCheckinMemberList.get(0).getMember().updateSelfEvent();
-            return ResponseDto.success("결산완료");
+            return true;
         }
+        else if (findCheckinMemberList.size() == 0) // 아마 동작하지는 않겟지만 확인용.
+            return false;
 
         // 신용도, 포인트 결산
         double addCreditScore = 0;
         int point = 0;
+        int done = 0;
         for(CheckinMember checkinMember : findCheckinMemberList) {
             // 이벤트 참여자가 잘 참여했는지 확인 (정상, 지각)
             switch (checkinMember.getAttendance().toString()) {
-                case "ontime":
+                case "ONTIME":
                     addCreditScore = MAG_DONE_CREDIT * 0.1 * (1);
                     point = checkinMember.getEvent().getPoint();
+                    done = 1;
                     if(checkinMember.getMember().getPointOnDay() > 1000)
                         point = 0;  // 하루에 벌 수 있는 포인트는 1000점 제한
                     break;
-                case "late":
+                case "LATE":
                     addCreditScore = MAG_DONE_CREDIT * 0.1 * (0);
                     point = 0;
+                    done = 1;
                     break;
-                case "noshow":
+                case "NOSHOW":
                     addCreditScore = MAG_DONE_CREDIT * 0.1 * (-1);
                     point = (checkinMember.getEvent().getPoint()*-1);   // 다시 물어봐야함 건만큼 뺏기는것이 맞는건가?
+                    done = 0;
                     break;
             }
             // 신용도 업데이트
             checkinMember.getMember().updateCreditScore(addCreditScore);
-
+            // 약속 카운터 올리기
+            checkinMember.getMember().updateNumOfDone(done);
             // 포인트 업데이트
             checkinMember.getMember().updatePoint(point);
 
         }
         // 결과 출력
-        return ResponseDto.success("결산완료");
+        return true;
 
     }
 
@@ -540,12 +534,12 @@ public class EventService {
         // 엔티티 조회
         Member member = validateMember(request);
         if (null == member)
-            return ResponseDto.fail("INVALID_TOKEN");
+            return ResponseDto.fail("토큰이 유효하지 않습니다.");
         // 약속 호출
         Event event = isPresentEvent(eventId);
 
         if (null == event)
-            return ResponseDto.fail("ID_NOT_FOUND");
+            return ResponseDto.fail("이벤트를 찾을 수 없습니다.");
         // 방장 여부 확인
         if (!isMaster(event, member))
             return ResponseDto.fail("방장이 아닙니다.");
@@ -557,9 +551,12 @@ public class EventService {
         }
 
         // 이벤트상태
-        event.setEventStatus(EventStatus.CLOSED);
-
-        return ResponseDto.success("약속을 확인했습니다. 더이상 체크인할 수 없습니다.");
+        if(calculateCredit(eventId)) {
+            event.setEventStatus(EventStatus.CLOSED);
+            return ResponseDto.success("약속을 확인했습니다. 더이상 체크인할 수 없습니다.");
+        }
+        else
+            return ResponseDto.fail("약속완료 실패");
     }
 
     //== 추가 메서드 ==//

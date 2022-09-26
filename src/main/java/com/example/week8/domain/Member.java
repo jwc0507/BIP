@@ -81,12 +81,17 @@ public class Member extends Timestamped{
         this.profileImageUrl = url;
     }
     public void updateCreditScore(double score) {
-        this.credit = score;
+        this.credit += score;
     }
     public void updatePoint(int point) {
         this.point += point;
+        if(point > 0)
+            pointOnDay += point;
     }
     public void updateSelfEvent () {
         this.numOfSelfEvent++;
+    }
+    public void updateNumOfDone (int done) {
+        numOfDone += done;
     }
 }
