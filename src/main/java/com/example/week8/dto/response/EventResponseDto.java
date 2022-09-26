@@ -1,5 +1,6 @@
 package com.example.week8.dto.response;
 
+import com.example.week8.domain.enums.EventStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,6 +17,7 @@ public class EventResponseDto {
 
     private Long id;
     private List<MemberResponseDto> memberList;
+    private EventStatus eventStatus;
     private String title;
     private String eventDateTime;
     private String place;
