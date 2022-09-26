@@ -71,8 +71,6 @@ public class EventService {
         if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
             return ResponseDto.fail("지나간 날짜 입니다.");
 
-        if(eventRequestDto.getPoint() > 1000)
-            return ResponseDto.fail("최대로 걸 수 있는 포인트는 1000점입니다");
 
         // 약속 생성
         Event event = Event.builder()
