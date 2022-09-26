@@ -81,20 +81,26 @@ public class EventController {
     }
 
     // 방장 확인
-    @RequestMapping (value = "/api/event/master/check/{eventId}", method = RequestMethod.GET)
+    @RequestMapping (value = "/api/events/master/check/{eventId}", method = RequestMethod.GET)
     public ResponseDto<?> setSecondName(@PathVariable Long eventId, HttpServletRequest request) {
         return eventService.chkMaster(eventId, request);
     }
 
     // 방장 위임
-    @RequestMapping (value = "/api/event/master/{eventId}", method = RequestMethod.POST)
+    @RequestMapping (value = "/api/events/master/{eventId}", method = RequestMethod.POST)
     public ResponseDto<?> setSecondName(@PathVariable Long eventId, @RequestBody MasterRequestDto requestDto, HttpServletRequest request) {
         return eventService.changeMaster(eventId, requestDto, request);
     }
 
     // 약속 맴버 추방
-    @RequestMapping (value = "/api/event/master/{eventId}", method = RequestMethod.DELETE)
+    @RequestMapping (value = "/api/events/master/{eventId}", method = RequestMethod.DELETE)
     public ResponseDto<?> kickMember(@PathVariable Long eventId, @RequestBody MasterRequestDto requestDto, HttpServletRequest request) {
         return eventService.kickMember(eventId, requestDto, request);
+    }
+
+    // 날짜 체크
+    @RequestMapping (value = "/api/events/date", method = RequestMethod.POST)
+    public ResponseDto<?> chkDateTime(@RequestBody DuplicationRequestDto requestDto) {
+        return eventService.chkDateTime(requestDto);
     }
 }
