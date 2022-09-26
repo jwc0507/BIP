@@ -1,5 +1,6 @@
 package com.example.week8.domain;
 
+import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.request.EventRequestDto;
 import lombok.*;
 
@@ -30,6 +31,9 @@ public class Event extends Timestamped{
 
     @OneToOne
     private Member master; // 방장 (Event에서는 방장이 누구인지 궁금하지만 member에서는 자기가 방장인지 궁금하지는 않다 = 단방향)
+
+    @Enumerated(EnumType.STRING)
+    private EventStatus eventStatus;
 
     @Column (nullable = false)
     private String title; // 약속 이름

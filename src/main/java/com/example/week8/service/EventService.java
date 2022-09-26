@@ -5,6 +5,7 @@ import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.enums.Attendance;
+import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.EventListDto;
 import com.example.week8.dto.response.EventResponseDto;
@@ -69,13 +70,14 @@ public class EventService {
         }
 
         if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
-            return ResponseDto.fail("지나간 날짜 입니다.");
+            return ResponseDto.fail("약속 시간을 미래로 설정해주세요.");
 
 
         // 약속 생성
         Event event = Event.builder()
                 .title(eventRequestDto.getTitle())
                 .master(member)
+                .eventStatus(EventStatus.ONGOING)
                 .eventDateTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()))
                 .place(eventRequestDto.getPlace())
                 .content(eventRequestDto.getContent())
@@ -84,7 +86,7 @@ public class EventService {
         eventRepository.save(event);
 
         // 약속 멤버 생성
-        EventMember eventMember = EventMember.createEventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
+        EventMember eventMember = new EventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
         eventMemberRepository.save(eventMember);
 
         // MemberResponseDto에 Member 담기
@@ -96,6 +98,7 @@ public class EventService {
                 EventResponseDto.builder()
                         .id(event.getId())
                         .memberList(list)
+                        .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
                         .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
@@ -145,6 +148,7 @@ public class EventService {
                 EventResponseDto.builder()
                         .id(event.getId())
                         .memberList(list)
+                        .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
                         .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
@@ -266,6 +270,7 @@ public class EventService {
                 EventResponseDto.builder()
                         .id(event.getId())
                         .memberList(tempList)
+                        .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
                         .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
@@ -334,15 +339,31 @@ public class EventService {
         Event event = isPresentEvent(eventId);
 
         // 약속 멤버 생성
-        EventMember tempEventMember = EventMember.createEventMember(guest, event);
+        EventMember tempEventMember = new EventMember(guest, event);
         eventMemberRepository.save(tempEventMember);
+
+        // 체크인멤버 생성 - 초대하는 사람 것
+        if (isPresentCheckinMember(eventId, member.getId()) == null) {
+            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
+            checkinMemberRepository.save(checkinMember);
+        } else {
+            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
+            checkinMemberRepository.save(checkinMember);
+        }
+
+        // 체크인멤버 생성 - 초대받는 사람 것이 생기고 있음
+        CheckinMember checkinMemberGuest = new CheckinMember(event, isPresentMember(guest.getId()));
+        checkinMemberRepository.save(checkinMemberGuest);
 
         // MemberResponseDto에 Member 담기
         List<EventMember> findEventMemberList = eventMemberRepository.findAllByEventId(eventId);
         List<MemberResponseDto> tempList = new ArrayList<>();
         for (EventMember eventMember : findEventMemberList) {
-            Long memberId = eventMember.getMember().getId();
-            MemberResponseDto memberResponseDto = convertToDto(isPresentMember(memberId));
+            MemberResponseDto memberResponseDto = convertToDto(eventMember.getMember());
+
+            // 체크인멤버 호출
+            CheckinMember tempCheckinMember = isPresentCheckinMember(eventId, eventMember.getMember().getId());
+            memberResponseDto.setAttendance(tempCheckinMember.getAttendance());
             tempList.add(memberResponseDto);
         }
 
@@ -350,6 +371,7 @@ public class EventService {
                 EventResponseDto.builder()
                         .id(event.getId())
                         .memberList(tempList)
+                        .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
                         .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
@@ -411,19 +433,23 @@ public class EventService {
             return ResponseDto.fail("약속 참여자가 아닙니다.");
 
         // 중복 체크인 방지
-        if (checkinMemberRepository.findByMemberId(member.getId()).isPresent())
+        if (isPresentCheckinMember(eventId, member.getId()).getAttendance().equals(Attendance.ONTIME))
             return ResponseDto.fail("이미 체크인 했습니다.");
 
         // 약속 호출
         Event event = isPresentEvent(eventId);
 
-        // 체크인 멤버 객체 생성
-        CheckinMember checkinMember = new CheckinMember(event, member);
+        // 약속상태가 아직 ongoing(체크인 가능상태)인지 확인
+        if (event.getEventStatus() == EventStatus.CLOSED)
+            return ResponseDto.fail("체크인 가능 시간이 지났습니다.");
+
+        // 체크인멤버 객체 호출
+        CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
 
         // 체크인 시각에 따른 출석 상태 지정
         if (LocalDateTime.now().isBefore(event.getEventDateTime())) {
-            checkinMember.setAttendance(Attendance.ontime);
-        } else checkinMember.setAttendance(Attendance.late);
+            checkinMember.setAttendance(Attendance.ONTIME);
+        } else checkinMember.setAttendance(Attendance.LATE);
 
         checkinMemberRepository.save(checkinMember);
 
@@ -433,7 +459,7 @@ public class EventService {
         List<MemberResponseDto> memberResponseDtoList = new ArrayList<>();
         for (CheckinMember tempCheckinMember : findCheckinMemberList) {
             MemberResponseDto memberResponseDto = convertToDto(tempCheckinMember.getMember());
-            memberResponseDto.setAttendance(checkinMember.getAttendance());
+            memberResponseDto.setAttendance(tempCheckinMember.getAttendance());
             memberResponseDtoList.add(memberResponseDto);
         }
         return ResponseDto.success(memberResponseDtoList);
@@ -503,8 +529,38 @@ public class EventService {
 
 
     /**
-     * 약속 컴펌
+     * 약속 컨펌(방장만 가능)
      */
+    public ResponseDto<?> confirm(Long eventId, HttpServletRequest request) {
+
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 엔티티 조회
+        Member member = validateMember(request);
+        if (null == member)
+            return ResponseDto.fail("INVALID_TOKEN");
+        // 약속 호출
+        Event event = isPresentEvent(eventId);
+
+        if (null == event)
+            return ResponseDto.fail("ID_NOT_FOUND");
+        // 방장 여부 확인
+        if (!isMaster(event, member))
+            return ResponseDto.fail("방장이 아닙니다.");
+        // 약속 시간 후 컨펌이 이루어지는지 확인
+        if (LocalDateTime.now().isBefore(event.getEventDateTime())) {
+            System.out.println("now: "+LocalDateTime.now());
+            System.out.println("event: "+event.getEventDateTime());
+            return ResponseDto.fail("아직 약속시간 전입니다. 약속시간이 지난 후 다시 시도해주세요.");
+        }
+
+        // 이벤트상태
+        event.setEventStatus(EventStatus.CLOSED);
+
+        return ResponseDto.success("약속을 확인했습니다. 더이상 체크인할 수 없습니다.");
+    }
 
     //== 추가 메서드 ==//
 
@@ -652,8 +708,8 @@ public class EventService {
      * 체크인멤버 호출
      */
     @Transactional(readOnly = true)
-    public CheckinMember isPresentCheckinMember(Long eventId) {
-        Optional<CheckinMember> optionalCheckinMember = checkinMemberRepository.findByEventId(eventId);
+    public CheckinMember isPresentCheckinMember(Long eventId, Long memberId) {
+        Optional<CheckinMember> optionalCheckinMember = checkinMemberRepository.findByEventIdAndMemberId(eventId, memberId);
         return optionalCheckinMember.orElse(null);
     }
 
