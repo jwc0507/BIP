@@ -3,6 +3,7 @@ package com.example.week8.service;
 import com.example.week8.domain.Member;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.*;
+import com.example.week8.dto.response.ReceivePointResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.dto.response.UpdateMemberResponseDto;
 import com.example.week8.repository.MemberRepository;
@@ -24,6 +25,8 @@ public class UserService {
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final FileService fileService;
+
+    private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
     // 닉네임 변경
     @Transactional
@@ -214,4 +217,65 @@ public class UserService {
 
         return ResponseDto.success("회원탈퇴 완료");
     }
+
+    // 포인트 소모 (신용도올리기)
+    @Transactional
+    public ResponseDto<?> conversionPointToCredit(ConversionPointToCreditDto pointToCreditDto, HttpServletRequest request) {
+        int point = pointToCreditDto.getPoint();
+        String nickname = pointToCreditDto.getNickname();
+
+        // 최소 포인트량 확인
+        if (point < 1000)
+            return ResponseDto.fail("포인트는 최소 1000부터 사용할 수 있습니다.");
+
+        // 토큰 확인
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        // 자기 자신인지 확인
+        Member receiver;
+        double magnification;
+        if(!member.getNickname().equals(nickname)) {
+            // 자신이 아니면 상대 멤버객체를 가져오기
+            receiver = memberRepository.findByNickname(nickname).orElse(null);
+            if(receiver == null)
+                return ResponseDto.fail("받는 사람 닉네임이 올바르지 않습니다.");
+            magnification = MAG_POINT_CREDIT*2;
+        }
+        else {
+            receiver = member;
+            magnification = MAG_POINT_CREDIT;
+        }
+
+        // 신용도 추가
+        if (receiver.getCredit() >= 200)
+            return ResponseDto.fail("이미 신용도가 최대치 입니다.");
+
+        double calculationCredit = magnification*point; // 증가할 신용도량
+        double newCredit = receiver.getCredit()+calculationCredit;
+        double lastCredit = 0;
+        // 신용도는 200까지만 증가시킬 수 있음
+        if (200 < newCredit) {
+            lastCredit = newCredit - 200;
+            newCredit = 200;
+        }
+        receiver.updateCreditScore(newCredit);
+
+        // 남은 포인트 계산
+        double lastPoint = lastCredit/magnification;
+
+        // 포인트 감소
+        int newPoint = (point*-1)+(int)Math.floor(lastPoint);
+        member.updatePoint(newPoint);
+
+        return ResponseDto.success(ReceivePointResponseDto.builder()
+                .context(receiver.getNickname()+"님의 신용도 추가가 완료되었습니다.")
+                .newCredit(receiver.getCredit())
+                .lastPoint(member.getPoint())
+                .build());
+    }
+
 }
