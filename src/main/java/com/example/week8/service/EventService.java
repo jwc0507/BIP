@@ -53,6 +53,22 @@ public class EventService {
         return ResponseDto.fail(true);
     }
 
+    // 기본방장 체크인생성
+
+    public void createChkin(EventResponseDto eventResponseDto) {
+        // 체크인멤버 생성 - 초대하는 사람 것
+        Event event = eventRepository.findById(eventResponseDto.getId()).orElse(null);
+        EventMember eventMember = eventMemberRepository.findAllByEventId(event.getId()).get(0);
+        Member member = memberRepository.findById(eventMember.getMember().getId()).orElse(null);
+        if (isPresentCheckinMember(event.getId(), member.getId() ) == null) {
+            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
+            checkinMemberRepository.save(checkinMember);
+        } else {
+            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
+            checkinMemberRepository.save(checkinMember);
+        }
+    }
+
     /**
      * 약속 생성
      */
@@ -88,6 +104,7 @@ public class EventService {
         // 약속 멤버 생성
         EventMember eventMember = new EventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
         eventMemberRepository.save(eventMember);
+
 
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
@@ -341,15 +358,15 @@ public class EventService {
         // 약속 멤버 생성
         EventMember tempEventMember = new EventMember(guest, event);
         eventMemberRepository.save(tempEventMember);
-
-        // 체크인멤버 생성 - 초대하는 사람 것
-        if (isPresentCheckinMember(eventId, member.getId()) == null) {
-            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
-            checkinMemberRepository.save(checkinMember);
-        } else {
-            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
-            checkinMemberRepository.save(checkinMember);
-        }
+//
+//        // 체크인멤버 생성 - 초대하는 사람 것
+//        if (isPresentCheckinMember(eventId, member.getId()) == null) {
+//            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
+//            checkinMemberRepository.save(checkinMember);
+//        } else {
+//            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
+//            checkinMemberRepository.save(checkinMember);
+//        }
 
         // 체크인멤버 생성 - 초대받는 사람 것이 생기고 있음
         CheckinMember checkinMemberGuest = new CheckinMember(event, isPresentMember(guest.getId()));
@@ -407,8 +424,27 @@ public class EventService {
             return ResponseDto.fail("약속에 참여하지 않은 회원입니다.");
         }
 
+        // 체크인에서도 지우기
+        List<CheckinMember> checkinMemberList = checkinMemberRepository.findByEventIdAndMemberId(eventId, member.getId());
+        for (CheckinMember checkinMember : checkinMemberList) {
+            checkinMemberRepository.deleteById(checkinMember.getId());
+        }
+
         // 약속 멤버 삭제
         eventMemberRepository.deleteById(eventMember.getId());
+        eventMemberRepository.flush();
+
+        // 자신과의 약속 or 마지막 멤버일 경우 약속이 삭제되도록하기
+        List<EventMember> eventMemberList = eventMemberRepository.findAllByEventId(eventId);
+        if (eventMemberList.size() == 0) {
+            eventRepository.deleteById(eventId);
+            return ResponseDto.success("약속에서 탈퇴했습니다.");
+        }
+
+        // 자신이 방장일 경우 방장권한을 다음으로 들어온 사람에게 위임한다.
+        if (event.getMaster().getId().equals(member.getId())) {
+            event.changeMaster(eventMemberList.get(0).getMember());
+        }
 
         return ResponseDto.success("약속에서 탈퇴했습니다.");
     }
@@ -682,6 +718,11 @@ public class EventService {
             return ResponseDto.fail("해당 사용자가 약속 참여자가 아닙니다.");
 
         eventMemberRepository.deleteById(eventMember.getId());
+        // 체크인에서도 지우기
+        List<CheckinMember> checkinMemberList = checkinMemberRepository.findByEventIdAndMemberId(eventId, target.getId());
+        for (CheckinMember checkinMember : checkinMemberList) {
+            checkinMemberRepository.deleteById(checkinMember.getId());
+        }
 
         return ResponseDto.success("추방완료");
 

@@ -1,6 +1,7 @@
 package com.example.week8.controller;
 
 import com.example.week8.dto.request.*;
+import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.EventService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,9 @@ public class EventController {
     @PostMapping("/api/events")
     public ResponseDto<?> createEvent(@RequestBody EventRequestDto requestDto,
                                       HttpServletRequest request) {
-        return eventService.createEvent(requestDto, request);
+        ResponseDto<?> responseDto = eventService.createEvent(requestDto, request);
+        eventService.createChkin((EventResponseDto)responseDto.getData());
+        return responseDto;
     }
 
     /**
