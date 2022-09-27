@@ -29,7 +29,6 @@ public class MemberController {
     private final NaverOauthService naverOauthService;
 
     // 로그인
-    // 회원가입 후 자동 로그인을 시키고 로그인 결과로 닉네임과 이메일을 반환하게 추가 구현해야할듯. 만약 널값이라면 프론트에서 자동으로 닉네임 변경창으로 보내주면 좋을 것 같음.
     @RequestMapping (value = "/api/member/login", method = RequestMethod.POST)
     public ResponseDto<?> login(@RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
         return memberService.createMember(requestDto, response);

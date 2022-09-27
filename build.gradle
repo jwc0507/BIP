@@ -47,6 +47,9 @@ dependencies {
 //	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
 
+	//FCM
+//	implementation 'com.google.firebase:firebase-admin:9.0.0'
+
 }
 
 tasks.named('test') {

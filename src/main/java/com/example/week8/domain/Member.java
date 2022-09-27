@@ -20,6 +20,11 @@ public class Member extends Timestamped{
     @Column(name = "MEMBER_ID")
     private Long id; // 멤버id
 
+    @Column(name = "FIRST_LOGIN")
+    private boolean firstLogin; //첫 로그인 여부
+
+    @Column(name = "POINT_ON_DAY")
+    private Long pointOnDay;
 
     @Column (unique = true)
     private Long kakaoId;   // 카카오id
@@ -46,10 +51,13 @@ public class Member extends Timestamped{
     private String password;    // 비밀번호 (상수로 일단 넣기)
 
     @Column
-    private String profileImageUrl; // 프로필이미지 url (erd에 추가해야함)
+    private String profileImageUrl; // 프로필이미지 url
 
     @Column
-    private int numOfDone; // 약속 이행 수 (erd 추가)
+    private int numOfDone; // 약속 이행 수
+
+    @Column
+    private int numOfSelfEvent; // 자신과의 약속 이행 수 (erd 추가)
 
     @Column (nullable = false)
     @Enumerated (EnumType.STRING)
@@ -71,5 +79,19 @@ public class Member extends Timestamped{
     }
     public void updateProfileImageUrl (String url) {
         this.profileImageUrl = url;
+    }
+    public void updateCreditScore(double score) {
+        this.credit = score;
+    }
+    public void updatePoint(int point) {
+        this.point += point;
+        if(point > 0)
+            pointOnDay += point;
+    }
+    public void updateSelfEvent () {
+        this.numOfSelfEvent++;
+    }
+    public void updateNumOfDone (int done) {
+        numOfDone += done;
     }
 }
