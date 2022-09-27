@@ -35,9 +35,9 @@ public class Week8Application {
 			}
 		};
 	}
-	@PostConstruct
-	public void started(){
-		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
-
-	}
+//	@PostConstruct
+//	public void started(){
+//		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
+//
+//	}
 }
