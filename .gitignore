@@ -34,6 +34,8 @@ serviceTest.http
 friendTest.http
 eventTest.http
 masterTest.http
+fcmTest.http
+firebase-message-sw.js
 
 ### NetBeans ###
 /nbproject/private/
