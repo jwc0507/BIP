@@ -90,6 +90,15 @@ public class EventController {
     }
 
     /**
+     * 체크인(attendance) 상태 조회
+     */
+    @GetMapping("api/events/checkin/{eventId}")
+    public ResponseDto<?> getCheckin(@PathVariable Long eventId,
+                                  HttpServletRequest request) {
+        return eventService.getCheckinMembers(eventId, request);
+    }
+
+    /**
      * 컨펌(방장만)
      */
     @PutMapping("api/events/confirm/{eventId}")

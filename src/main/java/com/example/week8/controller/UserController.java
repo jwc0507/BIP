@@ -36,6 +36,12 @@ public class UserController {
         return userService.setEmail(requestDto, request);
     }
 
+    // 이메일 입력용 인증코드 생성
+    @RequestMapping (value = "/api/user/auth/email", method = RequestMethod.POST)
+    public ResponseDto<?> sendEmailCode(@RequestBody AuthRequestDto requestDto) {
+        return userService.sendEmailCode(requestDto);
+    }
+
     // 프로필 사진 수정
     @RequestMapping(value = "/api/user/profileimage", method = RequestMethod.PUT)
     public ResponseDto<?> updateProfileImage(@RequestBody ImgUrlRequestDto requestDto, HttpServletRequest request) {
