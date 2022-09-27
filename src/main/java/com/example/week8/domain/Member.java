@@ -20,8 +20,11 @@ public class Member extends Timestamped{
     @Column(name = "MEMBER_ID")
     private Long id; // 멤버id
 
-//    @OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
-//    private CheckinMember checkinMember;
+    @Column(name = "FIRST_LOGIN")
+    private boolean firstLogin; //첫 로그인 여부
+
+    @Column(name = "POINT_ON_DAY")
+    private Long pointOnDay;
 
     @Column (unique = true)
     private Long kakaoId;   // 카카오id
@@ -56,9 +59,6 @@ public class Member extends Timestamped{
     @Column
     private int numOfSelfEvent; // 자신과의 약속 이행 수 (erd 추가)
 
-    @Column
-    private int getPointOnDay; // 오늘 벌어들인 포인트양 (12시마다 초기화)
-
     @Column (nullable = false)
     @Enumerated (EnumType.STRING)
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
@@ -81,12 +81,17 @@ public class Member extends Timestamped{
         this.profileImageUrl = url;
     }
     public void updateCreditScore(double score) {
-        this.credit = score;
+        this.credit += score;
     }
     public void updatePoint(int point) {
         this.point += point;
+        if(point > 0)
+            pointOnDay += point;
     }
     public void updateSelfEvent () {
         this.numOfSelfEvent++;
+    }
+    public void updateNumOfDone (int done) {
+        numOfDone += done;
     }
 }

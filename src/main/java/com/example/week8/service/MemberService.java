@@ -83,8 +83,9 @@ public class MemberService {
             member = Member.builder()
                     .phoneNumber(phoneNumber)
                     .point(1000000)
-                    .getPointOnDay(0)
+                    .pointOnDay(0L)
                     .credit(100.0)
+                    .firstLogin(true)
                     .password("@")
                     .numOfDone(0)
                     .numOfSelfEvent(0)
@@ -119,6 +120,11 @@ public class MemberService {
         TokenDto tokenDto = tokenProvider.generateTokenDto(member);
 
         tokenToHeaders(tokenDto, response);
+
+        if(member.isFirstLogin()) {
+            member.setPoint(member.getPoint() + 100);
+            member.setFirstLogin(false);
+        }
 
         return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
