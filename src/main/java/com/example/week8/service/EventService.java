@@ -465,6 +465,36 @@ public class EventService {
         return ResponseDto.success(memberResponseDtoList);
     }
 
+    /**
+     *
+     */
+    public ResponseDto<?> getCheckinMembers(Long eventId, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 멤버 호출
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        // 약속 참여자 여부 확인
+        if (eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).isEmpty())
+            return ResponseDto.fail("약속 참여자가 아닙니다.");
+
+        // 해당 이벤트에 대한 체크인멤버 전체 호출
+        List<CheckinMember> findCheckinMemberList = checkinMemberRepository.findAllByEventId(eventId);
+
+        List<MemberResponseDto> memberResponseDtoList = new ArrayList<>();
+        for (CheckinMember tempCheckinMember : findCheckinMemberList) {
+            MemberResponseDto memberResponseDto = convertToDto(tempCheckinMember.getMember());
+            memberResponseDto.setAttendance(tempCheckinMember.getAttendance());
+            memberResponseDtoList.add(memberResponseDto);
+        }
+        return ResponseDto.success(memberResponseDtoList);
+    }
+
 
     // 신용도, 포인트 증감
     // 호출하는 곳에서 얼마나 정보르 주는지에 따라 메소드가 달라 질 수 있음.
