@@ -55,4 +55,9 @@ public class FriendController {
     public ResponseDto<?> setSecondName(@RequestBody FriendSecondNameRequestDto requestDto, HttpServletRequest request) {
         return friendService.setSecondName(requestDto, request);
     }
+    @RequestMapping (value = "/api/friends/recommandFriends", method = RequestMethod.GET)
+    public ResponseDto<?> getRecommandFriendsList(HttpServletRequest request) {
+        return friendService.getRecommandFriendsList(request);
+    }
+
 }

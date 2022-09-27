@@ -37,7 +37,6 @@ public class FriendService {
 
         Member member = (Member) chkResponse.getData();
         List<Friend> friendList = friendRepository.findAllByOwner(member);
-
         Collections.sort(friendList);
         List<MemberSearchResponseDto> memberSearchResponseDtos = new ArrayList<>();
         for (Friend friend : friendList) {
@@ -47,7 +46,6 @@ public class FriendService {
                     .profileImgUrl(friend.getFriend().getProfileImageUrl())
                     .creditScore(friend.getFriend().getCredit())
                     .build()
-
             );
         }
         return ResponseDto.success(memberSearchResponseDtos);
@@ -268,5 +266,26 @@ public class FriendService {
                 .profileImgUrl(friend.getFriend().getProfileImageUrl())
                 .creditScore(friend.getFriend().getCredit())
                 .build());
+    }
+
+    @Transactional
+    public ResponseDto<?> getRecommandFriendsList(HttpServletRequest request){
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        Member owner = (Member) chkResponse.getData();
+        List<Friend> friendsAddedMeList = friendRepository.findAllByFriend(owner); //Friend 테이블에서 오너를 친구로 등록한 친구 모두 찾기.
+        List<FriendInfoResponseDto> friendInfoResponseDtoList = new ArrayList<>();
+
+        for(Friend curFriend : friendsAddedMeList){
+            friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
+                    .id(curFriend.getOwner().getId())
+                    .nickname(curFriend.getOwner().getNickname())
+                    .profileImgUrl(curFriend.getOwner().getProfileImageUrl())
+                    .creditScore(curFriend.getOwner().getCredit())
+                    .build());
+        }
+        return ResponseDto.success(friendInfoResponseDtoList);
     }
 }
