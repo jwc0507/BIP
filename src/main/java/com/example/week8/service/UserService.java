@@ -10,9 +10,13 @@ import com.example.week8.repository.MemberRepository;
 import com.example.week8.repository.RefreshTokenRepository;
 import com.example.week8.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,6 +29,7 @@ public class UserService {
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final FileService fileService;
+    private final JavaMailSender javaMailSender;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -67,7 +72,7 @@ public class UserService {
         String newPhoneNumber = requestDto.getPhoneNumber();
 
         if (!memberService.chkValidCode(newPhoneNumber, requestDto.getAuthCode()))
-            return ResponseDto.fail("인증실패 코드를 재발급해주세요");
+            return ResponseDto.fail("인증실패 코드를 확인해주세요");
 
 
         if (memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build()).isSuccess()) {
@@ -108,8 +113,8 @@ public class UserService {
 
         String newEmail = requestDto.getEmail();
 
-        if (memberService.chkValidCode(newEmail, requestDto.getAuthCode()))
-            return ResponseDto.fail("인증실패 코드를 재발급해주세요");
+        if (!memberService.chkValidCode(newEmail, requestDto.getAuthCode()))
+            return ResponseDto.fail("인증실패 코드를 확인해주세요");
 
         if (memberService.checkEmail(DuplicationRequestDto.builder().value(newEmail).build()).isSuccess()) {
             Member member = (Member) chkResponse.getData();
@@ -128,6 +133,36 @@ public class UserService {
                     .build());
         }
         return ResponseDto.fail("중복된 이메일 입니다.");
+    }
+
+    @Transactional
+    public ResponseDto<?> sendEmailCode(AuthRequestDto requestDto) {
+        ResponseDto<?> getAuthCode = memberService.sendAuthCode(requestDto);
+        if(!getAuthCode.isSuccess())
+            return ResponseDto.fail("코드생성 실패");
+
+        String subject = "[포도미스키퍼] 이메일 로그인 인증코드입니다";
+        String text = "인증번호 ["+getAuthCode.getData()+"] 을 입력해주세요.";
+
+        // simpleMailMessage를 사용하면 텍스트만 보내고 MimeMessage를 사용시 멀티파트로 보냄 (파일전송 가능)
+        try {
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper mailHelper = new MimeMessageHelper(mimeMessage, "UTF-8");
+            mailHelper.setTo(requestDto.getValue());
+            mailHelper.setSubject(subject);
+            mailHelper.setText(text);
+            javaMailSender.send(mimeMessage);
+        }
+        catch (MessagingException e) {
+            return ResponseDto.fail("잘못된 이메일 주소입니다.");
+        }
+//        SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
+//        simpleMailMessage.setTo(requestDto.getValue());
+//        simpleMailMessage.setSubject(subject);
+//        simpleMailMessage.setText(text);
+//        javaMailSender.send(simpleMailMessage);
+
+        return ResponseDto.success("인증번호 전송완료");
     }
 
     // RefreshToken 유효성 검사
@@ -234,6 +269,10 @@ public class UserService {
             return chkResponse;
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
+
+        // 잔여 포인트량 확인
+        if (member.getPoint() < point)
+            return ResponseDto.fail("포인트가 부족합니다.");
 
         // 자기 자신인지 확인
         Member receiver;
