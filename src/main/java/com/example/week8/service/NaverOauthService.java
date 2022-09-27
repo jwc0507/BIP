@@ -151,6 +151,7 @@ public class NaverOauthService {
                         .phoneNumber(phoneNumber)
                         .point(1000)
                         .credit(100.0)
+                        .pointOnDay(0L)
                         .numOfDone(0)
                         .password("@")
                         .userRole(Authority.valueOf("ROLE_MEMBER"))
