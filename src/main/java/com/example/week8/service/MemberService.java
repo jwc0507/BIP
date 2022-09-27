@@ -37,7 +37,7 @@ public class MemberService {
     private final LoginMemberRepository loginMemberRepository;
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
-   // private final JavaMailSender javaMailSender;
+    private final JavaMailSender javaMailSender;
   //  private final RedisUtil redisUtil;
 
 
@@ -82,19 +82,17 @@ public class MemberService {
             // 없는 회원이라면
             member = Member.builder()
                     .phoneNumber(phoneNumber)
-                    .point(1000)
+                    .point(1000000)
+                    .pointOnDay(0L)
                     .credit(100.0)
+                    .firstLogin(true)
                     .password("@")
                     .numOfDone(0)
+                    .numOfSelfEvent(0)
                     .userRole(Authority.valueOf("ROLE_MEMBER"))
                     .build();
             memberRepository.save(member);
         }
-        if(member.isFirstLogin()) {
-            member.setPoint(member.getPoint() + 100);
-            member.setFirstLogin(false);
-        }
-
         // 로그인 시키기
         return login(member, response);
     }
@@ -122,6 +120,11 @@ public class MemberService {
         TokenDto tokenDto = tokenProvider.generateTokenDto(member);
 
         tokenToHeaders(tokenDto, response);
+
+        if(member.isFirstLogin()) {
+            member.setPoint(member.getPoint() + 100);
+            member.setFirstLogin(false);
+        }
 
         return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
@@ -162,7 +165,7 @@ public class MemberService {
 
         return ResponseDto.success(loginMember.getAuthCode());
     }
-/*
+
     // EMAIL 인증번호 발급
     @Transactional
     public ResponseDto<?> sendEmailCode(AuthRequestDto requestDto) {
@@ -176,7 +179,7 @@ public class MemberService {
         if(!getAuthCode.isSuccess())
             return ResponseDto.fail("코드생성 실패");
 
-        String subject = "[서비스 이름] 이메일 로그인 인증코드입니다";
+        String subject = "[포도미스키퍼] 이메일 로그인 인증코드입니다";
         String text = "인증번호 ["+getAuthCode.getData()+"] 을 입력해주세요.";
 
         // simpleMailMessage를 사용하면 텍스트만 보내고 MimeMessage를 사용시 멀티파트로 보냄 (파일전송 가능)
@@ -199,7 +202,7 @@ public class MemberService {
 
         return ResponseDto.success("인증번호 전송완료");
     }
-*/
+
     // 인증번호 생성
     private String generateCode() {
         StringBuilder stringBuilder = new StringBuilder();
