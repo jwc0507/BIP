@@ -270,6 +270,10 @@ public class UserService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
+        // 잔여 포인트량 확인
+        if (member.getPoint() < point)
+            return ResponseDto.fail("포인트가 부족합니다.");
+
         // 자기 자신인지 확인
         Member receiver;
         double magnification;
