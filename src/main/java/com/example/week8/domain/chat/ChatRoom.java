@@ -26,4 +26,6 @@ public class ChatRoom extends Timestamped {
     @JoinColumn(name = "event_id", nullable = false)
     @OneToOne(fetch = FetchType.LAZY)
     private Event event;
+
+    //맴버 객체
 }
