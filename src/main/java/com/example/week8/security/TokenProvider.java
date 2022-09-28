@@ -117,7 +117,6 @@ public class TokenProvider {
     }
 
     @Transactional
-
     public boolean deleteRefreshToken(Member member) {
         RefreshToken refreshToken = isPresentRefreshToken(member);
         if (null == refreshToken) {
@@ -127,8 +126,7 @@ public class TokenProvider {
         return false;
     }
 
-    public Authentication getAuthentication(HttpServletRequest request) {
-        String token=getAccessToken(request);
+    public Authentication getAuthentication(String token) {
         if(token==null) {
             return null;
         }
@@ -150,6 +148,14 @@ public class TokenProvider {
             return new UsernamePasswordAuthenticationToken(principal, token, authorities);
         }
     }
+
+    public Member getMemberByToken(String token){
+        Authentication authentication = getAuthentication(token.substring(7));
+        if (authentication == null)
+            return null;
+        return ((UserDetailsImpl) authentication.getPrincipal()).getMember();
+    }
+
 
     private String getAccessToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");

@@ -282,7 +282,7 @@ public class UserService {
             receiver = memberRepository.findByNickname(nickname).orElse(null);
             if(receiver == null)
                 return ResponseDto.fail("받는 사람 닉네임이 올바르지 않습니다.");
-            magnification = MAG_POINT_CREDIT*2;
+            magnification = MAG_POINT_CREDIT;   // 포인트로 신용도 올리기 배율을 동일화 하자는 fe요청
         }
         else {
             receiver = member;
@@ -300,6 +300,10 @@ public class UserService {
         if (200 < newCredit) {
             lastCredit = newCredit - 200;
             newCredit = 200;
+        }
+        // 신용도의 최소치는 0이다.
+        if (0 > newCredit) {
+            newCredit = 0;
         }
         receiver.updateCreditScore(newCredit);
 
