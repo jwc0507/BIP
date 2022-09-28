@@ -9,12 +9,18 @@ import com.example.week8.domain.enums.MessageType;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.ChatMessageRepository;
 import com.example.week8.repository.ChatRoomRepository;
+import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -25,16 +31,22 @@ public class ChatService {
     private final TokenProvider tokenProvider;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final MemberRepository memberRepository;
 
     // 메세지 보내기
     @Transactional
     public ResponseDto<?> sendMessage(ChatRequestDto message, String token) {
         // 토큰으로 유저찾기
-        Member member = tokenProvider.getMemberByToken(token);
+        Long id = Long.parseLong(tokenProvider.getMemberIdByToken(token));
+        Member member = memberRepository.findById(id).orElse(null);
         if (member == null) {
             log.info("토큰오류");
             return ResponseDto.fail("토큰 오류");
         }
+        // 현재 채팅방의 멤버인지 확인
+        // 아니라면 여기서 반환시키기
+
+
         ChatRoom chatRoom = chatRoomRepository.findById(message.getRoomId()).orElse(null);
         if (chatRoom == null) {
             log.info("룸 번호 오류");
@@ -79,4 +91,51 @@ public class ChatService {
         return ResponseDto.success("메세지 보내기 성공");
     }
 
+
+    // 기존 채팅방 메세지들 불러오기
+    public ResponseDto<?> getMessage(Long roomId, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        Optional<ChatRoom> getChatRoom = chatRoomRepository.findById(roomId);
+        ChatRoom chatRoom;
+        if (getChatRoom.isPresent())
+            chatRoom = getChatRoom.get();
+        else
+            return ResponseDto.fail("채팅방을 찾을 수 없습니다.");
+
+
+        List<ChatMessage> chatMessageList = chatMessageRepository.findAllByChatRoomOrderByCreatedAtDesc(chatRoom);
+        List<ChatMessageDto> chatMessageDtos = new ArrayList<>();
+        for (ChatMessage chatMessage : chatMessageList) {
+            Member member = chatMessage.getMember();
+            ChatMessageDto chatMsgResponseDto = ChatMessageDto.builder()
+                    .sender(member.getNickname())
+                    .message(chatMessage.getMessage())
+                    .build();
+            chatMessageDtos.add(chatMsgResponseDto);
+        }
+        return ResponseDto.success(chatMessageDtos);
+    }
+
+
+    private ResponseDto<?> validateCheck(HttpServletRequest request) {
+        if (null == request.getHeader("RefreshToken") || null == request.getHeader("Authorization")) {
+            return ResponseDto.fail("로그인이 필요합니다.");
+        }
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("Token이 유효하지 않습니다.");
+        }
+        return ResponseDto.success(member);
+    }
+
+    @Transactional
+    public Member validateMember(HttpServletRequest request) {
+        if (!tokenProvider.validateToken(request.getHeader("RefreshToken"))) {
+            return null;
+        }
+        return tokenProvider.getMemberFromAuthentication();
+    }
 }
