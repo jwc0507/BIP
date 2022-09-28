@@ -55,7 +55,8 @@ public class SecurityConfiguration {
 
     http.csrf().disable()
 
-            .headers().frameOptions().disable()
+            .headers().frameOptions().sameOrigin()
+
             .and()
             .exceptionHandling()
             .authenticationEntryPoint(authenticationEntryPointException)

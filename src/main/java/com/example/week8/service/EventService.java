@@ -4,6 +4,7 @@ import com.example.week8.domain.CheckinMember;
 import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
+import com.example.week8.domain.chat.ChatRoom;
 import com.example.week8.domain.enums.Attendance;
 import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.request.*;
@@ -11,11 +12,8 @@ import com.example.week8.dto.response.EventListDto;
 import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
 import com.example.week8.dto.response.ResponseDto;
-import com.example.week8.repository.CheckinMemberRepository;
+import com.example.week8.repository.*;
 import com.example.week8.dto.response.*;
-import com.example.week8.repository.EventMemberRepository;
-import com.example.week8.repository.EventRepository;
-import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +41,7 @@ public class EventService {
     private final EventMemberRepository eventMemberRepository;
     private final CheckinMemberRepository checkinMemberRepository;
     private final TokenProvider tokenProvider;
+    private final ChatRoomRepository chatRoomRepository;
     private final int MAG_DONE_CREDIT = 1;  // 약속완료 신용도 증감 배율 (1이 기본)
 
 
@@ -52,6 +51,18 @@ public class EventService {
             return ResponseDto.fail(false);
         return ResponseDto.fail(true);
     }
+
+    // 채팅방 개설
+    @Transactional
+    public void createChatRoom(Event event) {
+        ChatRoom chatRoom = ChatRoom.builder()
+                .id(event.getId())
+                .name(event.getTitle())
+                .event(event)
+                .build();
+        chatRoomRepository.save(chatRoom);
+    }
+
 
     /**
      * 약속 생성
@@ -89,6 +100,7 @@ public class EventService {
         EventMember eventMember = new EventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
         eventMemberRepository.save(eventMember);
 
+
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
         MemberResponseDto memberResponseDto = convertToDto(member);
@@ -108,6 +120,25 @@ public class EventService {
                         .point(event.getPoint())
                         .build()
         );
+    }
+
+    // 기본방장 체크인생성
+    public void createChkin(EventResponseDto eventResponseDto) {
+        // 체크인멤버 생성 - 초대하는 사람 것
+        Event event = eventRepository.findById(eventResponseDto.getId()).orElse(null);  // 이벤트 찾기
+        EventMember eventMember = eventMemberRepository.findAllByEventId(event.getId()).get(0);
+        Member member = memberRepository.findById(eventMember.getMember().getId()).orElse(null);    // 멤버찾기 (방장)
+
+        // 채팅방도 개설해준다.
+        createChatRoom(event);
+
+        if (isPresentCheckinMember(event.getId(), member.getId() ) == null) {
+            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
+            checkinMemberRepository.save(checkinMember);
+        } else {
+            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
+            checkinMemberRepository.save(checkinMember);
+        }
     }
 
     /**
@@ -341,15 +372,15 @@ public class EventService {
         // 약속 멤버 생성
         EventMember tempEventMember = new EventMember(guest, event);
         eventMemberRepository.save(tempEventMember);
-
-        // 체크인멤버 생성 - 초대하는 사람 것
-        if (isPresentCheckinMember(eventId, member.getId()) == null) {
-            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
-            checkinMemberRepository.save(checkinMember);
-        } else {
-            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
-            checkinMemberRepository.save(checkinMember);
-        }
+//
+//        // 체크인멤버 생성 - 초대하는 사람 것
+//        if (isPresentCheckinMember(eventId, member.getId()) == null) {
+//            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
+//            checkinMemberRepository.save(checkinMember);
+//        } else {
+//            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
+//            checkinMemberRepository.save(checkinMember);
+//        }
 
         // 체크인멤버 생성 - 초대받는 사람 것이 생기고 있음
         CheckinMember checkinMemberGuest = new CheckinMember(event, isPresentMember(guest.getId()));
@@ -407,8 +438,27 @@ public class EventService {
             return ResponseDto.fail("약속에 참여하지 않은 회원입니다.");
         }
 
+        // 체크인에서도 지우기
+        List<CheckinMember> checkinMemberList = checkinMemberRepository.findByEventIdAndMemberId(eventId, member.getId());
+        for (CheckinMember checkinMember : checkinMemberList) {
+            checkinMemberRepository.deleteById(checkinMember.getId());
+        }
+
         // 약속 멤버 삭제
         eventMemberRepository.deleteById(eventMember.getId());
+        eventMemberRepository.flush();
+
+        // 자신과의 약속 or 마지막 멤버일 경우 약속이 삭제되도록하기
+        List<EventMember> eventMemberList = eventMemberRepository.findAllByEventId(eventId);
+        if (eventMemberList.size() == 0) {
+            eventRepository.deleteById(eventId);
+            return ResponseDto.success("약속에서 탈퇴했습니다.");
+        }
+
+        // 자신이 방장일 경우 방장권한을 다음으로 들어온 사람에게 위임한다.
+        if (event.getMaster().getId().equals(member.getId())) {
+            event.changeMaster(eventMemberList.get(0).getMember());
+        }
 
         return ResponseDto.success("약속에서 탈퇴했습니다.");
     }
@@ -682,6 +732,11 @@ public class EventService {
             return ResponseDto.fail("해당 사용자가 약속 참여자가 아닙니다.");
 
         eventMemberRepository.deleteById(eventMember.getId());
+        // 체크인에서도 지우기
+        List<CheckinMember> checkinMemberList = checkinMemberRepository.findByEventIdAndMemberId(eventId, target.getId());
+        for (CheckinMember checkinMember : checkinMemberList) {
+            checkinMemberRepository.deleteById(checkinMember.getId());
+        }
 
         return ResponseDto.success("추방완료");
 
@@ -736,8 +791,14 @@ public class EventService {
      */
     @Transactional(readOnly = true)
     public CheckinMember isPresentCheckinMember(Long eventId, Long memberId) {
-        Optional<CheckinMember> optionalCheckinMember = checkinMemberRepository.findByEventIdAndMemberId(eventId, memberId);
-        return optionalCheckinMember.orElse(null);
+        List<CheckinMember> optionalCheckinMember = checkinMemberRepository.findByEventIdAndMemberId(eventId, memberId);
+       // return optionalCheckinMember.orElse(null);
+        for(CheckinMember c : optionalCheckinMember) {
+            log.info(c.getMember().getId().toString());
+        }
+        if(optionalCheckinMember.size() != 0)
+            return optionalCheckinMember.get(0);
+        return null;
     }
 
     /**
