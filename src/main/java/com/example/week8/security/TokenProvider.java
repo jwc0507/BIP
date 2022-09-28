@@ -1,4 +1,5 @@
 package com.example.week8.security;
+
 import com.example.week8.domain.Member;
 import com.example.week8.domain.RefreshToken;
 import com.example.week8.domain.UserDetailsImpl;
@@ -84,7 +85,6 @@ public class TokenProvider {
     }
 
 
-
     public Member getMemberFromAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || AnonymousAuthenticationToken.class.
@@ -127,10 +127,9 @@ public class TokenProvider {
     }
 
     public Authentication getAuthentication(String token) {
-        if(token==null) {
+        if (token == null) {
             return null;
-        }
-        else {
+        } else {
             Claims claims = Jwts
                     .parserBuilder()
                     .setSigningKey(key)
@@ -149,11 +148,21 @@ public class TokenProvider {
         }
     }
 
-    public Member getMemberByToken(String token){
-        Authentication authentication = getAuthentication(token.substring(7));
-        if (authentication == null)
+    public String getMemberIdByToken(String accessToken) {
+        String token = "";
+        if (StringUtils.hasText(accessToken) && accessToken.startsWith("Bearer ")) {
+            token = accessToken.substring(7);
+        } else {
             return null;
-        return ((UserDetailsImpl) authentication.getPrincipal()).getMember();
+        }
+        Claims claims = Jwts
+                .parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getSubject();
     }
 
 

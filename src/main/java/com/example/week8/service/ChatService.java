@@ -9,6 +9,7 @@ import com.example.week8.domain.enums.MessageType;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.ChatMessageRepository;
 import com.example.week8.repository.ChatRoomRepository;
+import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,12 +31,14 @@ public class ChatService {
     private final TokenProvider tokenProvider;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final MemberRepository memberRepository;
 
     // 메세지 보내기
     @Transactional
     public ResponseDto<?> sendMessage(ChatRequestDto message, String token) {
         // 토큰으로 유저찾기
-        Member member = tokenProvider.getMemberByToken(token);
+        Long id = Long.parseLong(tokenProvider.getMemberIdByToken(token));
+        Member member = memberRepository.findById(id).orElse(null);
         if (member == null) {
             log.info("토큰오류");
             return ResponseDto.fail("토큰 오류");
