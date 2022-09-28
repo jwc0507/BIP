@@ -45,6 +45,9 @@ public class Event extends Timestamped{
     private String place; // 장소
 
     @Column
+    private String coordinate; // 좌표값
+
+    @Column
     private String content; //내용
 
     @Column (nullable = false)
