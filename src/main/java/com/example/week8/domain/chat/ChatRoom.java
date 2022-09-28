@@ -5,6 +5,7 @@ import com.example.week8.domain.Timestamped;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Builder
@@ -27,5 +28,7 @@ public class ChatRoom extends Timestamped {
     @OneToOne(fetch = FetchType.LAZY)
     private Event event;
 
-    //맴버 객체
+    // 챗 멤버 객체
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatMember> chatMember;
 }
