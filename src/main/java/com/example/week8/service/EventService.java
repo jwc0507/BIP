@@ -266,6 +266,7 @@ public class EventService {
         return ResponseDto.success(tempList);
     }
 
+
     /**
      * 약속 단건 조회
      */
