@@ -266,6 +266,7 @@ public class EventService {
         return ResponseDto.success(tempList);
     }
 
+
     /**
      * 약속 단건 조회
      */
@@ -489,6 +490,10 @@ public class EventService {
         // 약속 호출
         Event event = isPresentEvent(eventId);
 
+        // 약속 두 시간 전부터 체크인 가능
+        if (LocalDateTime.now().isBefore(event.getEventDateTime().minusHours(2)))
+            return ResponseDto.fail("아직 체크인 가능 시간이 아닙니다.");
+
         // 약속상태가 아직 ongoing(체크인 가능상태)인지 확인
         if (event.getEventStatus() == EventStatus.CLOSED)
             return ResponseDto.fail("체크인 가능 시간이 지났습니다.");
@@ -516,7 +521,7 @@ public class EventService {
     }
 
     /**
-     *
+     * 체크인 목록 조회
      */
     public ResponseDto<?> getCheckinMembers(Long eventId, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);

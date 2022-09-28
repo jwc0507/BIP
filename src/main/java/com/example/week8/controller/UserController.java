@@ -4,10 +4,7 @@ import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -64,5 +61,11 @@ public class UserController {
     @RequestMapping (value = "/api/user/point", method = RequestMethod.PUT)
     public ResponseDto<?> conversionPointToCredit(@RequestBody ConversionPointToCreditDto requestDto, HttpServletRequest request) {
         return userService.conversionPointToCredit(requestDto, request);
+    }
+
+    // 활동 내역 조회(완료된 약속)
+    @GetMapping("/api/user/event")
+    public ResponseDto<?> getClosedEvent(HttpServletRequest request) {
+        return userService.getClosedEvent(request);
     }
 }
