@@ -51,8 +51,14 @@ public class FriendController {
     }
 
     // 친구 별명 추가
-    @RequestMapping (value = "/api/friends/secondName", method = RequestMethod.PUT)
+    @RequestMapping (value = "/api/friends/secondname", method = RequestMethod.PUT)
     public ResponseDto<?> setSecondName(@RequestBody FriendSecondNameRequestDto requestDto, HttpServletRequest request) {
         return friendService.setSecondName(requestDto, request);
     }
+    //추천 친구 목록 반환 (추천 친구 = 나는 추가하지 않았지만, 나를 추가한 친구)
+    @RequestMapping (value = "/api/friends/recommandlist", method = RequestMethod.GET)
+    public ResponseDto<?> getRecommandFriendsList(HttpServletRequest request) {
+        return friendService.getRecommandFriendsList(request);
+    }
+
 }

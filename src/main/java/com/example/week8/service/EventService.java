@@ -437,6 +437,7 @@ public class EventService {
     /**
      * 약속 탈퇴
      */
+    @Transactional
     public ResponseDto<?> exitEvent(Long eventId, HttpServletRequest request) {
 
         ResponseDto<?> chkResponse = validateCheck(request);

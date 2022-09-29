@@ -1,5 +1,6 @@
 package com.example.week8.domain;
 
+import com.example.week8.domain.chat.ChatRoom;
 import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.request.EventRequestDto;
 import lombok.*;
@@ -31,6 +32,9 @@ public class Event extends Timestamped{
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)  // 약속이 삭제되면 해당 약속과 연관된 EventSchedule도 고아가 되어 삭제됨
     private List<EventSchedule> eventScheduleList = new ArrayList<>();
+    
+    @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ChatRoom chatRoom;
 
     @OneToOne
     private Member master; // 방장 (Event에서는 방장이 누구인지 궁금하지만 member에서는 자기가 방장인지 궁금하지는 않다 = 단방향)
