@@ -45,6 +45,9 @@ public class Event extends Timestamped{
     private String place; // 장소
 
     @Column
+    private String coordinate; // 좌표값
+
+    @Column
     private String content; //내용
 
     @Column (nullable = false)
@@ -57,6 +60,7 @@ public class Event extends Timestamped{
         this.title = eventRequestDto.getTitle();
         this.eventDateTime = stringToLocalDateTime(eventRequestDto.getEventDateTime());
         this.place = eventRequestDto.getPlace();
+        this.coordinate = eventRequestDto.getCoordinate();
         this.content = eventRequestDto.getContent();
         this.point = eventRequestDto.getPoint();
     }

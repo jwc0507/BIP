@@ -1,14 +1,21 @@
 package com.example.week8.service;
 
+import com.example.week8.domain.Event;
+import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
+import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.*;
+import com.example.week8.dto.response.EventListDto;
 import com.example.week8.dto.response.ReceivePointResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.dto.response.UpdateMemberResponseDto;
+import com.example.week8.repository.EventMemberRepository;
+import com.example.week8.repository.EventRepository;
 import com.example.week8.repository.MemberRepository;
 import com.example.week8.repository.RefreshTokenRepository;
 import com.example.week8.security.TokenProvider;
+import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -19,6 +26,9 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +37,8 @@ public class UserService {
     private final MemberService memberService;
     private final TokenProvider tokenProvider;
     private final MemberRepository memberRepository;
+    private final EventMemberRepository eventMemberRepository;
+    private final EventRepository eventRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
@@ -282,11 +294,11 @@ public class UserService {
             receiver = memberRepository.findByNickname(nickname).orElse(null);
             if(receiver == null)
                 return ResponseDto.fail("받는 사람 닉네임이 올바르지 않습니다.");
-            magnification = MAG_POINT_CREDIT*2;
+            magnification = MAG_POINT_CREDIT*2;   // 포인트로 신용도 올리기 배율을 동일화 하자는 fe요청
         }
         else {
             receiver = member;
-            magnification = MAG_POINT_CREDIT;
+            magnification = MAG_POINT_CREDIT*2;
         }
 
         // 신용도 추가
@@ -300,6 +312,10 @@ public class UserService {
         if (200 < newCredit) {
             lastCredit = newCredit - 200;
             newCredit = 200;
+        }
+        // 신용도의 최소치는 0이다.
+        if (0 > newCredit) {
+            newCredit = 0;
         }
         receiver.updateCreditScore(newCredit);
 
@@ -315,6 +331,50 @@ public class UserService {
                 .newCredit(receiver.getCredit())
                 .lastPoint(member.getPoint())
                 .build());
+    }
+
+    // 활동 내역 조회(완료된 약속)
+    @Transactional(readOnly = true)
+    public ResponseDto<?> getClosedEvent(HttpServletRequest request) {
+
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 엔티티 조회
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        List<EventMember> eventMemberList = eventMemberRepository.findAllByMemberId(member.getId());
+        List<EventListDto> tempList = new ArrayList<>();
+
+        for (EventMember eventMember : eventMemberList) {
+            Event event = isPresentEvent(eventMember.getEvent().getId());
+            if (event.getEventStatus() == EventStatus.CLOSED)
+                tempList.add(convertToDto(event));
+        }
+        return ResponseDto.success(tempList);
+    }
+
+    // 약속 호출
+    @Transactional(readOnly = true)
+    public Event isPresentEvent(Long id) {
+        Optional<Event> optionalEvent = eventRepository.findById(id);
+        return optionalEvent.orElse(null);
+    }
+
+    // Event를 EventListDto로 변환
+    public EventListDto convertToDto(Event event) {
+        return EventListDto.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                .place(event.getPlace())
+                .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
+                .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                .build();
     }
 
 }

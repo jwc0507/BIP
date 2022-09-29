@@ -4,6 +4,7 @@ import com.example.week8.domain.CheckinMember;
 import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
+import com.example.week8.domain.chat.ChatRoom;
 import com.example.week8.domain.enums.Attendance;
 import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.request.*;
@@ -11,11 +12,8 @@ import com.example.week8.dto.response.EventListDto;
 import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.MemberResponseDto;
 import com.example.week8.dto.response.ResponseDto;
-import com.example.week8.repository.CheckinMemberRepository;
+import com.example.week8.repository.*;
 import com.example.week8.dto.response.*;
-import com.example.week8.repository.EventMemberRepository;
-import com.example.week8.repository.EventRepository;
-import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +41,7 @@ public class EventService {
     private final EventMemberRepository eventMemberRepository;
     private final CheckinMemberRepository checkinMemberRepository;
     private final TokenProvider tokenProvider;
+    private final ChatRoomRepository chatRoomRepository;
     private final int MAG_DONE_CREDIT = 1;  // 약속완료 신용도 증감 배율 (1이 기본)
 
 
@@ -53,21 +52,17 @@ public class EventService {
         return ResponseDto.fail(true);
     }
 
-    // 기본방장 체크인생성
-
-    public void createChkin(EventResponseDto eventResponseDto) {
-        // 체크인멤버 생성 - 초대하는 사람 것
-        Event event = eventRepository.findById(eventResponseDto.getId()).orElse(null);
-        EventMember eventMember = eventMemberRepository.findAllByEventId(event.getId()).get(0);
-        Member member = memberRepository.findById(eventMember.getMember().getId()).orElse(null);
-        if (isPresentCheckinMember(event.getId(), member.getId() ) == null) {
-            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
-            checkinMemberRepository.save(checkinMember);
-        } else {
-            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
-            checkinMemberRepository.save(checkinMember);
-        }
+    // 채팅방 개설
+    @Transactional
+    public void createChatRoom(Event event) {
+        ChatRoom chatRoom = ChatRoom.builder()
+                .id(event.getId())
+                .name(event.getTitle())
+                .event(event)
+                .build();
+        chatRoomRepository.save(chatRoom);
     }
+
 
     /**
      * 약속 생성
@@ -96,6 +91,7 @@ public class EventService {
                 .eventStatus(EventStatus.ONGOING)
                 .eventDateTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()))
                 .place(eventRequestDto.getPlace())
+                .coordinate(eventRequestDto.getCoordinate())
                 .content(eventRequestDto.getContent())
                 .point(eventRequestDto.getPoint())
                 .build();
@@ -119,12 +115,32 @@ public class EventService {
                         .title(event.getTitle())
                         .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
+                        .coordinate(event.getCoordinate())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
         );
+    }
+
+    // 기본방장 체크인생성
+    public void createChkin(EventResponseDto eventResponseDto) {
+        // 체크인멤버 생성 - 초대하는 사람 것
+        Event event = eventRepository.findById(eventResponseDto.getId()).orElse(null);  // 이벤트 찾기
+        EventMember eventMember = eventMemberRepository.findAllByEventId(event.getId()).get(0);
+        Member member = memberRepository.findById(eventMember.getMember().getId()).orElse(null);    // 멤버찾기 (방장)
+
+        // 채팅방도 개설해준다.
+        createChatRoom(event);
+
+        if (isPresentCheckinMember(event.getId(), member.getId() ) == null) {
+            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
+            checkinMemberRepository.save(checkinMember);
+        } else {
+            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
+            checkinMemberRepository.save(checkinMember);
+        }
     }
 
     /**
@@ -169,6 +185,7 @@ public class EventService {
                         .title(event.getTitle())
                         .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
+                        .coordinate(event.getCoordinate())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .content(event.getContent())
@@ -252,6 +269,7 @@ public class EventService {
         return ResponseDto.success(tempList);
     }
 
+
     /**
      * 약속 단건 조회
      */
@@ -291,6 +309,7 @@ public class EventService {
                         .title(event.getTitle())
                         .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
+                        .coordinate(event.getCoordinate())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .content(event.getContent())
@@ -392,6 +411,7 @@ public class EventService {
                         .title(event.getTitle())
                         .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                         .place(event.getPlace())
+                        .coordinate(event.getCoordinate())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .content(event.getContent())
@@ -475,6 +495,10 @@ public class EventService {
         // 약속 호출
         Event event = isPresentEvent(eventId);
 
+        // 약속 두 시간 전부터 체크인 가능
+        if (LocalDateTime.now().isBefore(event.getEventDateTime().minusHours(2)))
+            return ResponseDto.fail("아직 체크인 가능 시간이 아닙니다.");
+
         // 약속상태가 아직 ongoing(체크인 가능상태)인지 확인
         if (event.getEventStatus() == EventStatus.CLOSED)
             return ResponseDto.fail("체크인 가능 시간이 지났습니다.");
@@ -502,7 +526,7 @@ public class EventService {
     }
 
     /**
-     *
+     * 체크인 목록 조회
      */
     public ResponseDto<?> getCheckinMembers(Long eventId, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);

@@ -55,7 +55,8 @@ public class SecurityConfiguration {
 
     http.csrf().disable()
 
-            .headers().frameOptions().disable()
+            .headers().frameOptions().sameOrigin()
+
             .and()
             .exceptionHandling()
             .authenticationEntryPoint(authenticationEntryPointException)
@@ -69,7 +70,8 @@ public class SecurityConfiguration {
             .authorizeRequests()
             .antMatchers(HttpMethod.OPTIONS, "/**/*").permitAll()
             .antMatchers("/api/member/**").permitAll()
-            .anyRequest().authenticated()
+            //.anyRequest().authenticated()
+            .anyRequest().permitAll()
 
             .and()
             .apply(new JwtSecurityConfiguration(SECRET_KEY, tokenProvider, userDetailsService));
