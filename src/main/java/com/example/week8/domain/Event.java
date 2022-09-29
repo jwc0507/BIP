@@ -60,6 +60,7 @@ public class Event extends Timestamped{
         this.title = eventRequestDto.getTitle();
         this.eventDateTime = stringToLocalDateTime(eventRequestDto.getEventDateTime());
         this.place = eventRequestDto.getPlace();
+        this.coordinate = eventRequestDto.getCoordinate();
         this.content = eventRequestDto.getContent();
         this.point = eventRequestDto.getPoint();
     }
