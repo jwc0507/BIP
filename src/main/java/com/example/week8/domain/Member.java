@@ -25,7 +25,7 @@ public class Member extends Timestamped{
     private boolean firstLogin; //첫 로그인 여부
 
     @Column(name = "POINT_ON_DAY")
-    private Long pointOnDay;
+    private Long pointOnDay; //일일 포인트 획득량
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMember> chatMember;

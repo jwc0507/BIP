@@ -153,7 +153,7 @@ public class UserService {
         if(!getAuthCode.isSuccess())
             return ResponseDto.fail("코드생성 실패");
 
-        String subject = "[포도미스키퍼] 이메일 로그인 인증코드입니다";
+        String subject = "[프로미스톡] 이메일 로그인 인증코드입니다";
         String text = "인증번호 ["+getAuthCode.getData()+"] 을 입력해주세요.";
 
         // simpleMailMessage를 사용하면 텍스트만 보내고 MimeMessage를 사용시 멀티파트로 보냄 (파일전송 가능)

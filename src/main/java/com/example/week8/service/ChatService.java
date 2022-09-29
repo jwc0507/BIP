@@ -166,7 +166,7 @@ public class ChatService {
 
   //      LocalDateTime localDateTime = LocalDateTime.of(2022, 9, 28, 18, 0, 0);
 
-        List<ChatMessage> chatMessageList = chatMessageRepository.findAllByChatRoomAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(chatRoom, chatMember.getCreatedAt());
+        List<ChatMessage> chatMessageList = chatMessageRepository.findAllByChatRoomAndCreatedAtGreaterThanEqualOrderByCreatedAtAsc(chatRoom, chatMember.getCreatedAt());
         List<ChatMessageDto> chatMessageDtos = new ArrayList<>();
         for (ChatMessage chatMessage : chatMessageList) {
             Member getMember = chatMessage.getMember();
