@@ -81,7 +81,7 @@ public class EventService {
         }
 
         if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
-            return ResponseDto.fail("약속 시간을 미래로 설정해주세요.");
+            return ResponseDto.success("약속 시간을 미래로 설정해주세요.");
 
 
         // 약속 생성
