@@ -1,5 +1,6 @@
 package com.example.week8.domain;
 
+import com.example.week8.domain.chat.ChatMember;
 import com.example.week8.domain.enums.Authority;
 import lombok.*;
 
@@ -25,6 +26,9 @@ public class Member extends Timestamped{
 
     @Column(name = "POINT_ON_DAY")
     private Long pointOnDay; //일일 포인트 획득량
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatMember> chatMember;
 
     @Column (unique = true)
     private Long kakaoId;   // 카카오id

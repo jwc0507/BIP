@@ -8,9 +8,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import javax.annotation.PostConstruct;
-import java.util.TimeZone;
-
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableScheduling
@@ -26,7 +23,7 @@ public class Week8Application {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
-						.allowedOrigins("http://localhost:3000")
+						.allowedOrigins("http://localhost:3000", "http://promisetalk.s3-website.ap-northeast-2.amazonaws.com/")
 						.exposedHeaders("Authorization", "RefreshToken")
 						.allowedMethods("*")
 						.allowedHeaders("*")
@@ -35,9 +32,4 @@ public class Week8Application {
 			}
 		};
 	}
-//	@PostConstruct
-//	public void started(){
-//		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
-//
-//	}
 }
