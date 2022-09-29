@@ -1,4 +1,5 @@
 package com.example.week8.security;
+
 import com.example.week8.domain.Member;
 import com.example.week8.domain.RefreshToken;
 import com.example.week8.domain.UserDetailsImpl;
@@ -84,7 +85,6 @@ public class TokenProvider {
     }
 
 
-
     public Member getMemberFromAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || AnonymousAuthenticationToken.class.
@@ -117,7 +117,6 @@ public class TokenProvider {
     }
 
     @Transactional
-
     public boolean deleteRefreshToken(Member member) {
         RefreshToken refreshToken = isPresentRefreshToken(member);
         if (null == refreshToken) {
@@ -127,12 +126,10 @@ public class TokenProvider {
         return false;
     }
 
-    public Authentication getAuthentication(HttpServletRequest request) {
-        String token=getAccessToken(request);
-        if(token==null) {
+    public Authentication getAuthentication(String token) {
+        if (token == null) {
             return null;
-        }
-        else {
+        } else {
             Claims claims = Jwts
                     .parserBuilder()
                     .setSigningKey(key)
@@ -150,6 +147,24 @@ public class TokenProvider {
             return new UsernamePasswordAuthenticationToken(principal, token, authorities);
         }
     }
+
+    public String getMemberIdByToken(String accessToken) {
+        String token = "";
+        if (StringUtils.hasText(accessToken) && accessToken.startsWith("Bearer ")) {
+            token = accessToken.substring(7);
+        } else {
+            return null;
+        }
+        Claims claims = Jwts
+                .parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getSubject();
+    }
+
 
     private String getAccessToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");

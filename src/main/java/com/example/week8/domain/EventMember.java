@@ -24,14 +24,9 @@ public class EventMember {
     @JoinColumn(name = "MEMBER_ID")
     private Member member;
 
-    //==생성 메서드==//
-    public static EventMember createEventMember(Member member, Event event) {
-        EventMember eventMember = new EventMember();
-        eventMember.setMember(member);
-        eventMember.setEvent(event);
-
-        return eventMember;
+    public EventMember(Member member, Event event) {
+        this.member = member;
+        this.event = event;
     }
-
 
 }

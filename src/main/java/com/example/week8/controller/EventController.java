@@ -1,6 +1,7 @@
 package com.example.week8.controller;
 
 import com.example.week8.dto.request.*;
+import com.example.week8.dto.response.EventResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.EventService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,9 @@ public class EventController {
     @PostMapping("/api/events")
     public ResponseDto<?> createEvent(@RequestBody EventRequestDto requestDto,
                                       HttpServletRequest request) {
-        return eventService.createEvent(requestDto, request);
+        ResponseDto<?> responseDto = eventService.createEvent(requestDto, request);
+        eventService.createChkin((EventResponseDto)responseDto.getData());
+        return responseDto;
     }
 
     /**
@@ -80,6 +83,33 @@ public class EventController {
         return eventService.exitEvent(eventId, request);
     }
 
+    /**
+     * 체크인
+     */
+    @PostMapping("api/events/checkin/{eventId}")
+    public ResponseDto<?> checkin(@PathVariable Long eventId,
+                                    HttpServletRequest request) {
+        return eventService.checkin(eventId, request);
+    }
+
+    /**
+     * 체크인(attendance) 상태 조회
+     */
+    @GetMapping("api/events/checkin/{eventId}")
+    public ResponseDto<?> getCheckin(@PathVariable Long eventId,
+                                  HttpServletRequest request) {
+        return eventService.getCheckinMembers(eventId, request);
+    }
+
+    /**
+     * 컨펌(방장만)
+     */
+    @PutMapping("api/events/confirm/{eventId}")
+    public ResponseDto<?> confirm(@PathVariable Long eventId,
+                                  HttpServletRequest request) {
+        return eventService.confirm(eventId, request);
+    }
+
     // 방장 확인
     @RequestMapping (value = "/api/events/master/check/{eventId}", method = RequestMethod.GET)
     public ResponseDto<?> setSecondName(@PathVariable Long eventId, HttpServletRequest request) {
@@ -93,7 +123,7 @@ public class EventController {
     }
 
     // 약속 맴버 추방
-    @RequestMapping (value = "/api/events/master/{eventId}", method = RequestMethod.DELETE)
+    @RequestMapping (value = "/api/events/master/deport/{eventId}", method = RequestMethod.POST)
     public ResponseDto<?> kickMember(@PathVariable Long eventId, @RequestBody MasterRequestDto requestDto, HttpServletRequest request) {
         return eventService.kickMember(eventId, requestDto, request);
     }

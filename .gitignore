@@ -27,12 +27,15 @@ out/
 !**/src/test/**/out/
 
 ### custom ignore files ###
+event-scheduler-4736e-firebase-adminsdk-1atyo-5249f2d5a7.json
 application-aws.properties
 memberTest.http
 serviceTest.http
 friendTest.http
 eventTest.http
 masterTest.http
+fcmTest.http
+firebase-message-sw.js
 
 ### NetBeans ###
 /nbproject/private/
