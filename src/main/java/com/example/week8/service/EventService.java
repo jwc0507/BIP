@@ -1,11 +1,9 @@
 package com.example.week8.service;
 
-import com.example.week8.domain.CheckinMember;
-import com.example.week8.domain.Event;
-import com.example.week8.domain.EventMember;
-import com.example.week8.domain.Member;
+import com.example.week8.domain.*;
 import com.example.week8.domain.chat.ChatRoom;
 import com.example.week8.domain.enums.Attendance;
+import com.example.week8.domain.enums.Before;
 import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.EventListDto;
@@ -42,6 +40,7 @@ public class EventService {
     private final CheckinMemberRepository checkinMemberRepository;
     private final TokenProvider tokenProvider;
     private final ChatRoomRepository chatRoomRepository;
+    private final EventScheduleRepository eventScheduleRepository;
     private final int MAG_DONE_CREDIT = 1;  // 약속완료 신용도 증감 배율 (1이 기본)
 
 
@@ -97,10 +96,12 @@ public class EventService {
                 .build();
         eventRepository.save(event);
 
+        // 약속 스케쥴 생성 - 주, 일, 시, 분
+        createEventSchedule(event);
+
         // 약속 멤버 생성
         EventMember eventMember = new EventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
         eventMemberRepository.save(eventMember);
-
 
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
@@ -122,6 +123,32 @@ public class EventService {
                         .point(event.getPoint())
                         .build()
         );
+    }
+
+    // 약속 스케쥴 생성
+    public void createEventSchedule(Event event) {
+        // 알림 시간이 이미 지난 시점이라면 해당 eventSchedule은 생성하지 않음
+
+        if (event.getEventDateTime().minusDays(1).isAfter(LocalDateTime.now())) {
+            EventSchedule eventScheduleDay = new EventSchedule(event);
+            eventScheduleDay.setBefore(Before.DAY);
+            eventScheduleDay.setTargetTime(event.getEventDateTime().minusDays(1));
+            eventScheduleRepository.save(eventScheduleDay);
+        }
+
+        if (event.getEventDateTime().minusHours(1).isAfter(LocalDateTime.now())) {
+            EventSchedule eventScheduleHour = new EventSchedule(event);
+            eventScheduleHour.setBefore(Before.HOUR);
+            eventScheduleHour.setTargetTime(event.getEventDateTime().minusHours(1));
+            eventScheduleRepository.save(eventScheduleHour);
+        }
+
+        if (event.getEventDateTime().minusMinutes(1).isAfter(LocalDateTime.now())) {
+            EventSchedule eventScheduleMinute = new EventSchedule(event);
+            eventScheduleMinute.setBefore(Before.MINUTE);
+            eventScheduleMinute.setTargetTime(event.getEventDateTime().minusMinutes(10));
+            eventScheduleRepository.save(eventScheduleMinute);
+        }
     }
 
     // 기본방장 체크인생성
@@ -168,9 +195,16 @@ public class EventService {
         if (!isMaster(event, member))
             return ResponseDto.fail("방장이 아닙니다.");
 
+        // eventDateTime에 변경이 있는지 확인
+        if (!event.getEventDateTime().isEqual(stringToLocalDateTime(eventRequestDto.getEventDateTime()))) {
+            event.updateEvent(eventRequestDto);  // 약속 수정
+            eventScheduleRepository.deleteAllByEventId(eventId);  // 기존 약속스케쥴 삭제
+            createEventSchedule(event);  // 새로운 약속스케쥴 생성
+        } else {
+            event.updateEvent(eventRequestDto);  // 약속 수정
+        }
 
-        // 약속 수정
-        event.updateEvent(eventRequestDto);
+
 
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
@@ -648,6 +682,29 @@ public class EventService {
         }
         else
             return ResponseDto.fail("약속완료 실패");
+    }
+
+    /**
+     * 약속 스케쥴러
+     */
+    public void eventAlarm() {
+        LocalDateTime now = LocalDateTime.now().withNano(0);  // LocalDateTime에서 밀리세컨드 부분 제거
+        log.info("현재시각 "+now);
+        List<EventSchedule> eventScheduleList = eventScheduleRepository.findAll();
+        for (EventSchedule eventSchedule : eventScheduleList) {
+            if (eventSchedule.getTargetTime().equals(now)) {
+                if (eventSchedule.getBefore() == Before.DAY) {
+                    log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 하루 남았습니다.");
+                    eventScheduleRepository.delete(eventSchedule);
+                } else if (eventSchedule.getBefore() == Before.HOUR) {
+                    log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 한 시간 남았습니다.");
+                    eventScheduleRepository.delete(eventSchedule);
+                } else if (eventSchedule.getBefore() == Before.MINUTE) {
+                    log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 십 분 남았습니다.");
+                    eventScheduleRepository.delete(eventSchedule);
+                }
+            }
+        }
     }
 
     //== 추가 메서드 ==//
