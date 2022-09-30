@@ -10,6 +10,7 @@ import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -146,7 +147,7 @@ public class ChatService {
 
 
     // 기존 채팅방 메세지들 불러오기
-    public ResponseDto<?> getMessage(Long roomId, HttpServletRequest request) {
+    public ResponseDto<?> getMessage(Long roomId, Pageable pageable, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
@@ -166,7 +167,7 @@ public class ChatService {
 
   //      LocalDateTime localDateTime = LocalDateTime.of(2022, 9, 28, 18, 0, 0);
 
-        List<ChatMessage> chatMessageList = chatMessageRepository.findAllByChatRoomAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(chatRoom, chatMember.getCreatedAt());
+        List<ChatMessage> chatMessageList = chatMessageRepository.findAllByChatRoomAndCreatedAtGreaterThanEqualOrderByCreatedAtAsc(chatRoom, chatMember.getCreatedAt(), pageable);
         List<ChatMessageDto> chatMessageDtos = new ArrayList<>();
         for (ChatMessage chatMessage : chatMessageList) {
             Member getMember = chatMessage.getMember();
