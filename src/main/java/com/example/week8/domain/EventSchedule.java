@@ -25,7 +25,7 @@ public class EventSchedule {
     private Event event;
 
     @Enumerated(EnumType.STRING)
-    private BeforeTime BeforeTime;
+    private BeforeTime beforeTime;
 
     @Column
     private LocalDateTime targetTime;
