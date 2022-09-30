@@ -3,7 +3,7 @@ package com.example.week8.service;
 import com.example.week8.domain.*;
 import com.example.week8.domain.chat.ChatRoom;
 import com.example.week8.domain.enums.Attendance;
-import com.example.week8.domain.enums.Before;
+import com.example.week8.domain.enums.BeforeTime;
 import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.EventListDto;
@@ -131,21 +131,21 @@ public class EventService {
 
         if (event.getEventDateTime().minusDays(1).isAfter(LocalDateTime.now())) {
             EventSchedule eventScheduleDay = new EventSchedule(event);
-            eventScheduleDay.setBefore(Before.DAY);
+            eventScheduleDay.setBeforeTime(BeforeTime.DAY);
             eventScheduleDay.setTargetTime(event.getEventDateTime().minusDays(1));
             eventScheduleRepository.save(eventScheduleDay);
         }
 
         if (event.getEventDateTime().minusHours(1).isAfter(LocalDateTime.now())) {
             EventSchedule eventScheduleHour = new EventSchedule(event);
-            eventScheduleHour.setBefore(Before.HOUR);
+            eventScheduleHour.setBeforeTime(BeforeTime.HOUR);
             eventScheduleHour.setTargetTime(event.getEventDateTime().minusHours(1));
             eventScheduleRepository.save(eventScheduleHour);
         }
 
         if (event.getEventDateTime().minusMinutes(1).isAfter(LocalDateTime.now())) {
             EventSchedule eventScheduleMinute = new EventSchedule(event);
-            eventScheduleMinute.setBefore(Before.MINUTE);
+            eventScheduleMinute.setBeforeTime(BeforeTime.MINUTE);
             eventScheduleMinute.setTargetTime(event.getEventDateTime().minusMinutes(10));
             eventScheduleRepository.save(eventScheduleMinute);
         }
@@ -693,13 +693,13 @@ public class EventService {
         List<EventSchedule> eventScheduleList = eventScheduleRepository.findAll();
         for (EventSchedule eventSchedule : eventScheduleList) {
             if (eventSchedule.getTargetTime().equals(now)) {
-                if (eventSchedule.getBefore() == Before.DAY) {
+                if (eventSchedule.getBeforeTime() == BeforeTime.DAY) {
                     log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 하루 남았습니다.");
                     eventScheduleRepository.delete(eventSchedule);
-                } else if (eventSchedule.getBefore() == Before.HOUR) {
+                } else if (eventSchedule.getBeforeTime() == BeforeTime.HOUR) {
                     log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 한 시간 남았습니다.");
                     eventScheduleRepository.delete(eventSchedule);
-                } else if (eventSchedule.getBefore() == Before.MINUTE) {
+                } else if (eventSchedule.getBeforeTime() == BeforeTime.MINUTE) {
                     log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 십 분 남았습니다.");
                     eventScheduleRepository.delete(eventSchedule);
                 }
