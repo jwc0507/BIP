@@ -141,7 +141,7 @@ public class KakaoOauthService {
                         .kakaoId(kakaoId)
                         .email(email)
                         .profileImageUrl(imageUrl)
-                        .point(1000)
+                        .point(1000000)
                         .credit(100.0)
                         .pointOnDay(0L)
                         .numOfDone(0)
