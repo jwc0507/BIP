@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Getter @Setter
+@Getter
+@Setter
 public class EventSchedule {
 
     @Id

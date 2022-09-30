@@ -96,8 +96,6 @@ public class EventService {
                 .build();
         eventRepository.save(event);
 
-        // 약속 스케쥴 생성 - 주, 일, 시, 분
-        createEventSchedule(event);
 
         // 약속 멤버 생성
         EventMember eventMember = new EventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
@@ -107,6 +105,14 @@ public class EventService {
         List<MemberResponseDto> list = new ArrayList<>();
         MemberResponseDto memberResponseDto = convertToDto(member);
         list.add(memberResponseDto);
+
+        eventRepository.flush();
+        eventMemberRepository.flush();
+
+
+        // 약속 스케쥴 생성 - 주, 일, 시, 분
+        createEventSchedule(event);
+        createChkin(event.getId());
 
         return ResponseDto.success(
                 EventResponseDto.builder()
@@ -152,9 +158,9 @@ public class EventService {
     }
 
     // 기본방장 체크인생성
-    public void createChkin(EventResponseDto eventResponseDto) {
+    public void createChkin(Long eventId) {
         // 체크인멤버 생성 - 초대하는 사람 것
-        Event event = eventRepository.findById(eventResponseDto.getId()).orElse(null);  // 이벤트 찾기
+        Event event = eventRepository.findById(eventId).orElse(null);  // 이벤트 찾기
         EventMember eventMember = eventMemberRepository.findAllByEventId(event.getId()).get(0);
         Member member = memberRepository.findById(eventMember.getMember().getId()).orElse(null);    // 멤버찾기 (방장)
 
