@@ -29,9 +29,9 @@ public class Scheduler {  // 스케쥴링할 메소드의 조건 2가지: void�
         }
     }
 
-//    @Async
-//    @Scheduled(cron = "0 */10 * * * *")
-//    public void eventAlarm() {
-//        eventService.eventAlarm();
-//    }
+    @Async
+    @Scheduled(cron = "0 */10 * * * *")
+    public void eventAlarm() {
+        eventService.eventAlarm();
+    }
 }
