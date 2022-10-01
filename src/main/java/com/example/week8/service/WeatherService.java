@@ -24,6 +24,7 @@ public class WeatherService {
     private String apiKey;
     private final String BASE_URL = "http://api.openweathermap.org/data/2.5/weather";
 
+    // 날씨 단건조회
     public ResponseDto<?> getLocalWeather(String coordinate) {
         String[] splitCoordinate = coordinate.split(",");
 

@@ -283,7 +283,7 @@ public class UserService {
         assert member != null;  // 동작할일은 없는 코드
 
         // 잔여 포인트량 확인
-        if (member.getPoint() < point)
+        if (member.getPoint() < point || member.getPoint() < 0)
             return ResponseDto.fail("포인트가 부족합니다.");
 
         // 자기 자신인지 확인
@@ -314,7 +314,7 @@ public class UserService {
             newCredit = 200;
         }
         // 신용도의 최소치는 0이다.
-        if (0 > newCredit) {
+        else if (0 > newCredit) {
             newCredit = 0;
         }
         receiver.updateCreditScore(newCredit);
@@ -323,7 +323,7 @@ public class UserService {
         double lastPoint = lastCredit/magnification;
 
         // 포인트 감소
-        int newPoint = (point*-1)+(int)Math.floor(lastPoint);
+        int newPoint = (point*-1)+(int)lastPoint;
         member.updatePoint(newPoint);
 
         return ResponseDto.success(ReceivePointResponseDto.builder()

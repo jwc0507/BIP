@@ -41,6 +41,7 @@ public class EventService {
     private final TokenProvider tokenProvider;
     private final ChatRoomRepository chatRoomRepository;
     private final EventScheduleRepository eventScheduleRepository;
+    private final WeatherService weatherService;
     private final int MAG_DONE_CREDIT = 1;  // 약속완료 신용도 증감 배율 (1이 기본)
 
 
@@ -125,6 +126,7 @@ public class EventService {
                         .coordinate(event.getCoordinate())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -228,6 +230,7 @@ public class EventService {
                         .coordinate(event.getCoordinate())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -352,6 +355,7 @@ public class EventService {
                         .coordinate(event.getCoordinate())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -454,6 +458,7 @@ public class EventService {
                         .coordinate(event.getCoordinate())
                         .createdAt(event.getCreatedAt())
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -917,6 +922,7 @@ public class EventService {
                 .title(event.getTitle())
                 .eventDateTime(Time.serializeDate(event.getEventDateTime()))
                 .place(event.getPlace())
+                .weatherResponseDto((WeatherResponseDto) weatherService.getLocalWeather(event.getCoordinate()).getData())
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
                 .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                 .build();

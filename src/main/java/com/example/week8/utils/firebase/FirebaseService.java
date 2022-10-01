@@ -1,6 +1,8 @@
 //package com.example.week8.utils.firebase;
 //
+//
 //import com.example.week8.dto.FCMMessageDto;
+//import com.example.week8.dto.response.ResponseDto;
 //import com.fasterxml.jackson.core.JsonProcessingException;
 //import com.fasterxml.jackson.databind.ObjectMapper;
 //import com.google.auth.oauth2.GoogleCredentials;
@@ -19,14 +21,12 @@
 //@RequiredArgsConstructor
 //@Slf4j
 //public class FirebaseService {
-//    private final RestTemplate restTemplate; // 비공개 키 경로
-//
-//    private final String CONFIG_PATH = "firebase/firebase-key.json"; // 토큰 발급 URL
-//    private final String AUTH_URL = "https://www.googleapis.com/auth/cloud-platform"; // 엔드포인트 URL
+//    private final String CONFIG_PATH = "event-scheduler-4736e-firebase-adminsdk-1atyo-5249f2d5a7.json";
+//    private final String AUTH_URL = "https://www.googleapis.com/auth/cloud-platform";
 //    private final String SEND_URL = "https://fcm.googleapis.com/v1/projects/event-scheduler-4736e/messages:send";
 //    private final ObjectMapper objectMapper;
 //
-//    public void sendMessageTo(String targetToken, String title, String body) throws IOException {
+//    public ResponseDto<?> sendMessageTo(String targetToken, String title, String body) throws IOException {
 //        String message = makeMessage(targetToken, title, body);
 //
 //        HttpHeaders headers = new HttpHeaders();
@@ -34,17 +34,21 @@
 //        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 //        headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken());
 //
-//        final HttpEntity<Object> entity = new HttpEntity<>(message, headers);
-//        final ResponseEntity<String> response = restTemplate.exchange(SEND_URL, HttpMethod.POST, entity, String.class);
-//        final HttpStatus status = response.getStatusCode();
-//        final String responseBody = response.getBody();
+//        HttpEntity<Object> entity = new HttpEntity<>(message, headers);
+//        RestTemplate rt = new RestTemplate();
+//        ResponseEntity<String> response = rt.exchange(
+//                SEND_URL,
+//                HttpMethod.POST,
+//                entity,
+//                String.class
+//        );
+//        HttpStatus status = response.getStatusCode();
+//        String responseBody = response.getBody();
 //
 //        if (status.equals(HttpStatus.OK)) { // 발송 API 호출 성공
-//
+//            return ResponseDto.success(responseBody);
 //        }
-//        else { // 발송 API 호출 실패
-//
-//        }
+//        return ResponseDto.fail(responseBody);
 //    }
 //
 //    // 파라미터를 FCM이 요구하는 body 형태로 만들어준다.
