@@ -6,7 +6,6 @@ import com.example.week8.domain.enums.SearchType;
 import com.example.week8.dto.request.FriendAdditionRequestDto;
 import com.example.week8.dto.request.FriendSecondNameRequestDto;
 import com.example.week8.dto.response.FriendInfoResponseDto;
-import com.example.week8.dto.response.MemberSearchResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.FriendRepository;
 import com.example.week8.repository.MemberRepository;
@@ -62,6 +61,9 @@ public class FriendService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
+        if (friendAdditionRequestDto.getValue() == null)
+            return ResponseDto.fail("입력필드가 잘못되었습니다.");
+
         //nickname으로 검색한 member
         Member findedMember = memberRepository.findByNickname(friendAdditionRequestDto.getValue()).orElse(null);
         if (findedMember == null)
@@ -103,6 +105,9 @@ public class FriendService {
             return chkResponse;
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
+
+        if (friendAdditionRequestDto.getValue() == null)
+            return ResponseDto.fail("입력필드가 잘못되었습니다.");
 
         //phoneNumber로 검색한 member
         Member findedMember = memberRepository.findByPhoneNumber(friendAdditionRequestDto.getValue()).orElse(null);

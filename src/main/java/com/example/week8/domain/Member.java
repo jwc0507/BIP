@@ -67,7 +67,7 @@ public class Member extends Timestamped {
     @Enumerated(EnumType.STRING)
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "owner")
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "owner")
     private List<Friend> friendList = new ArrayList<>();
 
     public void updateNickname(String name) {
