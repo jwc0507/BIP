@@ -39,8 +39,18 @@ public class Post extends Timestamped {
 //    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 //    private List<Comment> comments;
 
-    @Column(nullable = false)
+    @Column
     private int likes;
+
+    @Column
+    private int views;
+
+    @Column(nullable = false)
+    private int point;
+
+    private String imgUrl;
+    private String address;
+    private String coordinates;
 
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
@@ -51,9 +61,23 @@ public class Post extends Timestamped {
         this.likes = 0;
     }
 
-    // 조회수 갯수 올리기
-    public void addLike() {
-        this.likes += 1;
+    // 조회수 올리기
+    public void addViews() {
+        this.views += 1;
+    }
+
+    //회원정보 검증
+    public boolean validateMember(Member member) {
+        return !this.member.equals(member);
+    }
+
+    // 게시글 수정
+    public void updatePost(PostRequestDto postRequestDto) {
+        this.divisionOne = postRequestDto.getDivisionOne();
+        this.divisionTwo = postRequestDto.getDivisionTwo();
+        this.title = postRequestDto.getTitle();
+        this.content = postRequestDto.getContent();
+
     }
 
 }
