@@ -1,7 +1,7 @@
 package com.example.week8.dto.response;
 
-import com.example.week8.domain.enums.DivisionOne;
-import com.example.week8.domain.enums.DivisionTwo;
+import com.example.week8.domain.enums.Board;
+import com.example.week8.domain.enums.Category;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 @Builder
 public class PostResponseDto {
     private Long id;
-    private DivisionOne divisionOne;
-    private DivisionTwo divisionTwo;
+    private Board board;
+    private Category category;
     private String nickname;
     private String title;
     private String content;
