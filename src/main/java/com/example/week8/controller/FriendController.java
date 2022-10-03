@@ -60,5 +60,4 @@ public class FriendController {
     public ResponseDto<?> getRecommandFriendsList(HttpServletRequest request) {
         return friendService.getRecommandFriendsList(request);
     }
-
 }
