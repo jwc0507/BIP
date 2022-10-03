@@ -1,10 +1,12 @@
 package com.example.week8.dto.request;
 
 import lombok.Getter;
-import lombok.Setter;
+
+import javax.validation.constraints.NotNull;
 
 @Getter
-@Setter
 public class ImgUrlRequestDto {
+
+    @NotNull
     private String imgUrl;
 }

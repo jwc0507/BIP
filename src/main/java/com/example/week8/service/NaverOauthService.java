@@ -149,7 +149,7 @@ public class NaverOauthService {
                         .email(email)
                         .profileImageUrl(imgUrl)
                         .phoneNumber(phoneNumber)
-                        .point(1000)
+                        .point(1000000)
                         .credit(100.0)
                         .pointOnDay(0L)
                         .numOfDone(0)

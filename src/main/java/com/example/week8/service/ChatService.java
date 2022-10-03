@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -75,6 +77,7 @@ public class ChatService {
         ChatMessageDto chatMessageDto = ChatMessageDto.builder()
                 .sender("알림")
                 .message(member.getNickname() + "님이 입장하셨습니다.")
+                .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ")))
                 .build();
 
         // 메세지 보내기
@@ -126,18 +129,22 @@ public class ChatService {
             return ResponseDto.fail("룸 번호 오류");
         }
 
+        String dateNow = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm "));
+
         ChatMessageDto chatMessageDto = ChatMessageDto.builder()
                 .sender(member.getNickname())
                 .message(message.getMessage())
+                .sendTime(dateNow)
                 .build();
 
         // 메세지 보내기
         messageTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), chatMessageDto);
 
-        // 보낸 메세지 저장
+        // 보낸 메세지 저장 (db바뀔때 timestamp 없애고 위의 값을 저장하는것으로 바꾸기)
         ChatMessage chatMessage = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .member(member)
+                .sendTime(dateNow)
                 .message(message.getMessage())
                 .build();
 
@@ -171,9 +178,11 @@ public class ChatService {
         List<ChatMessageDto> chatMessageDtos = new ArrayList<>();
         for (ChatMessage chatMessage : chatMessageList) {
             Member getMember = chatMessage.getMember();
+
             ChatMessageDto chatMsgResponseDto = ChatMessageDto.builder()
                     .sender(getMember.getNickname())
                     .message(chatMessage.getMessage())
+                    .sendTime(chatMessage.getSendTime())
                     .build();
             chatMessageDtos.add(chatMsgResponseDto);
         }
