@@ -38,6 +38,8 @@ fcmTest.http
 firebase-message-sw.js
 index.html
 SseTestController.java
+postTest.http
+CommentTest.http
 
 ### NetBeans ###
 /nbproject/private/

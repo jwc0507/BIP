@@ -1,5 +1,6 @@
 package com.example.week8.controller;
 
+import com.example.week8.domain.enums.DivisionOne;
 import com.example.week8.dto.request.PostRequestDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.PostService;
@@ -59,5 +60,20 @@ public class PostController {
         return postService.deletePost(eventId, request);
     }
 
+    /**
+     * 기부요청 게시판 카테고리 조회
+     */
+    @GetMapping("/api/posts/request")
+    public ResponseDto<?> getRequestList(@RequestParam("category") String category) {
+        return postService.getCategoryList(DivisionOne.ASK.toString(), category);
+    }
+
+    /**
+     * 기부하기 게시판 카테고리 조회
+     */
+    @GetMapping("/api/posts/donation")
+    public ResponseDto<?> getDonationList(@RequestParam("category") String category) {
+        return postService.getCategoryList(DivisionOne.ANSWER.toString(), category);
+    }
 
 }
