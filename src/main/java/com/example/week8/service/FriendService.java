@@ -207,9 +207,10 @@ public class FriendService {
         if (friend == null)
             return ResponseDto.fail("친구리스트에 없는 멤버입니다.");
 
-        return ResponseDto.success(MemberSearchResponseDto.builder()
+        return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(findedMember.getId())
-                .nickname(findedMember.getNickname())
+                .nicknameByOwner(friend.getSecondName())
+                .nicknameByFriend(findedMember.getNickname())
                 .profileImgUrl(findedMember.getProfileImageUrl())
                 .creditScore(findedMember.getCredit())
                 .build());
@@ -220,6 +221,7 @@ public class FriendService {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
+        Member getMember = validateMember(request);
 
         Member findedMember;
         // 닉네임으로 검색
@@ -236,9 +238,16 @@ public class FriendService {
         } else {
             return ResponseDto.fail("검색 타입 에러");
         }
-        return ResponseDto.success(MemberSearchResponseDto.builder()
+
+        String secondName = null;
+        Friend friend = isPresentFriend(getMember, findedMember);
+        if(friend != null)
+            secondName = friend.getSecondName();
+
+        return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(findedMember.getId())
-                .nickname(findedMember.getNickname())
+                .nicknameByOwner(secondName)
+                .nicknameByFriend(findedMember.getNickname())
                 .profileImgUrl(findedMember.getProfileImageUrl())
                 .creditScore(findedMember.getCredit())
                 .build());

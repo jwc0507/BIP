@@ -42,12 +42,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ErrorResponse.ErrorCode.DATETIME_PARSE_ERROR));
     }
 
-    // 좌표 업음 에러
-    @ExceptionHandler(NumberFormatException.class)
-    protected ResponseEntity<ErrorResponse> coordinateException(final Exception e) {
-        log.error("dateException: {}", e.getMessage());
-        return ResponseEntity
-                .status(ErrorResponse.ErrorCode.COORDINATE_EMPTY_ERROR.getStatus().value())
-                .body(new ErrorResponse(ErrorResponse.ErrorCode.COORDINATE_EMPTY_ERROR));
-    }
+//    // 좌표 업음 에러
+//    @ExceptionHandler(NumberFormatException.class)
+//    protected ResponseEntity<ErrorResponse> coordinateException(final Exception e) {
+//        log.error("dateException: {}", e.getMessage());
+//        return ResponseEntity
+//                .status(ErrorResponse.ErrorCode.COORDINATE_EMPTY_ERROR.getStatus().value())
+//                .body(new ErrorResponse(ErrorResponse.ErrorCode.COORDINATE_EMPTY_ERROR));
+//    }
 }
