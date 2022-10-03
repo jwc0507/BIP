@@ -1,7 +1,7 @@
-package com.example.week8.controller;
+/*package com.example.week8.controller;
 
 import com.example.week8.dto.response.ResponseDto;
-import com.example.week8.service.WeatherService;
+//import com.example.week8.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,3 +19,4 @@ public class WeatherController {
         return weatherService.getLocalWeather(coordinate);
     }
 }
+*/
