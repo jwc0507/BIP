@@ -1,6 +1,6 @@
 package com.example.week8.controller;
 
-import com.example.week8.domain.enums.DivisionOne;
+import com.example.week8.domain.enums.Board;
 import com.example.week8.dto.request.PostRequestDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.PostService;
@@ -34,11 +34,11 @@ public class PostController {
 
     /**
      * 게시글 전체 조회
-     * divisionOne: ASK, ANSWER, ALL
+     * divisionOne: request, donation, all
      */
     @GetMapping("/api/posts")
-    public ResponseDto<?> getAllPost(@RequestParam("division") String divisionOne) {
-        return postService.getAllPost(divisionOne);
+    public ResponseDto<?> getAllPost(@RequestParam("board") String board) {
+        return postService.getAllPost(board);
     }
 
     /**
@@ -65,7 +65,7 @@ public class PostController {
      */
     @GetMapping("/api/posts/request")
     public ResponseDto<?> getRequestList(@RequestParam("category") String category) {
-        return postService.getCategoryList(DivisionOne.ASK.toString(), category);
+        return postService.getCategoryList(Board.request.toString(), category);
     }
 
     /**
@@ -73,7 +73,7 @@ public class PostController {
      */
     @GetMapping("/api/posts/donation")
     public ResponseDto<?> getDonationList(@RequestParam("category") String category) {
-        return postService.getCategoryList(DivisionOne.ANSWER.toString(), category);
+        return postService.getCategoryList(Board.donation.toString(), category);
     }
 
 }

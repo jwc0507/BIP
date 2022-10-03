@@ -1,13 +1,13 @@
 package com.example.week8.dto.request;
 
-import com.example.week8.domain.enums.DivisionOne;
-import com.example.week8.domain.enums.DivisionTwo;
+import com.example.week8.domain.enums.Board;
+import com.example.week8.domain.enums.Category;
 import lombok.Getter;
 
 @Getter
 public class PostRequestDto {
-    private DivisionOne divisionOne;
-    private DivisionTwo divisionTwo;
+    private Board board;
+    private Category category;
     private String title;
     private String content;
 //    private String imgUrl;
