@@ -3,6 +3,7 @@ package com.example.week8.dto.request;
 import lombok.Getter;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Getter
 public class EventRequestDto {
@@ -22,7 +23,7 @@ public class EventRequestDto {
     @NotBlank
     private String content;
 
-    @NotBlank
+    @NotNull
     private int point;
 
 }
