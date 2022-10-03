@@ -1,4 +1,4 @@
-/*
+
 package com.example.week8.service;
 
 
@@ -101,7 +101,7 @@ public class WeatherService {
         }
     }
 
- */
+
 //
 //    /*
 //     * POP	강수확률	 %
@@ -203,4 +203,4 @@ public class WeatherService {
 //class XY  {
 //    public double nX;
 //    public double nY;
-//}
+}
