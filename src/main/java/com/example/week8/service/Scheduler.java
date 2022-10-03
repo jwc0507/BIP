@@ -27,6 +27,7 @@ public class Scheduler {  // 스케쥴링할 메소드의 조건 2가지: void�
             curMember.setFirstLogin(true); //첫 로그인 여부 초기화
             curMember.setPointOnDay(0L);   //일일 획득 포인트 초기화
         }
+        log.info("로그인 보너스 카운터가 초기화 되었습니다");
     }
 
     @Async

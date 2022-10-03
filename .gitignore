@@ -36,6 +36,8 @@ eventTest.http
 masterTest.http
 fcmTest.http
 firebase-message-sw.js
+index.html
+SseTestController.java
 
 ### NetBeans ###
 /nbproject/private/
