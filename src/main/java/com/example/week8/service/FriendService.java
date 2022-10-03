@@ -38,17 +38,19 @@ public class FriendService {
         Member member = (Member) chkResponse.getData();
         List<Friend> friendList = friendRepository.findAllByOwner(member);
         Collections.sort(friendList);
-        List<MemberSearchResponseDto> memberSearchResponseDtos = new ArrayList<>();
+        List<FriendInfoResponseDto> friendInfoResponseDtoList = new ArrayList<>();
+
         for (Friend friend : friendList) {
-            memberSearchResponseDtos.add(MemberSearchResponseDto.builder()
+            friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
                     .id(friend.getFriend().getId())
-                    .nickname(friend.getFriend().getNickname())
+                    .nicknameByOwner(friend.getSecondName())
+                    .nicknameByFriend(friend.getFriend().getNickname())
                     .profileImgUrl(friend.getFriend().getProfileImageUrl())
                     .creditScore(friend.getFriend().getCredit())
                     .build()
             );
         }
-        return ResponseDto.success(memberSearchResponseDtos);
+        return ResponseDto.success(friendInfoResponseDtoList);
     }
 
     //닉네임으로 친구 추가
@@ -86,7 +88,8 @@ public class FriendService {
 
         return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(newFriend.getFriend().getId())
-                .nickname(newFriend.getFriend().getNickname())
+                .nicknameByOwner(newFriend.getSecondName())
+                .nicknameByFriend(newFriend.getFriend().getNickname())
                 .profileImgUrl(newFriend.getFriend().getProfileImageUrl())
                 .creditScore(newFriend.getFriend().getCredit())
                 .build());
@@ -127,7 +130,8 @@ public class FriendService {
 
         return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(newFriend.getFriend().getId())
-                .nickname(newFriend.getFriend().getNickname())
+                .nicknameByOwner(newFriend.getSecondName())
+                .nicknameByFriend(newFriend.getFriend().getNickname())
                 .profileImgUrl(newFriend.getFriend().getProfileImageUrl())
                 .creditScore(newFriend.getFriend().getCredit())
                 .build());
@@ -259,10 +263,10 @@ public class FriendService {
             return ResponseDto.fail("친구리스트에 없는 멤버입니다.");
 
         friend.setSecondName(requestDto.getSecondName());
-
-        return ResponseDto.success(MemberSearchResponseDto.builder()
+        return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(friend.getFriend().getId())
-                .nickname(friend.getSecondName())
+                .nicknameByOwner(friend.getSecondName())
+                .nicknameByFriend(friend.getFriend().getNickname())
                 .profileImgUrl(friend.getFriend().getProfileImageUrl())
                 .creditScore(friend.getFriend().getCredit())
                 .build());
@@ -282,9 +286,16 @@ public class FriendService {
         for(Friend curFriend : friendsAddedMeList) {
             if (friendRepository.findByOwnerAndFriend(owner, curFriend.getOwner()).isEmpty()) {//나는 특정인을 친구로 등록안하고,특정인은 나를 친구로 등록했을 때만 friendInfoResponseDtoList에 추가
                 {
+                    String nicknameByFriend=null;
+                    Friend ownerSideFriend =friendRepository.findByOwnerAndFriend(owner,curFriend.getOwner()).orElse(null);
+
+                    if(ownerSideFriend!=null)
+                        nicknameByFriend=ownerSideFriend.getSecondName();
+
                     friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
                             .id(curFriend.getOwner().getId())
-                            .nickname(curFriend.getOwner().getNickname())
+                            .nicknameByOwner(nicknameByFriend)
+                            .nicknameByFriend(curFriend.getOwner().getNickname())
                             .profileImgUrl(curFriend.getOwner().getProfileImageUrl())
                             .creditScore(curFriend.getOwner().getCredit())
                             .build());

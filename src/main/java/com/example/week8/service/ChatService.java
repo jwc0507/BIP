@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -75,6 +76,7 @@ public class ChatService {
         ChatMessageDto chatMessageDto = ChatMessageDto.builder()
                 .sender("알림")
                 .message(member.getNickname() + "님이 입장하셨습니다.")
+                .sendTime(LocalDateTime.now())
                 .build();
 
         // 메세지 보내기
@@ -129,6 +131,7 @@ public class ChatService {
         ChatMessageDto chatMessageDto = ChatMessageDto.builder()
                 .sender(member.getNickname())
                 .message(message.getMessage())
+                .sendTime(LocalDateTime.now())
                 .build();
 
         // 메세지 보내기
@@ -174,6 +177,7 @@ public class ChatService {
             ChatMessageDto chatMsgResponseDto = ChatMessageDto.builder()
                     .sender(getMember.getNickname())
                     .message(chatMessage.getMessage())
+                    .sendTime(chatMessage.getCreatedAt())
                     .build();
             chatMessageDtos.add(chatMsgResponseDto);
         }

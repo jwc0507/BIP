@@ -4,7 +4,6 @@ import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.enums.EventStatus;
-import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.EventListDto;
 import com.example.week8.dto.response.ReceivePointResponseDto;
@@ -13,10 +12,10 @@ import com.example.week8.dto.response.UpdateMemberResponseDto;
 import com.example.week8.repository.EventMemberRepository;
 import com.example.week8.repository.EventRepository;
 import com.example.week8.repository.MemberRepository;
-import com.example.week8.repository.RefreshTokenRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -31,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
 
@@ -39,7 +39,6 @@ public class UserService {
     private final MemberRepository memberRepository;
     private final EventMemberRepository eventMemberRepository;
     private final EventRepository eventRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
 
@@ -75,7 +74,7 @@ public class UserService {
 
     // 전화번호 변경
     @Transactional
-    public ResponseDto<?> setPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseDto<?> setPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request) {
         //== token 유효성 검사 ==//
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -86,33 +85,94 @@ public class UserService {
         if (!memberService.chkValidCode(newPhoneNumber, requestDto.getAuthCode()))
             return ResponseDto.fail("인증실패 코드를 확인해주세요");
 
+        ResponseDto<?> responseDto = memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build());
 
-        if (memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build()).isSuccess()) {
+        if (responseDto.isSuccess()) {
+            if (responseDto.getData() == null) {
+                Member member = (Member) chkResponse.getData();
+                Member updateMember = memberRepository.findById(member.getId()).get();
+
+                updateMember.updatePhoneNumber(newPhoneNumber);
+
+                return ResponseDto.success(UpdateMemberResponseDto.builder()
+                        .nickname(updateMember.getNickname())
+                        .phoneNumber(updateMember.getPhoneNumber())
+                        .email(updateMember.getEmail())
+                        .profileImgUrl(updateMember.getProfileImageUrl())
+                        .point(updateMember.getPoint())
+                        .creditScore(updateMember.getCredit())
+                        .numOfDone(updateMember.getNumOfDone())
+                        .build());
+            }
+            else {
+                return ResponseDto.fail("중복된 전화번호 입니다");
+            }
+        }
+        return ResponseDto.fail(responseDto.getData());
+    }
+
+    // 카카오 로그인 전용 전화번호 설정
+    @Transactional
+    public ResponseDto<?> setKakaoPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+        //== token 유효성 검사 ==//
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        String newPhoneNumber = requestDto.getPhoneNumber();
+
+        if (!memberService.chkValidCode(newPhoneNumber, requestDto.getAuthCode()))
+            return ResponseDto.fail("인증실패 코드를 확인해주세요");
+
+        ResponseDto<?> responseDto = memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build());
+
+        if (responseDto.isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
 
-            updateMember.updatePhoneNumber(newPhoneNumber);
+            // 없는 전화번호
+            if(responseDto.getData() == null) {
+                updateMember.updatePhoneNumber(newPhoneNumber);
 
-            refreshTokenRepository.delete(refreshTokenRepository.findByMember(updateMember).get());
+                return ResponseDto.success(UpdateMemberResponseDto.builder()
+                        .nickname(updateMember.getNickname())
+                        .phoneNumber(updateMember.getPhoneNumber())
+                        .email(updateMember.getEmail())
+                        .profileImgUrl(updateMember.getProfileImageUrl())
+                        .point(updateMember.getPoint())
+                        .creditScore(updateMember.getCredit())
+                        .numOfDone(updateMember.getNumOfDone())
+                        .build());
+            }
+            // 만약 먼저 회원가입한 계정에 해당 전화번호가 있다면
+            else {
+                Member findMember = (Member) responseDto.getData();
+                if (findMember.getKakaoId() != null) {
+                    return ResponseDto.fail("해당 전화번호에 가입된 카카오 아이디가 있습니다.");
+                }
+                // 계정 통합
+                String email = updateMember.getEmail();
+                String url = updateMember.getProfileImageUrl();
+                Long kakaoId = updateMember.getKakaoId();
 
-            // 토큰 재생성
-            TokenDto tokenDto = tokenProvider.generateTokenDto(updateMember);
+                log.info(updateMember.getNickname()+" : "+updateMember.getKakaoId());
 
-            //헤더에 반환 to FE
-            response.addHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
-            response.addHeader("RefreshToken", tokenDto.getRefreshToken());
+                tokenProvider.deleteRefreshToken(updateMember);
+                memberRepository.deleteById(updateMember.getId());
+                memberRepository.flush();
 
-            return ResponseDto.success(UpdateMemberResponseDto.builder()
-                    .nickname(updateMember.getNickname())
-                    .phoneNumber(updateMember.getPhoneNumber())
-                    .email(updateMember.getEmail())
-                    .profileImgUrl(updateMember.getProfileImageUrl())
-                    .point(updateMember.getPoint())
-                    .creditScore(updateMember.getCredit())
-                    .numOfDone(updateMember.getNumOfDone())
-                    .build());
+                findMember.updateKakaoMember(email,url,kakaoId);
+
+                log.info(findMember.getNickname()+" : "+findMember.getKakaoId());
+
+                memberService.login(findMember,response);
+
+                return ResponseDto.success("기존 계정과 통합이 완료되었습니다.");
+            }
+
         }
-        return ResponseDto.fail("중복된 전화번호 입니다.");
+
+        return ResponseDto.fail(responseDto.getData());
     }
 
     // 이메일 설정

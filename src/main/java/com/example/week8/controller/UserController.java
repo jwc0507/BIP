@@ -23,8 +23,14 @@ public class UserController {
 
     // 전화번호 변경
     @RequestMapping(value = "/api/user/phonenumber", method = RequestMethod.PUT)
-    public ResponseDto<?> updatePhoneNumber(@RequestBody LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
-        return userService.setPhoneNumber(requestDto, request, response);
+    public ResponseDto<?> updatePhoneNumber(@RequestBody LoginRequestDto requestDto, HttpServletRequest request) {
+        return userService.setPhoneNumber(requestDto, request);
+    }
+
+    // 카카오 전화번호 설정
+    @RequestMapping(value = "/api/user/phonenumber/kakao", method = RequestMethod.PUT)
+    public ResponseDto<?> updateKakaoPhoneNumber(@RequestBody LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+        return userService.setKakaoPhoneNumber(requestDto, request, response);
     }
 
     // 이메일 설정
