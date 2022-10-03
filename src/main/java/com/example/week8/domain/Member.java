@@ -23,6 +23,7 @@ public class Member extends Timestamped {
 
     @Column(name = "FIRST_LOGIN")
     private boolean firstLogin; //첫 로그인 여부
+
     @Column(name = "POINT_ON_DAY")
     private Long pointOnDay; //당일 포인트 획득량
 
