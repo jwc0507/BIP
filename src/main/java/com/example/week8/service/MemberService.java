@@ -38,6 +38,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
     private final JavaMailSender javaMailSender;
+    private final SseEmitterService sseEmitterService;
   //  private final RedisUtil redisUtil;
 
 
@@ -125,6 +126,8 @@ public class MemberService {
             member.setPoint(member.getPoint() + 100);
             member.setFirstLogin(false);
         }
+//
+//        sseEmitterService.subscribe(member.getId());
 
         return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
