@@ -1,7 +1,7 @@
 package com.example.week8.domain;
 
-import com.example.week8.domain.enums.DivisionOne;
-import com.example.week8.domain.enums.DivisionTwo;
+import com.example.week8.domain.enums.Board;
+import com.example.week8.domain.enums.Category;
 import com.example.week8.dto.request.PostRequestDto;
 import lombok.*;
 
@@ -25,11 +25,13 @@ public class Post extends Timestamped {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
 
+    @Column (nullable = false)
     @Enumerated(EnumType.STRING)
-    private DivisionOne divisionOne;
+    private Board board;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private DivisionTwo divisionTwo;
+    private Category category;
 
     @Column(nullable = false)
     private String title;
@@ -64,8 +66,8 @@ public class Post extends Timestamped {
 
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
-        this.divisionOne = postRequestDto.getDivisionOne();
-        this.divisionTwo = postRequestDto.getDivisionTwo();
+        this.board = postRequestDto.getBoard();
+        this.category = postRequestDto.getCategory();
         this.title = postRequestDto.getTitle();
         this.address = postRequestDto.getAddress();
 //        this.imgUrl = postRequestDto.getImgUrl();
@@ -99,8 +101,8 @@ public class Post extends Timestamped {
 
     // 게시글 수정
     public void updatePost(PostRequestDto postRequestDto) {
-        this.divisionOne = postRequestDto.getDivisionOne();
-        this.divisionTwo = postRequestDto.getDivisionTwo();
+        this.board = postRequestDto.getBoard();
+        this.category = postRequestDto.getCategory();
         this.title = postRequestDto.getTitle();
         this.content = postRequestDto.getContent();
 

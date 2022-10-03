@@ -2,8 +2,8 @@ package com.example.week8.service;
 
 import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
-import com.example.week8.domain.enums.DivisionOne;
-import com.example.week8.domain.enums.DivisionTwo;
+import com.example.week8.domain.enums.Board;
+import com.example.week8.domain.enums.Category;
 import com.example.week8.dto.request.PostRequestDto;
 import com.example.week8.dto.response.PostResponseAllDto;
 import com.example.week8.dto.response.PostResponseDto;
@@ -45,24 +45,7 @@ public class PostService {
         Post post = new Post(member, postRequestDto);
         postRepository.save(post);
 
-        return ResponseDto.success(
-                PostResponseDto.builder()
-                        .id(post.getId())
-                        .divisionOne(post.getDivisionOne())
-                        .divisionTwo(post.getDivisionTwo())
-                        .nickname(post.getMember().getNickname())
-                        .title(post.getTitle())
-                        .content(post.getContent())
-                        .imgUrl(post.getImgUrl())
-                        .address(post.getAddress())
-                        .coordinate(post.getCoordinate())
-                        .numOfComment(post.getNumOfComment())
-                        .likes(post.getLikes())
-                        .point(post.getPoint())
-                        .createdAt(post.getCreatedAt())
-                        .modifiedAt(post.getModifiedAt())
-                        .build()
-        );
+        return getResponseDto(post);
     }
 
     /**
@@ -95,25 +78,7 @@ public class PostService {
 
         // 게시글 수정
         post.updatePost(postRequestDto);
-
-        return ResponseDto.success(
-                PostResponseDto.builder()
-                        .id(post.getId())
-                        .divisionOne(post.getDivisionOne())
-                        .divisionTwo(post.getDivisionTwo())
-                        .nickname(post.getMember().getNickname())
-                        .title(post.getTitle())
-                        .content(post.getContent())
-                        .imgUrl(post.getImgUrl())
-                        .address(post.getAddress())
-                        .coordinate(post.getCoordinate())
-                        .numOfComment(post.getNumOfComment())
-                        .likes(post.getLikes())
-                        .point(post.getPoint())
-                        .createdAt(post.getCreatedAt())
-                        .modifiedAt(post.getModifiedAt())
-                        .build()
-        );
+        return getResponseDto(post);
     }
 
     /**
@@ -129,25 +94,7 @@ public class PostService {
 
         // 조회수 추가
         post.addViews();
-
-        return ResponseDto.success(
-                PostResponseDto.builder()
-                        .id(post.getId())
-                        .divisionOne(post.getDivisionOne())
-                        .divisionTwo(post.getDivisionTwo())
-                        .nickname(post.getMember().getNickname())
-                        .title(post.getTitle())
-                        .content(post.getContent())
-                        .imgUrl(post.getImgUrl())
-                        .address(post.getAddress())
-                        .coordinate(post.getCoordinate())
-                        .numOfComment(post.getNumOfComment())
-                        .likes(post.getLikes())
-                        .point(post.getPoint())
-                        .createdAt(post.getCreatedAt())
-                        .modifiedAt(post.getModifiedAt())
-                        .build()
-        );
+        return getResponseDto(post);
     }
 
     /**
@@ -156,67 +103,23 @@ public class PostService {
     @Transactional(readOnly = true)
     public ResponseDto<?> getAllPost(String divisionOne) {
 
-        if (divisionOne.equals("ASK")) {
-            List<Post> postList = postRepository.findAllByDivisionOneOrderByModifiedAtDesc(DivisionOne.ASK);
-            List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
-            for (Post post : postList) {
-                postResponseAllDtoList.add(
-                        PostResponseAllDto.builder()
-                                .id(post.getId())
-                                .nickname(post.getMember().getNickname())
-                                .board(post.getDivisionOne().toString())
-                                .category(post.getDivisionTwo().toString())
-                                .title(post.getTitle())
-                                .likes(post.getLikes())
-                                .point(post.getPoint())
-                                .numOfComment(post.getNumOfComment())
-                                .createdAt(post.getCreatedAt())
-                                .modifiedAt(post.getModifiedAt())
-                                .build()
-                );
-            }
-            return ResponseDto.success(postResponseAllDtoList);
-        } else if (divisionOne.equals("ANSWER")) {
-            List<Post> postList = postRepository.findAllByDivisionOneOrderByModifiedAtDesc(DivisionOne.ANSWER);
-            List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
-            for (Post post : postList) {
-                postResponseAllDtoList.add(
-                        PostResponseAllDto.builder()
-                                .id(post.getId())
-                                .nickname(post.getMember().getNickname())
-                                .board(post.getDivisionOne().toString())
-                                .category(post.getDivisionTwo().toString())
-                                .title(post.getTitle())
-                                .likes(post.getLikes())
-                                .point(post.getPoint())
-                                .numOfComment(post.getNumOfComment())
-                                .createdAt(post.getCreatedAt())
-                                .modifiedAt(post.getModifiedAt())
-                                .build()
-                );
-            }
-            return ResponseDto.success(postResponseAllDtoList);
-        } else {
-            List<Post> postList = postRepository.findAllByOrderByModifiedAtDesc();
-            List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
-            for (Post post : postList) {
-                postResponseAllDtoList.add(
-                        PostResponseAllDto.builder()
-                                .id(post.getId())
-                                .nickname(post.getMember().getNickname())
-                                .board(post.getDivisionOne().toString())
-                                .category(post.getDivisionTwo().toString())
-                                .title(post.getTitle())
-                                .likes(post.getLikes())
-                                .point(post.getPoint())
-                                .numOfComment(post.getNumOfComment())
-                                .createdAt(post.getCreatedAt())
-                                .modifiedAt(post.getModifiedAt())
-                                .build()
-                );
-            }
-            return ResponseDto.success(postResponseAllDtoList);
+        List<Post> postList;
+        List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
+
+        Board boardType = getBoard(divisionOne);
+        if (boardType == null)
+            return ResponseDto.fail("게시판 종류를 확인해주세요");
+
+        if (divisionOne.equals("request")) {
+            postList = postRepository.findAllByBoardOrderByModifiedAtDesc(Board.request);
         }
+        else if (divisionOne.equals("donation")) {
+            postList = postRepository.findAllByBoardOrderByModifiedAtDesc(Board.donation);
+        }
+        else {
+            postList = postRepository.findAllByOrderByModifiedAtDesc();
+        }
+        return getResponseDto(postList, postResponseAllDtoList);
     }
 
 
@@ -258,22 +161,76 @@ public class PostService {
 
         List<Post> postList;
         List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
-        DivisionOne boardType = getBoard(board);
+        Board boardType = getBoard(board);
         if (boardType == null)
             return ResponseDto.fail("게시판 종류를 확인해주세요");
-        DivisionTwo categoryType = getCategory(category);
+        Category categoryType = getCategory(category);
         if (categoryType == null)
             return ResponseDto.fail("상세카테고리를 확인해주세요");
 
-        postList = postRepository.findAllByDivisionOneAndDivisionTwoOrderByModifiedAtDesc(boardType, categoryType);
+        postList = postRepository.findAllByBoardAndCategoryOrderByModifiedAtDesc(boardType, categoryType);
 
+        return getResponseDto(postList, postResponseAllDtoList);
+    }
+
+
+    //-- 모듈 --//
+
+    // ENUM MAPPING (BOARD TYPE)
+    public static final Map<String, Board> boardMap = new HashMap<>();
+
+    static {
+        for (Board type : Board.values()) {
+            boardMap.put(type.toString(), type);
+        }
+    }
+
+    public static Board getBoard(String type) {
+        return boardMap.get(type);
+    }
+
+    // ENUM MAPPING (CATEGORY TYPE)
+    public static final Map<String, Category> categoryMap = new HashMap<>();
+
+    static {
+        for (Category type : Category.values()) {
+            categoryMap.put(type.toString(), type);
+        }
+    }
+
+    public static Category getCategory(String type) {
+        return categoryMap.get(type);
+    }
+
+    private ResponseDto<?> getResponseDto(Post post) {
+        return ResponseDto.success(
+                PostResponseDto.builder()
+                        .id(post.getId())
+                        .board(post.getBoard())
+                        .category(post.getCategory())
+                        .nickname(post.getMember().getNickname())
+                        .title(post.getTitle())
+                        .content(post.getContent())
+                        .imgUrl(post.getImgUrl())
+                        .address(post.getAddress())
+                        .coordinate(post.getCoordinate())
+                        .numOfComment(post.getNumOfComment())
+                        .likes(post.getLikes())
+                        .point(post.getPoint())
+                        .createdAt(post.getCreatedAt())
+                        .modifiedAt(post.getModifiedAt())
+                        .build()
+        );
+    }
+
+    private ResponseDto<?> getResponseDto(List<Post> postList, List<PostResponseAllDto> postResponseAllDtoList) {
         for (Post post : postList) {
             postResponseAllDtoList.add(
                     PostResponseAllDto.builder()
                             .id(post.getId())
                             .nickname(post.getMember().getNickname())
-                            .board(post.getDivisionOne().toString())
-                            .category(post.getDivisionTwo().toString())
+                            .board(post.getBoard().toString())
+                            .category(post.getCategory().toString())
                             .title(post.getTitle())
                             .likes(post.getLikes())
                             .point(post.getPoint())
@@ -284,35 +241,6 @@ public class PostService {
             );
         }
         return ResponseDto.success(postResponseAllDtoList);
-    }
-
-
-    //-- 모듈 --//
-
-    // ENUM MAPPING (BOARD TYPE)
-    public static final Map<String, DivisionOne> boardMap = new HashMap<>();
-
-    static {
-        for (DivisionOne type : DivisionOne.values()) {
-            boardMap.put(type.toString(), type);
-        }
-    }
-
-    public static DivisionOne getBoard(String type) {
-        return boardMap.get(type);
-    }
-
-    // ENUM MAPPING (CATEGORY TYPE)
-    public static final Map<String, DivisionTwo> categoryMap = new HashMap<>();
-
-    static {
-        for (DivisionTwo type : DivisionTwo.values()) {
-            categoryMap.put(type.toString(), type);
-        }
-    }
-
-    public static DivisionTwo getCategory(String type) {
-        return categoryMap.get(type);
     }
 
     /**
