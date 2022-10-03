@@ -28,6 +28,9 @@ public class WeatherService {
     public ResponseDto<?> getLocalWeather(String coordinate) {
         String[] splitCoordinate = coordinate.split(",");
 
+        if(coordinate.isEmpty())
+            return ResponseDto.fail("좌표값 없음");
+
         double lat = Double.parseDouble(splitCoordinate[0]);
         double lon = Double.parseDouble(splitCoordinate[1]);
         OpenWeather response;

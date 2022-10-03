@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,7 +19,7 @@ public class EventController {
      * 약속 생성
      */
     @PostMapping("/api/events")
-    public ResponseDto<?> createEvent(@RequestBody EventRequestDto requestDto,
+    public ResponseDto<?> createEvent(@RequestBody @Valid EventRequestDto requestDto,
                                       HttpServletRequest request) {
         return eventService.createEvent(requestDto, request);
     }
@@ -28,7 +29,7 @@ public class EventController {
      */
     @PutMapping("/api/events/{eventId}")
     public ResponseDto<?> updateEvent(@PathVariable Long eventId,
-                                      @RequestBody EventRequestDto requestDto,
+                                      @RequestBody @Valid EventRequestDto requestDto,
                                       HttpServletRequest request) {
         return eventService.updateEvent(eventId,requestDto, request);
     }
@@ -66,7 +67,7 @@ public class EventController {
      */
     @PostMapping("/api/events/{eventId}")
     public ResponseDto<?> inviteMember(@PathVariable Long eventId,
-                                       @RequestBody InviteMemberDto inviteMemberDto,
+                                       @RequestBody @Valid InviteMemberDto inviteMemberDto,
                                        HttpServletRequest request) {
         return eventService.inviteMember(eventId, inviteMemberDto, request);
     }
@@ -115,19 +116,19 @@ public class EventController {
 
     // 방장 위임
     @RequestMapping (value = "/api/events/master/{eventId}", method = RequestMethod.POST)
-    public ResponseDto<?> setSecondName(@PathVariable Long eventId, @RequestBody MasterRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> setSecondName(@PathVariable Long eventId, @RequestBody @Valid MasterRequestDto requestDto, HttpServletRequest request) {
         return eventService.changeMaster(eventId, requestDto, request);
     }
 
     // 약속 맴버 추방
     @RequestMapping (value = "/api/events/master/deport/{eventId}", method = RequestMethod.POST)
-    public ResponseDto<?> kickMember(@PathVariable Long eventId, @RequestBody MasterRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> kickMember(@PathVariable Long eventId, @RequestBody @Valid MasterRequestDto requestDto, HttpServletRequest request) {
         return eventService.kickMember(eventId, requestDto, request);
     }
 
     // 날짜 체크
     @RequestMapping (value = "/api/events/date", method = RequestMethod.POST)
-    public ResponseDto<?> chkDateTime(@RequestBody DuplicationRequestDto requestDto) {
+    public ResponseDto<?> chkDateTime(@RequestBody @Valid DuplicationRequestDto requestDto) {
         return eventService.chkDateTime(requestDto);
     }
 }

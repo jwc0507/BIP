@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,7 +20,7 @@ public class PostController {
      * 게시글 생성
      */
     @PostMapping("/api/posts")
-    public ResponseDto<?> createEvent(@RequestBody PostRequestDto postRequestDto,
+    public ResponseDto<?> createEvent(@RequestBody @Valid PostRequestDto postRequestDto,
                                       HttpServletRequest request) {
         return postService.createPost(postRequestDto, request);
     }
@@ -46,7 +47,7 @@ public class PostController {
      */
     @PutMapping("/api/posts/{postId}")
     public ResponseDto<?> updatePost(@PathVariable Long postId,
-                                     @RequestBody PostRequestDto postRequestDto,
+                                     @RequestBody @Valid PostRequestDto postRequestDto,
                                      HttpServletRequest request) {
         return postService.updatePost(postId, postRequestDto, request);
     }

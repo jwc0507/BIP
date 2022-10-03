@@ -9,6 +9,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,7 +19,7 @@ public class CommentController {
 
     // 댓글 작성하기
     @RequestMapping(value = "/api/comment/{postId}", method = RequestMethod.POST)
-    public ResponseDto<?> createComment (@PathVariable Long postId, @RequestBody CommentRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> createComment (@PathVariable Long postId, @RequestBody @Valid CommentRequestDto requestDto, HttpServletRequest request) {
         return commentService.createComment(postId, requestDto, request);
     }
 
@@ -30,7 +31,7 @@ public class CommentController {
 
     // 댓글 수정하기
     @RequestMapping(value = "/api/comment/update/{commentId}", method = RequestMethod.PUT)
-    public ResponseDto<?> updateComment (@PathVariable Long commentId, @RequestBody CommentRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> updateComment (@PathVariable Long commentId, @RequestBody @Valid  CommentRequestDto requestDto, HttpServletRequest request) {
         return commentService.updateComment(commentId, requestDto, request);
     }
 

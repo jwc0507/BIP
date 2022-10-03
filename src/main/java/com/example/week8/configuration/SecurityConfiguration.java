@@ -70,8 +70,10 @@ public class SecurityConfiguration {
             .authorizeRequests()
             .antMatchers(HttpMethod.OPTIONS, "/**/*").permitAll()
             .antMatchers("/api/member/**").permitAll()
-            //.anyRequest().authenticated()
-            .anyRequest().permitAll()
+            .antMatchers("/sub/**").permitAll()
+            .antMatchers("/pub/**").permitAll()
+            .anyRequest().authenticated()
+            //.anyRequest().permitAll()
 
             .and()
             .apply(new JwtSecurityConfiguration(SECRET_KEY, tokenProvider, userDetailsService));

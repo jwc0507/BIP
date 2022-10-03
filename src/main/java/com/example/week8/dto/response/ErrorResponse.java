@@ -35,6 +35,7 @@ public class ErrorResponse {
         INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "내부 서버 오류입니다."),
         COORDINATE_EMPTY_ERROR(HttpStatus.BAD_REQUEST, "좌표값 비어있음 에러입니다."),
         DATETIME_PARSE_ERROR(HttpStatus.BAD_REQUEST, "날짜 값 에러입니다."),
+        DTO_NOT_VALID_ERROR(HttpStatus.BAD_REQUEST, "입력 값 에러입니다.")
         ;
 
         private final HttpStatus status;

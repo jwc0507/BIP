@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,37 +18,37 @@ public class UserController {
 
     // 닉네임 변경
     @RequestMapping(value = "/api/user/nickname", method = RequestMethod.PUT)
-    public ResponseDto<?> updateNickname(@RequestBody MemberInfoRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> updateNickname(@RequestBody @Valid MemberInfoRequestDto requestDto, HttpServletRequest request) {
         return userService.setNickname(requestDto, request);
     }
 
     // 전화번호 변경
     @RequestMapping(value = "/api/user/phonenumber", method = RequestMethod.PUT)
-    public ResponseDto<?> updatePhoneNumber(@RequestBody LoginRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> updatePhoneNumber(@RequestBody @Valid LoginRequestDto requestDto, HttpServletRequest request) {
         return userService.setPhoneNumber(requestDto, request);
     }
 
     // 카카오 전화번호 설정
     @RequestMapping(value = "/api/user/phonenumber/kakao", method = RequestMethod.PUT)
-    public ResponseDto<?> updateKakaoPhoneNumber(@RequestBody LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseDto<?> updateKakaoPhoneNumber(@RequestBody @Valid LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
         return userService.setKakaoPhoneNumber(requestDto, request, response);
     }
 
     // 이메일 설정
     @RequestMapping(value = "/api/user/email", method = RequestMethod.PUT)
-    public ResponseDto<?> updateEmail(@RequestBody EmailLoginRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> updateEmail(@RequestBody @Valid EmailLoginRequestDto requestDto, HttpServletRequest request) {
         return userService.setEmail(requestDto, request);
     }
 
     // 이메일 입력용 인증코드 생성
     @RequestMapping (value = "/api/user/auth/email", method = RequestMethod.POST)
-    public ResponseDto<?> sendEmailCode(@RequestBody AuthRequestDto requestDto) {
+    public ResponseDto<?> sendEmailCode(@RequestBody @Valid AuthRequestDto requestDto) {
         return userService.sendEmailCode(requestDto);
     }
 
     // 프로필 사진 수정
     @RequestMapping(value = "/api/user/profileimage", method = RequestMethod.PUT)
-    public ResponseDto<?> updateProfileImage(@RequestBody ImgUrlRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> updateProfileImage(@RequestBody @Valid ImgUrlRequestDto requestDto, HttpServletRequest request) {
         return userService.setProfileImg(requestDto, request);
     }
 
@@ -65,7 +66,7 @@ public class UserController {
 
     // 포인트 추가
     @RequestMapping (value = "/api/user/point", method = RequestMethod.PUT)
-    public ResponseDto<?> conversionPointToCredit(@RequestBody ConversionPointToCreditDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> conversionPointToCredit(@RequestBody @Valid ConversionPointToCreditDto requestDto, HttpServletRequest request) {
         return userService.conversionPointToCredit(requestDto, request);
     }
 
