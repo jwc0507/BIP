@@ -73,7 +73,7 @@ public class Post extends Timestamped {
 //        this.imgUrl = postRequestDto.getImgUrl();
         this.coordinate = postRequestDto.getCoordinate();
         this.content = postRequestDto.getContent();
-        this.point = postRequestDto.getPoint();
+        this.point = Integer.parseInt(postRequestDto.getPoint());
         this.likes = 0;
         this.numOfComment = 0;
     }

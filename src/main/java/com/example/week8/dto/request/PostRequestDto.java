@@ -31,5 +31,5 @@ public class PostRequestDto {
     private String coordinate;
 
     @NotBlank
-    private int point;
+    private String point;
 }
