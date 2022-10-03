@@ -233,9 +233,9 @@ public class MemberService {
 
         Optional<Member> optionalMember = memberRepository.findByPhoneNumber(requestDto.getValue());
         if (optionalMember.isPresent())
-            return ResponseDto.success(true);
+            return ResponseDto.success(false);
 
-        return ResponseDto.success(false);
+        return ResponseDto.success(true);
     }
 
 
