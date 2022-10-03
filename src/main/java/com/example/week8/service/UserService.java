@@ -85,7 +85,7 @@ public class UserService {
         if (!memberService.chkValidCode(newPhoneNumber, requestDto.getAuthCode()))
             return ResponseDto.fail("인증실패 코드를 확인해주세요");
 
-        ResponseDto<?> responseDto = memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build());
+        ResponseDto<?> responseDto = memberService.getMemberByPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build());
 
         if (responseDto.isSuccess()) {
             if (responseDto.getData() == null) {
@@ -124,7 +124,7 @@ public class UserService {
         if (!memberService.chkValidCode(newPhoneNumber, requestDto.getAuthCode()))
             return ResponseDto.fail("인증실패 코드를 확인해주세요");
 
-        ResponseDto<?> responseDto = memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build());
+        ResponseDto<?> responseDto = memberService.getMemberByPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build());
 
         if (responseDto.isSuccess()) {
             Member member = (Member) chkResponse.getData();

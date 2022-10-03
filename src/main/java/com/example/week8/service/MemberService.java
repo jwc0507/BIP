@@ -212,8 +212,8 @@ public class MemberService {
         return stringBuilder.toString();
     }
 
-    // 이미 있는 회원인지 체크 (프론트에서 뷰 넘길때 사용하기 위함)
-    public ResponseDto<?> checkPhoneNumber(DuplicationRequestDto requestDto) {
+    // 카카오 로그인용 전화번호 체크
+    public ResponseDto<?> getMemberByPhoneNumber(DuplicationRequestDto requestDto) {
         String regExp = "(^02|[0-9]{3})([0-9]{3,4})([0-9]{4})$";
         if (!Pattern.matches(regExp, requestDto.getValue()))
             return ResponseDto.fail("전화번호 형식을 지켜주세요.");
@@ -224,6 +224,20 @@ public class MemberService {
 
         return ResponseDto.success(null);
     }
+
+    // 이미 있는 회원인지 체크 (프론트에서 뷰 넘길때 사용하기 위함)
+    public ResponseDto<?> checkPhoneNumber(DuplicationRequestDto requestDto) {
+        String regExp = "(^02|[0-9]{3})([0-9]{3,4})([0-9]{4})$";
+        if (!Pattern.matches(regExp, requestDto.getValue()))
+            return ResponseDto.fail("전화번호 형식을 지켜주세요.");
+
+        Optional<Member> optionalMember = memberRepository.findByPhoneNumber(requestDto.getValue());
+        if (optionalMember.isPresent())
+            return ResponseDto.success(true);
+
+        return ResponseDto.success(false);
+    }
+
 
     // 닉네임 중복 검사
     public ResponseDto<?> checkNickname(DuplicationRequestDto requestDto) {
