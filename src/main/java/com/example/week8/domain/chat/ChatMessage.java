@@ -33,4 +33,6 @@ public class ChatMessage extends Timestamped {
     @ManyToOne(fetch = FetchType.LAZY)
     private ChatRoom chatRoom;
 
+    @Column
+    private String sendTime;
 }

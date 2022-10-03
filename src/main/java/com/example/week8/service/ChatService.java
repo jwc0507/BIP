@@ -129,10 +129,12 @@ public class ChatService {
             return ResponseDto.fail("룸 번호 오류");
         }
 
+        String dateNow = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm "));
+
         ChatMessageDto chatMessageDto = ChatMessageDto.builder()
                 .sender(member.getNickname())
                 .message(message.getMessage())
-                .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ")))
+                .sendTime(dateNow)
                 .build();
 
         // 메세지 보내기
@@ -142,6 +144,7 @@ public class ChatService {
         ChatMessage chatMessage = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .member(member)
+                .sendTime(dateNow)
                 .message(message.getMessage())
                 .build();
 
@@ -179,7 +182,7 @@ public class ChatService {
             ChatMessageDto chatMsgResponseDto = ChatMessageDto.builder()
                     .sender(getMember.getNickname())
                     .message(chatMessage.getMessage())
-                    .sendTime(chatMessage.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ")))
+                    .sendTime(chatMessage.getSendTime())
                     .build();
             chatMessageDtos.add(chatMsgResponseDto);
         }
