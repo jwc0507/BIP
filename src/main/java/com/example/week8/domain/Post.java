@@ -6,6 +6,7 @@ import com.example.week8.dto.request.PostRequestDto;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -36,11 +37,17 @@ public class Post extends Timestamped {
     @Column(nullable = false)
     private String content;
 
-//    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Comment> comments;
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "post")
+    private List<Comment> comments;
 
     @Column
     private int likes;
+
+    @Column
+    private int numOfComment;
+
+    @Column
+    private int totalCountOfComment;
 
     @Column
     private int views;
@@ -48,22 +55,41 @@ public class Post extends Timestamped {
     @Column(nullable = false)
     private int point;
 
+    @Column
     private String imgUrl;
+    @Column
     private String address;
-    private String coordinates;
+    @Column
+    private String coordinate;
 
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
         this.divisionOne = postRequestDto.getDivisionOne();
         this.divisionTwo = postRequestDto.getDivisionTwo();
         this.title = postRequestDto.getTitle();
+        this.address = postRequestDto.getAddress();
+//        this.imgUrl = postRequestDto.getImgUrl();
+        this.coordinate = postRequestDto.getCoordinate();
         this.content = postRequestDto.getContent();
+        this.point = postRequestDto.getPoint();
         this.likes = 0;
+        this.numOfComment = 0;
     }
 
     // 조회수 올리기
     public void addViews() {
         this.views += 1;
+    }
+
+    // 댓글 수 올리기
+    public void addCommentCounter() {
+        this.totalCountOfComment++;
+        this.numOfComment++;
+    }
+
+    // 댓글수 내리기
+    public void removeCommentCounter() {
+        this.numOfComment--;
     }
 
     //회원정보 검증

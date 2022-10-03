@@ -10,4 +10,8 @@ public class PostRequestDto {
     private DivisionTwo divisionTwo;
     private String title;
     private String content;
+//    private String imgUrl;
+    private String address;
+    private String coordinate;
+    private int point;
 }

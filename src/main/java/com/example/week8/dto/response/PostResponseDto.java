@@ -16,8 +16,10 @@ public class PostResponseDto {
     private String nickname;
     private String title;
     private String content;
-//    private List<Comment> commentList;
-//    private int commentCount;
+    private String address;
+    private String coordinate;
+    private String imgUrl;
+    private int numOfComment;
     private int likes;
     private int point;
     private LocalDateTime createdAt;
