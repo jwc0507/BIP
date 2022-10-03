@@ -3,6 +3,7 @@ package com.example.week8.service;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
 import com.example.week8.domain.enums.DivisionOne;
+import com.example.week8.domain.enums.DivisionTwo;
 import com.example.week8.dto.request.PostRequestDto;
 import com.example.week8.dto.response.PostResponseAllDto;
 import com.example.week8.dto.response.PostResponseDto;
@@ -14,9 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -215,7 +214,6 @@ public class PostService {
     }
 
 
-
     /**
      * 게시글 삭제
      */
@@ -245,9 +243,69 @@ public class PostService {
 
         return ResponseDto.success("게시글이 삭제되었습니다.");
     }
-    
+
+
+    /**
+     * 상세 카테고리 검색
+     */
+    public ResponseDto<?> getCategoryList(String board, String category) {
+
+        List<Post> postList;
+        List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
+        DivisionOne boardType = getBoard(board);
+        if (boardType == null)
+            return ResponseDto.fail("게시판 종류를 확인해주세요");
+        DivisionTwo categoryType = getCategory(category);
+        if (categoryType == null)
+            return ResponseDto.fail("상세카테고리를 확인해주세요");
+
+        postList = postRepository.findAllByDivisionOneAndDivisionTwoOrderByModifiedAtDesc(boardType, categoryType);
+
+        for (Post post : postList) {
+            postResponseAllDtoList.add(
+                    PostResponseAllDto.builder()
+                            .id(post.getId())
+                            .nickname(post.getMember().getNickname())
+                            .title(post.getTitle())
+                            .likes(post.getLikes())
+                            .point(post.getPoint())
+                            .numOfComment(post.getNumOfComment())
+                            .createdAt(post.getCreatedAt())
+                            .modifiedAt(post.getModifiedAt())
+                            .build()
+            );
+        }
+        return ResponseDto.success(postResponseAllDtoList);
+    }
+
 
     //-- 모듈 --//
+
+    // ENUM MAPPING (BOARD TYPE)
+    public static final Map<String, DivisionOne> boardMap = new HashMap<>();
+
+    static {
+        for (DivisionOne type : DivisionOne.values()) {
+            boardMap.put(type.toString(), type);
+        }
+    }
+
+    public static DivisionOne getBoard(String type) {
+        return boardMap.get(type);
+    }
+
+    // ENUM MAPPING (CATEGORY TYPE)
+    public static final Map<String, DivisionTwo> categoryMap = new HashMap<>();
+
+    static {
+        for (DivisionTwo type : DivisionTwo.values()) {
+            categoryMap.put(type.toString(), type);
+        }
+    }
+
+    public static DivisionTwo getCategory(String type) {
+        return categoryMap.get(type);
+    }
 
     /**
      * 게시글 호출
@@ -291,4 +349,6 @@ public class PostService {
         }
         return ResponseDto.success(member);
     }
+
+
 }
