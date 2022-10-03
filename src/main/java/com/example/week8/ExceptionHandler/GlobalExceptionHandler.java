@@ -3,8 +3,10 @@ package com.example.week8.ExceptionHandler;
 
 import com.example.week8.dto.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -50,4 +52,12 @@ public class GlobalExceptionHandler {
 //                .status(ErrorResponse.ErrorCode.COORDINATE_EMPTY_ERROR.getStatus().value())
 //                .body(new ErrorResponse(ErrorResponse.ErrorCode.COORDINATE_EMPTY_ERROR));
 //    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
+        log.error("dtoException: {}", e.getMessage());
+        return ResponseEntity
+                .status(ErrorResponse.ErrorCode.DTO_NOT_VALID_ERROR.getStatus().value())
+                .body(new ErrorResponse(ErrorResponse.ErrorCode.DTO_NOT_VALID_ERROR));
+    }
 }

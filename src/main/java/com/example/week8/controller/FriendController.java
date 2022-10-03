@@ -5,9 +5,11 @@ import com.example.week8.dto.request.FriendSecondNameRequestDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.FriendService;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 @RequiredArgsConstructor
 @RestController
@@ -21,13 +23,13 @@ public class FriendController {
 
     //닉네임으로 친구 추가
     @RequestMapping(value = "api/friends/nickname", method= RequestMethod.POST)
-    public ResponseDto<?> addFriendByNickname(@RequestBody FriendAdditionRequestDto friendAdditionRequestDto, HttpServletRequest request){
+    public ResponseDto<?> addFriendByNickname(@RequestBody @Valid FriendAdditionRequestDto  friendAdditionRequestDto, HttpServletRequest request){
         return friendService.addFriendByNickname(friendAdditionRequestDto,request);
     }
 
     //전화번호로 친구 추가
     @RequestMapping(value = "api/friends/phonenumber", method = RequestMethod.POST)
-    public ResponseDto<?> addFriendByPhoneNumber(@RequestBody FriendAdditionRequestDto friendAdditionRequestDto, HttpServletRequest request) {
+    public ResponseDto<?> addFriendByPhoneNumber(@RequestBody @Valid FriendAdditionRequestDto friendAdditionRequestDto, HttpServletRequest request) {
         System.out.println("전화번호로 친구 추가 컨트롤러");
         return friendService.addFriendByPhoneNumber(friendAdditionRequestDto, request);
     }
@@ -52,7 +54,7 @@ public class FriendController {
 
     // 친구 별명 추가
     @RequestMapping (value = "/api/friends/secondname", method = RequestMethod.PUT)
-    public ResponseDto<?> setSecondName(@RequestBody FriendSecondNameRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> setSecondName(@RequestBody @Valid FriendSecondNameRequestDto requestDto, HttpServletRequest request) {
         return friendService.setSecondName(requestDto, request);
     }
     //추천 친구 목록 반환 (추천 친구 = 나는 추가하지 않았지만, 나를 추가한 친구)

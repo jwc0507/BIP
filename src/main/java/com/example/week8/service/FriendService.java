@@ -61,9 +61,6 @@ public class FriendService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-        if (friendAdditionRequestDto.getValue() == null)
-            return ResponseDto.fail("입력필드가 잘못되었습니다.");
-
         //nickname으로 검색한 member
         Member findedMember = memberRepository.findByNickname(friendAdditionRequestDto.getValue()).orElse(null);
         if (findedMember == null)
@@ -105,9 +102,6 @@ public class FriendService {
             return chkResponse;
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
-
-        if (friendAdditionRequestDto.getValue() == null)
-            return ResponseDto.fail("입력필드가 잘못되었습니다.");
 
         //phoneNumber로 검색한 member
         Member findedMember = memberRepository.findByPhoneNumber(friendAdditionRequestDto.getValue()).orElse(null);
@@ -228,9 +222,6 @@ public class FriendService {
             return chkResponse;
         Member getMember = validateMember(request);
 
-        if(value == null)
-            return ResponseDto.fail("입력 값이 올바르지 않습니다.");
-
         Member findedMember;
         // 닉네임으로 검색
         if (type.equals(SearchType.name.toString())) {
@@ -271,10 +262,7 @@ public class FriendService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-        if(requestDto.getFriendNickname() == null)
-            return ResponseDto.fail("입력값이 잘못되었습니다.");
-
-        Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
+       Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
         if (getFriend == null)
             return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
 
