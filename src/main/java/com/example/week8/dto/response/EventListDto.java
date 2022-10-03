@@ -17,4 +17,5 @@ public class EventListDto {
     private String place;
     private int memberCount;
     private String lastTime;
+    private WeatherResponseDto weatherResponseDto;
 }
