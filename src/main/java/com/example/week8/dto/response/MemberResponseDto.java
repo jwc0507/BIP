@@ -13,7 +13,8 @@ public class MemberResponseDto {
     private Long id;
     private String phoneNumber;
     private String email;
-    private String nickname;
+    private String nicknameByOwner;
+    private String nicknameByFriend;
     private double credit;
     private int point;
     private String profileImageUrl;
