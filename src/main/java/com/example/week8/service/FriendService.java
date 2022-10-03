@@ -228,6 +228,9 @@ public class FriendService {
             return chkResponse;
         Member getMember = validateMember(request);
 
+        if(value == null)
+            return ResponseDto.fail("입력 값이 올바르지 않습니다.");
+
         Member findedMember;
         // 닉네임으로 검색
         if (type.equals(SearchType.name.toString())) {
@@ -267,6 +270,9 @@ public class FriendService {
             return chkResponse;
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
+
+        if(requestDto.getFriendNickname() == null)
+            return ResponseDto.fail("입력값이 잘못되었습니다.");
 
         Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
         if (getFriend == null)
