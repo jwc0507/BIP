@@ -15,6 +15,8 @@ public class PostResponseAllDto {
     private Long id;
     private String nickname;
     private String title;
+    private String board;
+    private String category;
     private int numOfComment;
     private int likes;
     private int point;
