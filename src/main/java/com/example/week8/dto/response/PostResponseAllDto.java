@@ -20,7 +20,7 @@ public class PostResponseAllDto {
     private int numOfComment;
     private int likes;
     private int point;
-    private LocalDateTime createdAt;
-    private LocalDateTime modifiedAt;
+    private String createdAt;
+    private String modifiedAt;
 }
 

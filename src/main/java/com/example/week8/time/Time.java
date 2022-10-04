@@ -1,8 +1,12 @@
 package com.example.week8.time;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
+@Slf4j
 public class Time {
     private static class TIME_MAXIMUM {
         public static final int SEC = 60;
@@ -59,13 +63,20 @@ public class Time {
         return localDateTime.until(now, ChronoUnit.SECONDS);
     }
 
-    public static String serializeDate(LocalDateTime localDateTime) {
-        StringBuilder result = new StringBuilder();
-        String[] splitDate = localDateTime.toString().split("T|:| ");
-        for(String s : splitDate) {
-            result.append(s).append("-");
-        }
+    public static String serializeEventDate(LocalDateTime localDateTime) {
+//        StringBuilder result = new StringBuilder();
+//        String[] splitDate = localDateTime.toString().split("T|:| ");
+//        for(String s : splitDate) {
+//            result.append(s).append("-");
+//        }
+        String dateNow = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-00"));
+        log.info(dateNow);
+        return dateNow;
+    }
 
-        return result.append("00").toString();
+    public static String serializePostDate(LocalDateTime localDateTime) {
+        String dateNow = localDateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm"));
+        log.info(dateNow);
+        return dateNow;
     }
 }
