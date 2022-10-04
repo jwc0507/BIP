@@ -4,11 +4,9 @@ import com.example.week8.domain.Event;
 import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.enums.EventStatus;
+import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.*;
-import com.example.week8.dto.response.EventListDto;
-import com.example.week8.dto.response.ReceivePointResponseDto;
-import com.example.week8.dto.response.ResponseDto;
-import com.example.week8.dto.response.UpdateMemberResponseDto;
+import com.example.week8.dto.response.*;
 import com.example.week8.repository.EventMemberRepository;
 import com.example.week8.repository.EventRepository;
 import com.example.week8.repository.MemberRepository;
@@ -165,9 +163,19 @@ public class UserService {
 
                 log.info(findMember.getNickname()+" : "+findMember.getKakaoId());
 
-                memberService.login(findMember,response);
+                TokenDto tokenDto = tokenProvider.generateTokenDto(member);
 
-                return ResponseDto.success("기존 계정과 통합이 완료되었습니다.");
+                response.addHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
+                response.addHeader("RefreshToken", tokenDto.getRefreshToken());
+
+                if(member.isFirstLogin()) {
+                    member.setPoint(member.getPoint() + 100);
+                    member.setFirstLogin(false);
+                }
+//
+//        sseEmitterService.subscribe(member.getId());
+
+                return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
             }
 
         }
