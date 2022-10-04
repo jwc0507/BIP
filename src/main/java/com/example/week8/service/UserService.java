@@ -160,6 +160,8 @@ public class UserService {
       //          updateMember.setEmail(UUID.randomUUID().toString());
 
                 memberRepository.deleteById(updateMember.getId());
+                memberRepository.flush();
+
                 findMember.updateKakaoMember(email,url,kakaoId);
 
                 if(member.isFirstLogin()) {
