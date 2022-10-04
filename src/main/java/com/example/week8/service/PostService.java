@@ -1,5 +1,7 @@
 package com.example.week8.service;
 
+import com.amazonaws.services.ec2.model.Image;
+import com.example.week8.domain.ImageFile;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
 import com.example.week8.domain.enums.Board;
@@ -8,6 +10,7 @@ import com.example.week8.dto.request.PostRequestDto;
 import com.example.week8.dto.response.PostResponseAllDto;
 import com.example.week8.dto.response.PostResponseDto;
 import com.example.week8.dto.response.ResponseDto;
+import com.example.week8.repository.ImageFilesRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +26,13 @@ import java.util.*;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final ImageFilesRepository imageFilesRepository;
     private final TokenProvider tokenProvider;
 
     /**
      * 게시글 작성
      */
+    @Transactional
     public ResponseDto<?> createPost(PostRequestDto postRequestDto,
                                      HttpServletRequest request) {
 
@@ -43,7 +48,14 @@ public class PostService {
 
         // 게시글 생성
         Post post = new Post(member, postRequestDto);
-        postRepository.save(post);
+        List<String> imgURLList = postRequestDto.getImgUrlList();
+
+        for(String imgURL : imgURLList){
+            ImageFile imageFile = imageFilesRepository.findByUrl(imgURL).orElse(null);
+            if(imageFile==null)
+                continue;
+            imageFile.setPost(post);
+        }
 
         return getResponseDto(post);
     }
@@ -51,6 +63,7 @@ public class PostService {
     /**
      * 게시글 수정
      */
+    @Transactional
     public ResponseDto<?> updatePost(Long postId,
                                      PostRequestDto postRequestDto,
                                      HttpServletRequest request) {
@@ -203,6 +216,15 @@ public class PostService {
     }
 
     private ResponseDto<?> getResponseDto(Post post) {
+
+
+        List<ImageFile> imageFileList = imageFilesRepository.findAllByPost(post);
+        List<String> imageUrlList = new ArrayList<>();
+
+        for(ImageFile imageFile : imageFileList){
+            imageUrlList.add(imageFile.getUrl());
+        }
+
         return ResponseDto.success(
                 PostResponseDto.builder()
                         .id(post.getId())
@@ -211,7 +233,7 @@ public class PostService {
                         .nickname(post.getMember().getNickname())
                         .title(post.getTitle())
                         .content(post.getContent())
-                        .imgUrl(post.getImgUrl())
+                        .imgUrlList(imageUrlList)
                         .address(post.getAddress())
                         .coordinate(post.getCoordinate())
                         .numOfComment(post.getNumOfComment())
