@@ -50,6 +50,37 @@ public class Time {
         return diffTime + "년 후";
     }
 
+    public static String convertLocaldatetimeToTimePast(LocalDateTime localDateTime) {
+        // 현재 시각
+        LocalDateTime now = LocalDateTime.now();
+
+        // 현재(now) - 글이 작성된 시각(localDateTime; 약속시간)
+        long diffTime = localDateTime.until(now, ChronoUnit.SECONDS);
+
+        String msg = null;
+        if (diffTime < TIME_MAXIMUM.SEC){
+            return diffTime + "초 전";
+        }
+        diffTime = diffTime / TIME_MAXIMUM.SEC;
+        if (diffTime < TIME_MAXIMUM.MIN ) {
+            return diffTime + "분 전";
+        }
+        diffTime = diffTime / TIME_MAXIMUM.MIN;
+        if (diffTime < TIME_MAXIMUM.HOUR) {
+            return diffTime + "시간 전";
+        }
+        diffTime = diffTime / TIME_MAXIMUM.HOUR;
+        if (diffTime < TIME_MAXIMUM.DAY) {
+            return diffTime + "일 전";
+        }
+        diffTime = diffTime / TIME_MAXIMUM.DAY;
+        if (diffTime < TIME_MAXIMUM.MONTH) {
+            return diffTime + "개월 전";
+        }
+        diffTime = diffTime / TIME_MAXIMUM.MONTH;
+        return diffTime + "년 전";
+    }
+
     public static boolean diffTime (LocalDateTime localDateTime, LocalDateTime now) {
         long tempDiffTime = localDateTime.until(now, ChronoUnit.SECONDS);
         return tempDiffTime > 0;
