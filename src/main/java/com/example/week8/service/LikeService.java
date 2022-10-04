@@ -70,6 +70,7 @@ public class LikeService {
         if(like ==null)
             return ResponseDto.fail("이미 해당 게시물을 '좋아하지 않는' 상태입니다.");
         likeRepository.deleteByMemberAndPost(member,post);
+        post.cancelLike();
         return ResponseDto.success(LikeResponseDto.builder()
                 .post_id(like.getPost().getId())
                 .title(like.getPost().getTitle())
