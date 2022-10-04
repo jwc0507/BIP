@@ -151,8 +151,10 @@ public class NaverOauthService {
                         .phoneNumber(phoneNumber)
                         .point(1000000)
                         .credit(100.0)
+                        .firstLogin(true)
                         .pointOnDay(0L)
                         .numOfDone(0)
+                        .numOfSelfEvent(0)
                         .password("@")
                         .userRole(Authority.valueOf("ROLE_MEMBER"))
                         .build();
@@ -173,6 +175,11 @@ public class NaverOauthService {
         TokenDto token = tokenProvider.generateTokenDto(naverMember);
         response.addHeader("Authorization", "Bearer " + token.getAccessToken());
         response.addHeader("RefreshToken", token.getRefreshToken());
+
+        if(naverMember.isFirstLogin()) {
+            naverMember.setPoint(naverMember.getPoint() + 100);
+            naverMember.setFirstLogin(false);
+        }
 
         UserDetails userDetails = new UserDetailsImpl(naverMember);
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, token.getAccessToken(), userDetails.getAuthorities());
