@@ -6,7 +6,6 @@ import com.example.week8.domain.enums.SearchType;
 import com.example.week8.dto.request.FriendAdditionRequestDto;
 import com.example.week8.dto.request.FriendSecondNameRequestDto;
 import com.example.week8.dto.response.FriendInfoResponseDto;
-import com.example.week8.dto.response.MemberSearchResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.FriendRepository;
 import com.example.week8.repository.MemberRepository;
@@ -207,9 +206,10 @@ public class FriendService {
         if (friend == null)
             return ResponseDto.fail("친구리스트에 없는 멤버입니다.");
 
-        return ResponseDto.success(MemberSearchResponseDto.builder()
+        return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(findedMember.getId())
-                .nickname(findedMember.getNickname())
+                .nicknameByOwner(friend.getSecondName())
+                .nicknameByFriend(findedMember.getNickname())
                 .profileImgUrl(findedMember.getProfileImageUrl())
                 .creditScore(findedMember.getCredit())
                 .build());
@@ -220,6 +220,7 @@ public class FriendService {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
+        Member getMember = validateMember(request);
 
         Member findedMember;
         // 닉네임으로 검색
@@ -236,9 +237,16 @@ public class FriendService {
         } else {
             return ResponseDto.fail("검색 타입 에러");
         }
-        return ResponseDto.success(MemberSearchResponseDto.builder()
+
+        String secondName = null;
+        Friend friend = isPresentFriend(getMember, findedMember);
+        if(friend != null)
+            secondName = friend.getSecondName();
+
+        return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(findedMember.getId())
-                .nickname(findedMember.getNickname())
+                .nicknameByOwner(secondName)
+                .nicknameByFriend(findedMember.getNickname())
                 .profileImgUrl(findedMember.getProfileImageUrl())
                 .creditScore(findedMember.getCredit())
                 .build());
@@ -254,7 +262,7 @@ public class FriendService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-        Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
+       Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
         if (getFriend == null)
             return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
 

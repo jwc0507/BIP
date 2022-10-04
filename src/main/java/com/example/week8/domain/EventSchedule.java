@@ -1,5 +1,6 @@
 package com.example.week8.domain;
 
+import com.example.week8.domain.enums.BeforeTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -22,9 +23,9 @@ public class EventSchedule {
     @JoinColumn(name = "EVENT_ID")
     @JsonIgnore
     private Event event;
-//
-//    @Column
-//    private String before;
+
+    @Enumerated(EnumType.STRING)
+    private BeforeTime beforeTime;
 
     @Column
     private LocalDateTime targetTime;

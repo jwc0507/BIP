@@ -1,4 +1,3 @@
-/*
 package com.example.week8.service;
 
 
@@ -25,8 +24,12 @@ public class WeatherService {
     private String apiKey;
     private final String BASE_URL = "http://api.openweathermap.org/data/2.5/weather";
 
+    // 날씨 단건조회
     public ResponseDto<?> getLocalWeather(String coordinate) {
         String[] splitCoordinate = coordinate.split(",");
+
+        if(coordinate.isEmpty())
+            return ResponseDto.fail("좌표값 없음");
 
         double lat = Double.parseDouble(splitCoordinate[0]);
         double lon = Double.parseDouble(splitCoordinate[1]);
@@ -100,7 +103,7 @@ public class WeatherService {
         }
     }
 
- */
+
 //
 //    /*
 //     * POP	강수확률	 %
@@ -202,4 +205,4 @@ public class WeatherService {
 //class XY  {
 //    public double nX;
 //    public double nY;
-//}
+}

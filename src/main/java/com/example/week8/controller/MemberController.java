@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
@@ -30,13 +31,13 @@ public class MemberController {
 
     // 로그인
     @RequestMapping (value = "/api/member/login", method = RequestMethod.POST)
-    public ResponseDto<?> login(@RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
+    public ResponseDto<?> login(@RequestBody @Valid LoginRequestDto requestDto, HttpServletResponse response) {
         return memberService.createMember(requestDto, response);
     }
 
     // 이메일 로그인
     @RequestMapping (value = "/api/member/login/email", method = RequestMethod.POST)
-    public ResponseDto<?> emailLogin(@RequestBody EmailLoginRequestDto requestDto, HttpServletResponse response) {
+    public ResponseDto<?> emailLogin(@RequestBody @Valid EmailLoginRequestDto requestDto, HttpServletResponse response) {
         return memberService.emailLogin(requestDto, response);
     }
 
@@ -54,7 +55,7 @@ public class MemberController {
 
     // 회원가입
     @RequestMapping (value = "/api/member/signup", method = RequestMethod.POST)
-    public ResponseDto<?> signup(@RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
+    public ResponseDto<?> signup(@RequestBody @Valid LoginRequestDto requestDto, HttpServletResponse response) {
         return memberService.createMember(requestDto, response);
     }
 
@@ -66,37 +67,37 @@ public class MemberController {
 
     // 문자 인증코드생성
     @RequestMapping (value = "/api/member/auth/sms", method = RequestMethod.POST)
-    public ResponseDto<?> sendSMSCode(@RequestBody AuthRequestDto requestDto) throws UnsupportedEncodingException, URISyntaxException, NoSuchAlgorithmException, InvalidKeyException, JsonProcessingException {
+    public ResponseDto<?> sendSMSCode(@RequestBody @Valid AuthRequestDto requestDto) throws UnsupportedEncodingException, URISyntaxException, NoSuchAlgorithmException, InvalidKeyException, JsonProcessingException {
         return smsService.sendSms(requestDto);
     }
 
     // 이메일 인증코드생성 (기 생성된 멤버에 한해서)
     @RequestMapping (value = "/api/member/auth/email", method = RequestMethod.POST)
-    public ResponseDto<?> sendEmailCode(@RequestBody AuthRequestDto requestDto) {
+    public ResponseDto<?> sendEmailCode(@RequestBody @Valid AuthRequestDto requestDto) {
         return memberService.sendEmailCode(requestDto);
     }
 
     // 임시 인증코드 생성 (테스트용)
     @RequestMapping (value = "/api/member/auth/test", method = RequestMethod.POST)
-    public ResponseDto<?> sendAuthCode(@RequestBody AuthRequestDto requestDto) {
+    public ResponseDto<?> sendAuthCode(@RequestBody @Valid AuthRequestDto requestDto) {
         return memberService.sendAuthCode(requestDto);
     }
 
     // 전화번호 중복 확인
     @RequestMapping(value = "/api/member/chkphonenumber", method = RequestMethod.POST)
-    public ResponseDto<?> checkDuplicationPhoneNumber(@RequestBody DuplicationRequestDto requestDto) {
+    public ResponseDto<?> checkDuplicationPhoneNumber(@RequestBody @Valid DuplicationRequestDto requestDto) {
         return memberService.checkPhoneNumber(requestDto);
     }
 
     // 닉네임 중복 확인
     @RequestMapping(value = "/api/member/chknickname", method = RequestMethod.POST)
-    public ResponseDto<?> checkDuplicationNickname(@RequestBody DuplicationRequestDto requestDto) {
+    public ResponseDto<?> checkDuplicationNickname(@RequestBody @Valid DuplicationRequestDto requestDto) {
         return memberService.checkNickname(requestDto);
     }
 
     // 닉네임 중복 확인
     @RequestMapping(value = "/api/member/chkemail", method = RequestMethod.POST)
-    public ResponseDto<?> checkDuplicationemail(@RequestBody DuplicationRequestDto requestDto) {
+    public ResponseDto<?> checkDuplicationemail(@RequestBody @Valid DuplicationRequestDto requestDto) {
         return memberService.checkEmail(requestDto);
     }
 }

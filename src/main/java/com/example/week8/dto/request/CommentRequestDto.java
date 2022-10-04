@@ -5,8 +5,7 @@ import lombok.Getter;
 import javax.validation.constraints.NotBlank;
 
 @Getter
-public class MasterRequestDto {
-
+public class CommentRequestDto {
     @NotBlank
-    private Long targetId;
+    private String content;
 }
