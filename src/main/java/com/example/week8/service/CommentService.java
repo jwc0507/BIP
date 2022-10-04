@@ -10,6 +10,7 @@ import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.CommentRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
+import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -60,8 +61,8 @@ public class CommentService {
                 .id(comment.getId())
                 .nickname(comment.getMember().getNickname())
                 .content(comment.getContent())
-                .createAt(comment.getCreatedAt())
-                .modifiedAt(comment.getModifiedAt())
+                .createdAt(Time.serializePostDate(comment.getCreatedAt()))
+                .modifiedAt(Time.serializePostDate(comment.getModifiedAt()))
                 .build());
     }
 
@@ -92,8 +93,8 @@ public class CommentService {
                 .id(comment.getId())
                 .nickname(comment.getMember().getNickname())
                 .content(comment.getContent())
-                .createAt(comment.getCreatedAt())
-                .modifiedAt(comment.getModifiedAt())
+                .createdAt(Time.serializePostDate(comment.getCreatedAt()))
+                .modifiedAt(Time.serializePostDate(comment.getModifiedAt()))
                 .build());
     }
 
@@ -156,8 +157,8 @@ public class CommentService {
                     .id(comment.getId())
                     .nickname(comment.getMember().getNickname())
                     .content(comment.getContent())
-                    .createAt(comment.getCreatedAt())
-                    .modifiedAt(comment.getModifiedAt())
+                    .createdAt(Time.serializePostDate(comment.getCreatedAt()))
+                    .modifiedAt(Time.serializePostDate(comment.getModifiedAt()))
                     .build();
             commentResponseDtoList.add(commentResponseDto);
         }

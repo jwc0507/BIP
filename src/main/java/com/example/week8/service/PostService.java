@@ -10,6 +10,7 @@ import com.example.week8.dto.response.PostResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
+import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -217,8 +218,8 @@ public class PostService {
                         .numOfComment(post.getNumOfComment())
                         .likes(post.getLikes())
                         .point(post.getPoint())
-                        .createdAt(post.getCreatedAt())
-                        .modifiedAt(post.getModifiedAt())
+                        .createdAt(Time.serializePostDate(post.getCreatedAt()))
+                        .modifiedAt(Time.serializePostDate(post.getModifiedAt()))
                         .build()
         );
     }
@@ -228,15 +229,15 @@ public class PostService {
             postResponseAllDtoList.add(
                     PostResponseAllDto.builder()
                             .id(post.getId())
-                            .nickname(post.getMember().getNickname())
+                            .nickname(post.getMember().getNickname())   // 에러있음
                             .board(post.getBoard().toString())
                             .category(post.getCategory().toString())
                             .title(post.getTitle())
                             .likes(post.getLikes())
                             .point(post.getPoint())
                             .numOfComment(post.getNumOfComment())
-                            .createdAt(post.getCreatedAt())
-                            .modifiedAt(post.getModifiedAt())
+                            .createdAt(Time.serializePostDate(post.getCreatedAt()))
+                            .modifiedAt(Time.serializePostDate(post.getModifiedAt()))
                             .build()
             );
         }

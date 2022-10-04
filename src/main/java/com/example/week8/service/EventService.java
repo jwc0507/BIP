@@ -122,10 +122,10 @@ public class EventService {
                         .memberList(list)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
@@ -226,10 +226,10 @@ public class EventService {
                         .memberList(list)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
@@ -291,7 +291,7 @@ public class EventService {
                             chkDay = eventDateTime.getDayOfMonth();
                         if (chkDay != eventDateTime.getDayOfMonth()) {
                             monthEventListDtoList.add(MonthEventListDto.builder()
-                                    .eventDateTime(Time.serializeDate(lastEventDate))
+                                    .eventDateTime(Time.serializeEventDate(lastEventDate))
                                     .numberOfEventInToday(dateEventCounter)
                                     .build());
                             chkDay = eventDateTime.getDayOfMonth();
@@ -305,7 +305,7 @@ public class EventService {
         }
         if (unit.equals("month")) {
             monthEventListDtoList.add(MonthEventListDto.builder()
-                    .eventDateTime(Time.serializeDate(lastEventDate))
+                    .eventDateTime(Time.serializeEventDate(lastEventDate))
                     .numberOfEventInToday(dateEventCounter)
                     .build());
             return ResponseDto.success(monthEventListDtoList);
@@ -351,10 +351,10 @@ public class EventService {
                         .memberList(tempList)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
@@ -454,10 +454,10 @@ public class EventService {
                         .memberList(tempList)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
@@ -940,7 +940,7 @@ public class EventService {
         return EventListDto.builder()
                 .id(event.getId())
                 .title(event.getTitle())
-                .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                 .place(event.getPlace())
                 .weatherResponseDto((WeatherResponseDto) weatherService.getLocalWeather(event.getCoordinate()).getData())
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
