@@ -29,7 +29,7 @@ public class UserController {
     }
 
     // 카카오 전화번호 설정
-    @RequestMapping(value = "/api/user/phonenumber/kakao", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/user/phonenumber/kakao", method = RequestMethod.PUT)
     public ResponseDto<?> updateKakaoPhoneNumber(@RequestBody @Valid LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
         return userService.setKakaoPhoneNumber(requestDto, request, response);
     }
@@ -58,7 +58,7 @@ public class UserController {
         return userService.getMemberInfo(request);
     }
 
-    // 회원정보 불러오기
+    // 회원탈퇴
     @RequestMapping(value = "/api/user", method = RequestMethod.DELETE)
     public ResponseDto<?> deleteMember(HttpServletRequest request) {
         return userService.deleteMember(request);
