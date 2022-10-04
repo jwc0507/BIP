@@ -126,9 +126,6 @@ public class MemberService {
             member.setPoint(member.getPoint() + 100);
             member.setFirstLogin(false);
         }
-//
-//        sseEmitterService.subscribe(member.getId());
-
         return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
 
@@ -145,6 +142,7 @@ public class MemberService {
         if (tokenProvider.deleteRefreshToken(member))
             return ResponseDto.fail("존재하지 않는 Token 입니다.");
 
+        sseEmitterService.deleteAllEmitterStartWithId(member.getId().toString());
 
         return ResponseDto.success("로그아웃 성공");
     }
