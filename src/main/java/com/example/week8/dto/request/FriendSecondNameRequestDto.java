@@ -2,14 +2,14 @@ package com.example.week8.dto.request;
 
 import lombok.Getter;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 
 @Getter
 public class FriendSecondNameRequestDto {
 
-    @NotNull
+    @NotBlank
     private String friendNickname;
 
-    @NotNull
+    @NotBlank
     private String secondName;
 }

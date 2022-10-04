@@ -2,6 +2,7 @@ package com.example.week8.service;
 
 import com.example.week8.domain.*;
 import com.example.week8.domain.chat.ChatRoom;
+import com.example.week8.domain.enums.AlertType;
 import com.example.week8.domain.enums.Attendance;
 import com.example.week8.domain.enums.BeforeTime;
 import com.example.week8.domain.enums.EventStatus;
@@ -43,6 +44,7 @@ public class EventService {
     private final EventScheduleRepository eventScheduleRepository;
     private final FriendRepository friendRepository;
     private final WeatherService weatherService;
+    private final SseEmitterService sseEmitterService;
     private final int MAG_DONE_CREDIT = 1;  // 약속완료 신용도 증감 배율 (1이 기본)
 
 
@@ -122,10 +124,10 @@ public class EventService {
                         .memberList(list)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
@@ -226,10 +228,10 @@ public class EventService {
                         .memberList(list)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
@@ -291,7 +293,7 @@ public class EventService {
                             chkDay = eventDateTime.getDayOfMonth();
                         if (chkDay != eventDateTime.getDayOfMonth()) {
                             monthEventListDtoList.add(MonthEventListDto.builder()
-                                    .eventDateTime(Time.serializeDate(lastEventDate))
+                                    .eventDateTime(Time.serializeEventDate(lastEventDate))
                                     .numberOfEventInToday(dateEventCounter)
                                     .build());
                             chkDay = eventDateTime.getDayOfMonth();
@@ -305,7 +307,7 @@ public class EventService {
         }
         if (unit.equals("month")) {
             monthEventListDtoList.add(MonthEventListDto.builder()
-                    .eventDateTime(Time.serializeDate(lastEventDate))
+                    .eventDateTime(Time.serializeEventDate(lastEventDate))
                     .numberOfEventInToday(dateEventCounter)
                     .build());
             return ResponseDto.success(monthEventListDtoList);
@@ -351,10 +353,10 @@ public class EventService {
                         .memberList(tempList)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
@@ -454,10 +456,10 @@ public class EventService {
                         .memberList(tempList)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                         .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
@@ -705,16 +707,19 @@ public class EventService {
         List<EventSchedule> eventScheduleList = eventScheduleRepository.findAll();
         for (EventSchedule eventSchedule : eventScheduleList) {
             if (eventSchedule.getTargetTime().equals(now)) {
+                AlertType type = null;
                 if (eventSchedule.getBeforeTime() == BeforeTime.DAY) {
                     log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 하루 남았습니다.");
-                    eventScheduleRepository.delete(eventSchedule);
+                    type = AlertType.DAY;
                 } else if (eventSchedule.getBeforeTime() == BeforeTime.HOUR) {
                     log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 한 시간 남았습니다.");
-                    eventScheduleRepository.delete(eventSchedule);
+                    type = AlertType.HOUR;
                 } else if (eventSchedule.getBeforeTime() == BeforeTime.MINUTE) {
                     log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 십 분 남았습니다.");
-                    eventScheduleRepository.delete(eventSchedule);
+                    type = AlertType.MIN;
                 }
+                sseEmitterService.publishInScheduler(eventSchedule.getEvent().getId(), type);
+                eventScheduleRepository.delete(eventSchedule);
             }
         }
     }
@@ -940,7 +945,7 @@ public class EventService {
         return EventListDto.builder()
                 .id(event.getId())
                 .title(event.getTitle())
-                .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                 .place(event.getPlace())
                 .weatherResponseDto((WeatherResponseDto) weatherService.getLocalWeather(event.getCoordinate()).getData())
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
