@@ -29,7 +29,7 @@ public class UserController {
     }
 
     // 카카오 전화번호 설정
-    @RequestMapping(value = "/api/user/phonenumber/kakao", method = RequestMethod.PUT)
+    @RequestMapping(value = "/api/user/phonenumber/kakao", method = RequestMethod.POST)
     public ResponseDto<?> updateKakaoPhoneNumber(@RequestBody @Valid LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
         return userService.setKakaoPhoneNumber(requestDto, request, response);
     }
