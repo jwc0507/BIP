@@ -10,10 +10,10 @@ import javax.validation.constraints.NotNull;
 @Getter
 public class PostRequestDto {
 
-    @NotBlank
+    @NotNull
     private Board board;
 
-    @NotBlank
+    @NotNull
     private Category category;
 
     @NotBlank
@@ -32,5 +32,5 @@ public class PostRequestDto {
     private String coordinate;
 
     @NotBlank
-    private int point;
+    private String point;
 }

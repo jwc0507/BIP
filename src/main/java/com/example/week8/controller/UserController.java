@@ -58,7 +58,7 @@ public class UserController {
         return userService.getMemberInfo(request);
     }
 
-    // 회원정보 불러오기
+    // 회원탈퇴
     @RequestMapping(value = "/api/user", method = RequestMethod.DELETE)
     public ResponseDto<?> deleteMember(HttpServletRequest request) {
         return userService.deleteMember(request);

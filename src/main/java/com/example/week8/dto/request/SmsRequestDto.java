@@ -1,17 +1,15 @@
 package com.example.week8.dto.request;
 
 import com.example.week8.dto.MessageDto;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 
 import java.util.List;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Getter
+@Setter
+@AllArgsConstructor
+@RequiredArgsConstructor
 @Builder
 public class SmsRequestDto {
     String type;        // sms, lms, mms 종류

@@ -5,6 +5,9 @@ import lombok.*;
 import javax.validation.constraints.NotBlank;
 
 @Getter
+@Setter
+@AllArgsConstructor
+@RequiredArgsConstructor
 @Builder
 public class DuplicationRequestDto {
     @NotBlank
