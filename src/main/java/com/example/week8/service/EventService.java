@@ -41,6 +41,7 @@ public class EventService {
     private final TokenProvider tokenProvider;
     private final ChatRoomRepository chatRoomRepository;
     private final EventScheduleRepository eventScheduleRepository;
+    private final FriendRepository friendRepository;
     private final WeatherService weatherService;
     private final int MAG_DONE_CREDIT = 1;  // 약속완료 신용도 증감 배율 (1이 기본)
 
@@ -104,7 +105,7 @@ public class EventService {
 
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
-        MemberResponseDto memberResponseDto = convertToDto(member);
+        MemberResponseDto memberResponseDto = convertToDto(member, null);
         list.add(memberResponseDto);
 
         eventRepository.flush();
@@ -216,7 +217,7 @@ public class EventService {
 
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
-        MemberResponseDto memberResponseDto = convertToDto(member);
+        MemberResponseDto memberResponseDto = convertToDto(member, null);
         list.add(memberResponseDto);
 
         return ResponseDto.success(
@@ -340,7 +341,7 @@ public class EventService {
         List<MemberResponseDto> tempList = new ArrayList<>();
         for (EventMember eventMember : findEventMemberList) {
             Long memberId = eventMember.getMember().getId();
-            MemberResponseDto memberResponseDto = convertToDto(isPresentMember(memberId));
+            MemberResponseDto memberResponseDto = convertToDto(member,isPresentMember(memberId));
             tempList.add(memberResponseDto);
         }
 
@@ -408,7 +409,7 @@ public class EventService {
             return ResponseDto.fail("약속 참여자가 아닙니다.");
 
         // 닉네임에 해당하는(초대할) 멤버 호출
-        Member guest = isPresentMemberByNickname(inviteMemberDto.getNickname());
+        Member guest = isPresentMemberByNickname(inviteMemberDto.getNickname()); //친구가 설정한 닉네임.
         if (null == guest) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
@@ -439,7 +440,7 @@ public class EventService {
         List<EventMember> findEventMemberList = eventMemberRepository.findAllByEventId(eventId);
         List<MemberResponseDto> tempList = new ArrayList<>();
         for (EventMember eventMember : findEventMemberList) {
-            MemberResponseDto memberResponseDto = convertToDto(eventMember.getMember());
+            MemberResponseDto memberResponseDto = convertToDto(member,eventMember.getMember());
 
             // 체크인멤버 호출
             CheckinMember tempCheckinMember = isPresentCheckinMember(eventId, eventMember.getMember().getId());
@@ -564,7 +565,7 @@ public class EventService {
 
         List<MemberResponseDto> memberResponseDtoList = new ArrayList<>();
         for (CheckinMember tempCheckinMember : findCheckinMemberList) {
-            MemberResponseDto memberResponseDto = convertToDto(tempCheckinMember.getMember());
+            MemberResponseDto memberResponseDto = convertToDto(member, tempCheckinMember.getMember());
             memberResponseDto.setAttendance(tempCheckinMember.getAttendance());
             memberResponseDtoList.add(memberResponseDto);
         }
@@ -594,7 +595,7 @@ public class EventService {
 
         List<MemberResponseDto> memberResponseDtoList = new ArrayList<>();
         for (CheckinMember tempCheckinMember : findCheckinMemberList) {
-            MemberResponseDto memberResponseDto = convertToDto(tempCheckinMember.getMember());
+            MemberResponseDto memberResponseDto = convertToDto(member, tempCheckinMember.getMember());
             memberResponseDto.setAttendance(tempCheckinMember.getAttendance());
             memberResponseDtoList.add(memberResponseDto);
         }
@@ -901,16 +902,35 @@ public class EventService {
     /**
      * Member를 MemberResponseDto로 변환
      */
-    public MemberResponseDto convertToDto(Member member) {
-        return MemberResponseDto.builder()
-                .id(member.getId())
-                .phoneNumber(member.getPhoneNumber())
-                .email(member.getEmail())
-                .nickname(member.getNickname())
-                .credit(member.getCredit())
-                .point(member.getPoint())
-                .profileImageUrl(member.getProfileImageUrl())
-                .build();
+    public MemberResponseDto convertToDto(Member owner, Member friend) {
+        if(friend ==null) {//방장을 이벤트 멤버에 등록하는 경우
+            return MemberResponseDto.builder()
+                    .id(owner.getId())
+                    .phoneNumber(owner.getPhoneNumber())
+                    .email(owner.getEmail())
+                    .nicknameByOwner(owner.getNickname())
+                    .nicknameByFriend(null)
+                    .credit(owner.getCredit())
+                    .point(owner.getPoint())
+                    .profileImageUrl(owner.getProfileImageUrl())
+                    .build();
+        }
+        else {//방장 이외의 친구를 이벤트 멤버로 등록하는 경우
+            String nicknameByOwner = null;
+            Friend tempFriend = friendRepository.findByOwnerAndFriend(owner, friend).orElse(null);
+            if (tempFriend != null)
+                nicknameByOwner = tempFriend.getSecondName();
+            return MemberResponseDto.builder()
+                    .id(friend.getId())
+                    .phoneNumber(friend.getPhoneNumber())
+                    .email(friend.getEmail())
+                    .nicknameByOwner(nicknameByOwner)
+                    .nicknameByFriend(friend.getNickname())
+                    .credit(friend.getCredit())
+                    .point(friend.getPoint())
+                    .profileImageUrl(friend.getProfileImageUrl())
+                    .build();
+        }
     }
 
     /**
