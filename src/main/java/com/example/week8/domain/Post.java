@@ -108,4 +108,13 @@ public class Post extends Timestamped {
 
     }
 
+    public void addLike(){
+        this.likes++;
+    }
+
+    public void cancelLike(){
+        this.likes--;
+    }
+
+
 }
