@@ -408,7 +408,7 @@ public class EventService {
             return ResponseDto.fail("약속 참여자가 아닙니다.");
 
         // 닉네임에 해당하는(초대할) 멤버 호출
-        Member guest = isPresentMemberByNickname(inviteMemberDto.getNickname());
+        Member guest = isPresentMemberByNickname(inviteMemberDto.getNickname()); //친구가 설정한 닉네임.
         if (null == guest) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
@@ -901,16 +901,35 @@ public class EventService {
     /**
      * Member를 MemberResponseDto로 변환
      */
-    public MemberResponseDto convertToDto(Member member) {
-        return MemberResponseDto.builder()
-                .id(member.getId())
-                .phoneNumber(member.getPhoneNumber())
-                .email(member.getEmail())
-                .nickname(member.getNickname())
-                .credit(member.getCredit())
-                .point(member.getPoint())
-                .profileImageUrl(member.getProfileImageUrl())
-                .build();
+    public MemberResponseDto convertToDto(Member owner, Member friend) {
+        if(friend ==null) {//방장을 이벤트 멤버에 등록하는 경우
+            return MemberResponseDto.builder()
+                    .id(owner.getId())
+                    .phoneNumber(owner.getPhoneNumber())
+                    .email(owner.getEmail())
+                    .nicknameByOwner(owner.getNickname())
+                    .nicknameByFriend(null)
+                    .credit(owner.getCredit())
+                    .point(owner.getPoint())
+                    .profileImageUrl(owner.getProfileImageUrl())
+                    .build();
+        }
+        else {//방장 이외의 친구를 이벤트 멤버로 등록하는 경우
+            String nicknameByOwner = null;
+            Friend tempFriend = friendRepository.findByOwnerAndFriend(owner, friend).orElse(null);
+            if (tempFriend != null)
+                nicknameByOwner = tempFriend.getSecondName();
+            return MemberResponseDto.builder()
+                    .id(friend.getId())
+                    .phoneNumber(friend.getPhoneNumber())
+                    .email(friend.getEmail())
+                    .nicknameByOwner(nicknameByOwner)
+                    .nicknameByFriend(friend.getNickname())
+                    .credit(friend.getCredit())
+                    .point(friend.getPoint())
+                    .profileImageUrl(friend.getProfileImageUrl())
+                    .build();
+        }
     }
 
     /**
