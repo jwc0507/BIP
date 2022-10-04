@@ -30,6 +30,15 @@ public class Member extends Timestamped {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMember> chatMember;
 
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "owner")
+    private List<Friend> friendListOwner = new ArrayList<>();
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "friend")
+    private Friend friendListFriend;
+
+    @OneToOne(orphanRemoval = true, mappedBy = "member")
+    private RefreshToken refreshToken;
+
     @Column(unique = true)
     private Long kakaoId;   // 카카오id
 
@@ -66,12 +75,6 @@ public class Member extends Timestamped {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "owner")
-    private List<Friend> friendListOwner = new ArrayList<>();
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "friend")
-    private Friend friendListFriend;
 
     public void updateNickname(String name) {
         this.nickname = name;

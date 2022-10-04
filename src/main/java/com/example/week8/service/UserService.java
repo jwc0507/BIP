@@ -1,8 +1,6 @@
 package com.example.week8.service;
 
-import com.example.week8.domain.Event;
-import com.example.week8.domain.EventMember;
-import com.example.week8.domain.Member;
+import com.example.week8.domain.*;
 import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.*;
@@ -10,12 +8,17 @@ import com.example.week8.dto.response.*;
 import com.example.week8.repository.EventMemberRepository;
 import com.example.week8.repository.EventRepository;
 import com.example.week8.repository.MemberRepository;
+import com.example.week8.repository.RefreshTokenRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,7 @@ public class UserService {
     private final EventRepository eventRepository;
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -153,35 +157,40 @@ public class UserService {
                 String url = updateMember.getProfileImageUrl();
                 Long kakaoId = updateMember.getKakaoId();
 
-                log.info(updateMember.getNickname()+" : "+updateMember.getKakaoId());
+      //          updateMember.setEmail(UUID.randomUUID().toString());
 
-                tokenProvider.deleteRefreshToken(updateMember);
                 memberRepository.deleteById(updateMember.getId());
-                memberRepository.flush();
-
                 findMember.updateKakaoMember(email,url,kakaoId);
-
-                log.info(findMember.getNickname()+" : "+findMember.getKakaoId());
-
-                TokenDto tokenDto = tokenProvider.generateTokenDto(member);
-
-                response.addHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
-                response.addHeader("RefreshToken", tokenDto.getRefreshToken());
 
                 if(member.isFirstLogin()) {
                     member.setPoint(member.getPoint() + 100);
                     member.setFirstLogin(false);
                 }
-//
-//        sseEmitterService.subscribe(member.getId());
-
-                return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
+                forceLogin(findMember, request, response);
+                return ResponseDto.success("성공?");
             }
 
         }
-
         return ResponseDto.fail(responseDto.getData());
     }
+
+    private void forceLogin(Member kakaoUser, HttpServletRequest request, HttpServletResponse response) {
+        // response header에 token 추가
+//        Member member = validateMember(request);
+//
+//        refreshTokenRepository.delete(member.getRefreshToken());
+//        refreshTokenRepository.flush();
+//        memberRepository.deleteById(member.getId());
+
+        TokenDto token = tokenProvider.generateTokenDto(kakaoUser);
+        response.addHeader("Authorization", "Bearer " + token.getAccessToken());
+        response.addHeader("RefreshToken", token.getRefreshToken());
+
+        UserDetails userDetails = new UserDetailsImpl(kakaoUser);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, token.getAccessToken(), userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
 
     // 이메일 설정
     @Transactional
@@ -325,8 +334,6 @@ public class UserService {
             return chkResponse;
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
-
-        tokenProvider.deleteRefreshToken(member);
 
         memberRepository.deleteById(member.getId());
 
