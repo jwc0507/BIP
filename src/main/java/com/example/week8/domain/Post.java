@@ -33,8 +33,6 @@ public class Post extends Timestamped {
     @Enumerated(EnumType.STRING)
     private Category category;
 
-//    @Column(nullable = false)
-//    private String title;
 
     @Column(nullable = false)
     private String content;
@@ -57,8 +55,6 @@ public class Post extends Timestamped {
     @Column(nullable = false)
     private int point;
 
-    @Column
-    private String imgUrl;
     @Column
     private String address;
     @Column
