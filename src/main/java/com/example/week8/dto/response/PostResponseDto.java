@@ -19,7 +19,7 @@ public class PostResponseDto {
     private String content;
     private String address;
     private String coordinate;
-    private List<String> imgUrlList;
+    private String[] imgUrlList;
     private int numOfComment;
     private int likes;
     private int point;

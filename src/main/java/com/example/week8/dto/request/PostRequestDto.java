@@ -25,7 +25,7 @@ public class PostRequestDto {
 
 //    @NotNull
 //    private String imgUrl;
-    private List<String> imgUrlList;
+    private String[] imgUrlList;
 
     @NotBlank
     private String address;

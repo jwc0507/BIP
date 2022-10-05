@@ -48,7 +48,7 @@ public class PostService {
 
         // 게시글 생성
         Post post = new Post(member, postRequestDto);
-        List<String> imgURLList = postRequestDto.getImgUrlList();
+        String[] imgURLList = postRequestDto.getImgUrlList();
 
         for(String imgURL : imgURLList){
             ImageFile imageFile = imageFilesRepository.findByUrl(imgURL).orElse(null);
@@ -219,10 +219,11 @@ public class PostService {
 
 
         List<ImageFile> imageFileList = imageFilesRepository.findAllByPost(post);
-        List<String> imageUrlList = new ArrayList<>();
 
+        String[] imageUrlList = new String[imageFileList.size()];
+        int index=0;
         for(ImageFile imageFile : imageFileList){
-            imageUrlList.add(imageFile.getUrl());
+            imageUrlList[index++]=imageFile.getUrl();
         }
 
         return ResponseDto.success(
