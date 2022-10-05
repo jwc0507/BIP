@@ -33,16 +33,13 @@ public class Post extends Timestamped {
     @Enumerated(EnumType.STRING)
     private Category category;
 
-//    @Column(nullable = false)
-//    private String title;
-
     @Column(nullable = false)
     private String content;
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "post")
     private List<Comment> comments;
 
-    @Column
+    @Column(nullable = false)
     private int likes;
 
     @Column
@@ -51,7 +48,7 @@ public class Post extends Timestamped {
     @Column
     private int totalCountOfComment;
 
-    @Column
+    @Column(nullable = false)
     private int views;
 
     @Column(nullable = false)
@@ -59,28 +56,30 @@ public class Post extends Timestamped {
 
     @Column
     private String imgUrl;
-    @Column
+    
+    @Column(nullable = false)
     private String address;
-    @Column
+    
+    @Column(nullable = false)
     private String coordinate;
 
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
         this.board = postRequestDto.getBoard();
         this.category = postRequestDto.getCategory();
-//        this.title = postRequestDto.getTitle();
         this.address = postRequestDto.getAddress();
 //        this.imgUrl = postRequestDto.getImgUrl();
         this.coordinate = postRequestDto.getCoordinate();
         this.content = postRequestDto.getContent();
         this.point = Integer.parseInt(postRequestDto.getPoint());
+        this.views = 0;
         this.likes = 0;
         this.numOfComment = 0;
     }
 
     // 조회수 올리기
     public void addViews() {
-        this.views += 1;
+        this.views++;
     }
 
     // 댓글 수 올리기
@@ -103,11 +102,19 @@ public class Post extends Timestamped {
     public void updatePost(PostRequestDto postRequestDto) {
         this.board = postRequestDto.getBoard();
         this.category = postRequestDto.getCategory();
-//        this.title = postRequestDto.getTitle();
         this.content = postRequestDto.getContent();
         this.address = postRequestDto.getAddress();
         this.coordinate = postRequestDto.getCoordinate();
         this.point = Integer.parseInt(postRequestDto.getPoint());
     }
+
+    public void addLike(){
+        this.likes++;
+    }
+
+    public void cancelLike(){
+        this.likes--;
+    }
+
 
 }

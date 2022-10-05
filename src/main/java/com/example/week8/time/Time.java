@@ -106,7 +106,7 @@ public class Time {
     }
 
     public static String serializePostDate(LocalDateTime localDateTime) {
-        String dateNow = localDateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm"));
+        String dateNow = localDateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd.HH:mm"));
         log.info(dateNow);
         return dateNow;
     }
