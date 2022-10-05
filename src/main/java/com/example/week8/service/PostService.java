@@ -219,6 +219,7 @@ public class PostService {
                         .views(post.getViews())
                         .likes(post.getLikes())
                         .point(post.getPoint())
+                        .timePast(Time.convertLocaldatetimeToTimePast(post.getCreatedAt()))
                         .createdAt(Time.serializePostDate(post.getCreatedAt()))
                         .modifiedAt(Time.serializePostDate(post.getModifiedAt()))
                         .build()

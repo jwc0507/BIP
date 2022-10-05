@@ -62,7 +62,7 @@ public class WeatherService {
     }
 
     private String convertFaToCel(float fahrenheit) {
-        return String.format("%.2f", (fahrenheit - 273.15f) * 100 / 100.0f);
+        return String.format("%.1f", (fahrenheit - 273.15f) * 100 / 100.0f);
     }
 
     private String convertSky(String main) {

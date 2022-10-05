@@ -116,4 +116,11 @@ public class Member extends Timestamped {
     public void updateNumOfDone(int done) {
         numOfDone += done;
     }
+
+    public void chkFirstLogin() {
+        if(this.firstLogin) {
+            this.point += 100;
+            this.firstLogin = false;
+        }
+    }
 }
