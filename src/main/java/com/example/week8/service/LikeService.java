@@ -1,12 +1,11 @@
 package com.example.week8.service;
 
-import com.example.week8.domain.Like;
+import com.example.week8.domain.Likes;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
 import com.example.week8.dto.response.LikeResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.LikeRepository;
-import com.example.week8.repository.MemberRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LikeService {
     private final LikeRepository likeRepository;
-    private final MemberRepository memberRepository;
     private final PostRepository postRepository;
     private final TokenProvider tokenProvider;
 
@@ -41,7 +39,7 @@ public class LikeService {
         if(likeRepository.findByMemberAndPost(member,post).orElse(null)!=null)
             return ResponseDto.fail("이미 해당 게시물을 '좋아하는' 상태입니다.");
 
-        Like like = Like.builder()
+        Likes like = Likes.builder()
                     .member(member)
                     .post(post)
                     .build();
@@ -50,7 +48,6 @@ public class LikeService {
         post.addLike();
         return ResponseDto.success(LikeResponseDto.builder()
                 .post_id(like.getPost().getId())
-                .title(like.getPost().getTitle())
                 .category(like.getPost().getCategory())
                 .build());
     }
@@ -66,14 +63,13 @@ public class LikeService {
         if(post ==null)
             return ResponseDto.fail("게시글 없음 or 게시글 ID 오류");
 
-        Like like= likeRepository.findByMemberAndPost(member,post).orElse(null);
+        Likes like= likeRepository.findByMemberAndPost(member,post).orElse(null);
         if(like ==null)
             return ResponseDto.fail("이미 해당 게시물을 '좋아하지 않는' 상태입니다.");
         likeRepository.deleteByMemberAndPost(member,post);
         post.cancelLike();
         return ResponseDto.success(LikeResponseDto.builder()
                 .post_id(like.getPost().getId())
-                .title(like.getPost().getTitle())
                 .category(like.getPost().getCategory())
                 .build());
     }
@@ -87,14 +83,13 @@ public class LikeService {
 
         Member member = (Member) chkResponse.getData();
 
-        List<Like> likeList = likeRepository.findAllByMember(member);
+        List<Likes> likeList = likeRepository.findAllByMember(member);
         List<LikeResponseDto> likeResponseDtos = new ArrayList<>();
 
-        for(Like like : likeList)
+        for(Likes like : likeList)
         {
             likeResponseDtos.add(LikeResponseDto.builder()
                     .post_id(like.getPost().getId())
-                    .title(like.getPost().getTitle())
                     .category(like.getPost().getCategory())
                     .build());
         }
