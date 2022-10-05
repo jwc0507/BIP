@@ -153,6 +153,17 @@ public class FriendService {
         return ResponseDto.success("친구삭제가 완료되었습니다.");
     }
 
+    // 자신을 친구추가한 관계삭제
+    @Transactional
+    public boolean deleteMySelf(HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return false;
+        Member mySelf = validateMember(request); // Owner
+        friendRepository.deleteAllByFriend(mySelf);
+        return true;
+    }
+
     private Friend isPresentFriend(Member owner, Member friend) {
         Optional<Friend> findedFriend = friendRepository.findByOwnerAndFriend(owner, friend);
         return findedFriend.orElse(null);
