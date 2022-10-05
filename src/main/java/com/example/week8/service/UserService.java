@@ -42,7 +42,7 @@ public class UserService {
     private final EventRepository eventRepository;
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final FriendService friendService;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -149,7 +149,13 @@ public class UserService {
             // 만약 먼저 회원가입한 계정에 해당 전화번호가 있다면
             else {
                 Member findMember = (Member) responseDto.getData();
+                if(findMember.equals(updateMember))
+                    return ResponseDto.fail("멤버정보 동일 에러");
+
                 if (findMember.getKakaoId() != null) {
+                    tokenProvider.deleteRefreshToken(updateMember);
+                    SecurityContextHolder.clearContext();
+                    memberRepository.deleteById(updateMember.getId());
                     return ResponseDto.fail("해당 전화번호에 가입된 카카오 아이디가 있습니다.");
                 }
                 // 계정 통합
@@ -157,8 +163,10 @@ public class UserService {
                 String url = updateMember.getProfileImageUrl();
                 Long kakaoId = updateMember.getKakaoId();
 
-                SecurityContextHolder.clearContext();
+                friendService.deleteMySelf(request);
+
                 tokenProvider.deleteRefreshToken(updateMember);
+                SecurityContextHolder.clearContext();
 
                 memberRepository.deleteById(updateMember.getId());
                 memberRepository.flush();
@@ -342,6 +350,7 @@ public class UserService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
+        tokenProvider.deleteRefreshToken(member);
         SecurityContextHolder.clearContext();
         memberRepository.deleteById(member.getId());
 
