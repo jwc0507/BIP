@@ -17,9 +17,6 @@ public class PostRequestDto {
     private Category category;
 
     @NotBlank
-    private String title;
-
-    @NotBlank
     private String content;
 
 //    @NotNull

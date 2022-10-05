@@ -181,6 +181,11 @@ public class UserService {
         response.addHeader("Authorization", "Bearer " + token.getAccessToken());
         response.addHeader("RefreshToken", token.getRefreshToken());
 
+        if(kakaoUser.isFirstLogin()) {
+            kakaoUser.setPoint(kakaoUser.getPoint() + 100);
+            kakaoUser.setFirstLogin(false);
+        }
+
         UserDetails userDetails = new UserDetailsImpl(kakaoUser);
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, token.getAccessToken(), userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);

@@ -31,7 +31,7 @@ public class CommentController {
 
     // 댓글 수정하기
     @RequestMapping(value = "/api/comment/update/{commentId}", method = RequestMethod.PUT)
-    public ResponseDto<?> updateComment (@PathVariable Long commentId, @RequestBody @Valid  CommentRequestDto requestDto, HttpServletRequest request) {
+    public ResponseDto<?> updateComment (@PathVariable Long commentId, @RequestBody @Valid CommentRequestDto requestDto, HttpServletRequest request) {
         return commentService.updateComment(commentId, requestDto, request);
     }
 

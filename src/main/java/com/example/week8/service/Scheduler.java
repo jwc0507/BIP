@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,7 +21,8 @@ public class Scheduler {  // 스케쥴링할 메소드의 조건 2가지: void�
     private final EventService eventService;
 
     @Async
-    @Scheduled(cron = "59 59 23 * * *")
+    @Transactional
+    @Scheduled(cron = "0 0 0 * * *")
     public void init() {
         List<Member> memberList = memberRepository.findAll();
         for(Member curMember : memberList){
