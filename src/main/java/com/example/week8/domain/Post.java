@@ -56,8 +56,10 @@ public class Post extends Timestamped {
 
     @Column
     private String imgUrl;
+    
     @Column(nullable = false)
     private String address;
+    
     @Column(nullable = false)
     private String coordinate;
 

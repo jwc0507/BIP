@@ -213,7 +213,6 @@ public class PostService {
                         .nickname(post.getMember().getNickname())
                         .profileImgUrl(post.getMember().getProfileImageUrl())
                         .content(post.getContent())
-                        .imgUrl(post.getImgUrl())
                         .address(post.getAddress())
                         .coordinate(post.getCoordinate())
                         .numOfComment(post.getNumOfComment())
