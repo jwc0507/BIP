@@ -36,6 +36,7 @@ public class KakaoOauthService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
 
+    @Transactional
     public ResponseDto<?> kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         // 1. "인가 코드"로 전체 response 요청
         String accessToken = getAccessToken(code);
@@ -50,20 +51,13 @@ public class KakaoOauthService {
         forceLogin(kakaoUser, response);
 
         // 5. 첫 로그인 보너스 지급
-        chkFirstLogin(kakaoUser);
+        kakaoUser.chkFirstLogin();
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
                 .phoneNumber(kakaoUser.getPhoneNumber())
                 .email(kakaoUser.getEmail())
                 .build());
 
-    }
-    @Transactional
-    public void chkFirstLogin(Member member) {
-        if(member.isFirstLogin()) {
-            member.setPoint(member.getPoint() + 100);
-            member.setFirstLogin(false);
-        }
     }
 
     private String getAccessToken(String code) throws JsonProcessingException {

@@ -122,10 +122,8 @@ public class MemberService {
 
         tokenToHeaders(tokenDto, response);
 
-        if(member.isFirstLogin()) {
-            member.setPoint(member.getPoint() + 100);
-            member.setFirstLogin(false);
-        }
+        member.chkFirstLogin();
+
         return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
 

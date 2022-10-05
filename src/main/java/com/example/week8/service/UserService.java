@@ -162,12 +162,9 @@ public class UserService {
                 memberRepository.flush();
 
                 findMember.updateKakaoMember(email,url,kakaoId);
-
-                if(member.isFirstLogin()) {
-                    member.setPoint(member.getPoint() + 100);
-                    member.setFirstLogin(false);
-                }
                 forceLogin(findMember, response);
+
+                findMember.chkFirstLogin();
                 return ResponseDto.success("성공?");
             }
 

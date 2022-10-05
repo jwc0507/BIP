@@ -36,6 +36,7 @@ public class NaverOauthService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
 
+    @Transactional
     public ResponseDto<?> naverlogin(String code, String state, HttpServletResponse response) throws JsonProcessingException {
 
         // 1. 받은 code와 state로 accesstoken 받기
@@ -51,7 +52,7 @@ public class NaverOauthService {
         forceLogin(naverMember, response);
 
         // 5. 로그인 보너스 주기
-        chkFirstLogin(naverMember);
+        naverMember.chkFirstLogin();
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
                 .phoneNumber(naverMember.getPhoneNumber())
@@ -59,13 +60,6 @@ public class NaverOauthService {
                 .build());
     }
 
-    @Transactional
-    public void chkFirstLogin(Member member) {
-        if(member.isFirstLogin()) {
-            member.setPoint(member.getPoint() + 100);
-            member.setFirstLogin(false);
-        }
-    }
 
     private String getAccessToken(String code, String state) throws JsonProcessingException {
 
