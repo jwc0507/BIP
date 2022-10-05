@@ -9,7 +9,6 @@ import lombok.Getter;
 @Builder
 public class NaverMemberInfoDto {
     private String id;
-    private String nickname;
     private String email;
     private String imageUrl;
     private String phoneNumber;

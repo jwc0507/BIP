@@ -22,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -49,11 +50,21 @@ public class NaverOauthService {
         // 4. 강제 로그인 처리
         forceLogin(naverMember, response);
 
+        // 5. 로그인 보너스 주기
+        chkFirstLogin(naverMember);
+
         return ResponseDto.success(OauthLoginResponseDto.builder()
-                .nickname(naverMember.getNickname())
                 .phoneNumber(naverMember.getPhoneNumber())
                 .email(naverMember.getEmail())
                 .build());
+    }
+
+    @Transactional
+    public void chkFirstLogin(Member member) {
+        if(member.isFirstLogin()) {
+            member.setPoint(member.getPoint() + 100);
+            member.setFirstLogin(false);
+        }
     }
 
     private String getAccessToken(String code, String state) throws JsonProcessingException {
@@ -104,7 +115,6 @@ public class NaverOauthService {
         JsonNode jsonNode = objectMapper.readTree(responseBody);
 
         String id = jsonNode.get("response").get("id").asText();
-        String nickname = jsonNode.get("response").get("name").asText();
         String email = jsonNode.get("response").get("email").asText();
         String imgUrl = jsonNode.get("response").get("profile_image").asText();
         String mobile = jsonNode.get("response").get("mobile").asText();
@@ -112,7 +122,6 @@ public class NaverOauthService {
         String phoneNumber = mobile.replaceAll("-", "");
         return NaverMemberInfoDto.builder()
                 .id(id)
-                .nickname(nickname)
                 .email(email)
                 .imageUrl(imgUrl)
                 .phoneNumber(phoneNumber)
@@ -124,7 +133,6 @@ public class NaverOauthService {
         Member naverMember = memberRepository.findByNaverId(naverId)
                 .orElse(null);
         if (naverMember == null) {
-            String nickname = memberInfoDto.getNickname();
             String email = memberInfoDto.getEmail();
             String imgUrl = memberInfoDto.getImageUrl();
             String phoneNumber = memberInfoDto.getPhoneNumber();
@@ -160,7 +168,8 @@ public class NaverOauthService {
                         .build();
             } else {
                 naverMember.setNaverId(naverId);
-                naverMember.setEmail(email);
+                if (naverMember.getEmail() == null)
+                    naverMember.setEmail(email);
                 naverMember.setPhoneNumber(phoneNumber);
                 if (naverMember.getProfileImageUrl() == null)
                     naverMember.setProfileImageUrl(imgUrl);
@@ -175,11 +184,6 @@ public class NaverOauthService {
         TokenDto token = tokenProvider.generateTokenDto(naverMember);
         response.addHeader("Authorization", "Bearer " + token.getAccessToken());
         response.addHeader("RefreshToken", token.getRefreshToken());
-
-        if(naverMember.isFirstLogin()) {
-            naverMember.setPoint(naverMember.getPoint() + 100);
-            naverMember.setFirstLogin(false);
-        }
 
         UserDetails userDetails = new UserDetailsImpl(naverMember);
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, token.getAccessToken(), userDetails.getAuthorities());
