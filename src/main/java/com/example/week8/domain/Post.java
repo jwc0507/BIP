@@ -33,8 +33,8 @@ public class Post extends Timestamped {
     @Enumerated(EnumType.STRING)
     private Category category;
 
-    @Column(nullable = false)
-    private String title;
+//    @Column(nullable = false)
+//    private String title;
 
     @Column(nullable = false)
     private String content;
@@ -68,7 +68,7 @@ public class Post extends Timestamped {
         this.member = member;
         this.board = postRequestDto.getBoard();
         this.category = postRequestDto.getCategory();
-        this.title = postRequestDto.getTitle();
+//        this.title = postRequestDto.getTitle();
         this.address = postRequestDto.getAddress();
 //        this.imgUrl = postRequestDto.getImgUrl();
         this.coordinate = postRequestDto.getCoordinate();
@@ -103,9 +103,11 @@ public class Post extends Timestamped {
     public void updatePost(PostRequestDto postRequestDto) {
         this.board = postRequestDto.getBoard();
         this.category = postRequestDto.getCategory();
-        this.title = postRequestDto.getTitle();
+//        this.title = postRequestDto.getTitle();
         this.content = postRequestDto.getContent();
-
+        this.address = postRequestDto.getAddress();
+        this.coordinate = postRequestDto.getCoordinate();
+        this.point = Integer.parseInt(postRequestDto.getPoint());
     }
 
 }

@@ -14,7 +14,7 @@ public class PostResponseDto {
     private Board board;
     private Category category;
     private String nickname;
-    private String title;
+//    private String title;
     private String content;
     private String address;
     private String coordinate;
