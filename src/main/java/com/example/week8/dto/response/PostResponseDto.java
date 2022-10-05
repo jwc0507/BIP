@@ -5,7 +5,6 @@ import com.example.week8.domain.enums.Category;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -14,12 +13,13 @@ public class PostResponseDto {
     private Board board;
     private Category category;
     private String nickname;
-//    private String title;
+    private String profileImgUrl;
     private String content;
     private String address;
     private String coordinate;
     private String imgUrl;
     private int numOfComment;
+    private int views;
     private int likes;
     private int point;
     private String createdAt;
