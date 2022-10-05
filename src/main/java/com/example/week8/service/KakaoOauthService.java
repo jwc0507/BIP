@@ -22,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -48,12 +49,21 @@ public class KakaoOauthService {
         // 4. 강제 로그인 처리
         forceLogin(kakaoUser, response);
 
+        // 5. 첫 로그인 보너스 지급
+        chkFirstLogin(kakaoUser);
+
         return ResponseDto.success(OauthLoginResponseDto.builder()
-                .nickname(kakaoUser.getNickname())
                 .phoneNumber(kakaoUser.getPhoneNumber())
                 .email(kakaoUser.getEmail())
                 .build());
 
+    }
+    @Transactional
+    public void chkFirstLogin(Member member) {
+        if(member.isFirstLogin()) {
+            member.setPoint(member.getPoint() + 100);
+            member.setFirstLogin(false);
+        }
     }
 
     private String getAccessToken(String code) throws JsonProcessingException {
@@ -66,7 +76,7 @@ public class KakaoOauthService {
         body.add("grant_type", "authorization_code");
         body.add("client_id", "610f7f90999f8f182434e3cc03ad6415");
         body.add("redirect_uri", "http://localhost:3000/login/kakao");
-      //  body.add("redirect_uri", "http://localhost:8080/api/member/kakaologin");
+     //   body.add("redirect_uri", "http://localhost:8080/api/member/kakaologin");
         body.add("code", code);
 
         // HTTP 요청 보내기
@@ -107,12 +117,10 @@ public class KakaoOauthService {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(responseBody);
         Long id = jsonNode.get("id").asLong();
-        String nickname = jsonNode.get("properties").get("nickname").asText();
         String email = jsonNode.get("kakao_account").get("email").asText();
         String imgUrl = jsonNode.get("kakao_account").get("profile").get("profile_image_url").asText();
         return KakaoMemberInfoDto.builder()
                 .id(id)
-                .nickname(nickname)
                 .email(email)
                 .imageUrl(imgUrl)
                 .build();
@@ -124,7 +132,6 @@ public class KakaoOauthService {
         Member kakaoUser = memberRepository.findByKakaoId(kakaoId)
                 .orElse(null);
         if (kakaoUser == null) {
-            String nickname = kakaoMemberInfo.getNickname();
             String email = kakaoMemberInfo.getEmail();
             String imageUrl = kakaoMemberInfo.getImageUrl();
 
@@ -152,7 +159,8 @@ public class KakaoOauthService {
                         .build();
             } else {
                 kakaoUser.setKakaoId(kakaoId);
-                kakaoUser.setEmail(email);
+                if (kakaoUser.getEmail() == null)
+                    kakaoUser.setEmail(email);
                 if (kakaoUser.getProfileImageUrl() == null)
                     kakaoUser.setProfileImageUrl(imageUrl);
             }

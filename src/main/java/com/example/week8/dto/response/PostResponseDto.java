@@ -22,6 +22,7 @@ public class PostResponseDto {
     private int views;
     private int likes;
     private int point;
+    private String timePast;
     private String createdAt;
     private String modifiedAt;
 }
