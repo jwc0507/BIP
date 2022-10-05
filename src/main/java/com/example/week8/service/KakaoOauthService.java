@@ -54,6 +54,7 @@ public class KakaoOauthService {
         kakaoUser.chkFirstLogin();
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
+                        .nickname(kakaoUser.getNickname())
                 .phoneNumber(kakaoUser.getPhoneNumber())
                 .email(kakaoUser.getEmail())
                 .build());
