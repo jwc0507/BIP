@@ -84,8 +84,8 @@ public class PostService {
 
     /**
      * 게시글 단건 조회
+     * api 호출 시 데이터 변동사항(조회수 증가)이 발생하기 때문에 readOnly 옵션 미사용
      */
-    @Transactional(readOnly = true)
     public ResponseDto<?> getPost(Long postId) {
 
         Post post = isPresentPost(postId);
@@ -95,6 +95,7 @@ public class PostService {
 
         // 조회수 추가
         post.addViews();
+
         return getResponseDto(post);
     }
 
@@ -210,12 +211,13 @@ public class PostService {
                         .board(post.getBoard())
                         .category(post.getCategory())
                         .nickname(post.getMember().getNickname())
-//                        .title(post.getTitle())
+                        .profileImgUrl(post.getMember().getProfileImageUrl())
                         .content(post.getContent())
                         .imgUrl(post.getImgUrl())
                         .address(post.getAddress())
                         .coordinate(post.getCoordinate())
                         .numOfComment(post.getNumOfComment())
+                        .views(post.getViews())
                         .likes(post.getLikes())
                         .point(post.getPoint())
                         .createdAt(Time.serializePostDate(post.getCreatedAt()))
@@ -232,7 +234,8 @@ public class PostService {
                             .nickname(post.getMember().getNickname())   // 에러있음
                             .board(post.getBoard().toString())
                             .category(post.getCategory().toString())
-//                            .title(post.getTitle())
+                            .content(post.getContent())
+                            .views(post.getViews())
                             .likes(post.getLikes())
                             .point(post.getPoint())
                             .numOfComment(post.getNumOfComment())

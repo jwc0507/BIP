@@ -13,11 +13,12 @@ import lombok.NoArgsConstructor;
 public class PostResponseAllDto {
     private Long id;
     private String nickname;
-//    private String title;
     private String board;
     private String category;
+    private String content;
     private int numOfComment;
     private String[] imgUrls;
+    private int views;
     private int likes;
     private int point;
     private String timePast;
