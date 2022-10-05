@@ -158,6 +158,8 @@ public class UserService {
                 Long kakaoId = updateMember.getKakaoId();
 
                 SecurityContextHolder.clearContext();
+                tokenProvider.deleteRefreshToken(updateMember);
+
                 memberRepository.deleteById(updateMember.getId());
                 memberRepository.flush();
 
@@ -165,7 +167,15 @@ public class UserService {
                 forceLogin(findMember, response);
 
                 findMember.chkFirstLogin();
-                return ResponseDto.success("성공?");
+                return ResponseDto.success(UpdateMemberResponseDto.builder()
+                        .nickname(findMember.getNickname())
+                        .phoneNumber(findMember.getPhoneNumber())
+                        .email(findMember.getEmail())
+                        .profileImgUrl(findMember.getProfileImageUrl())
+                        .point(findMember.getPoint())
+                        .creditScore(findMember.getCredit())
+                        .numOfDone(findMember.getNumOfDone())
+                        .build());
             }
 
         }

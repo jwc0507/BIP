@@ -111,10 +111,12 @@ public class KakaoOauthService {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(responseBody);
         Long id = jsonNode.get("id").asLong();
+        String nickname = jsonNode.get("properties").get("nickname").asText();
         String email = jsonNode.get("kakao_account").get("email").asText();
         String imgUrl = jsonNode.get("kakao_account").get("profile").get("profile_image_url").asText();
         return KakaoMemberInfoDto.builder()
                 .id(id)
+                .nickname(nickname)
                 .email(email)
                 .imageUrl(imgUrl)
                 .build();
@@ -126,6 +128,7 @@ public class KakaoOauthService {
         Member kakaoUser = memberRepository.findByKakaoId(kakaoId)
                 .orElse(null);
         if (kakaoUser == null) {
+            String nickname = kakaoMemberInfo.getNickname();
             String email = kakaoMemberInfo.getEmail();
             String imageUrl = kakaoMemberInfo.getImageUrl();
 
@@ -142,19 +145,15 @@ public class KakaoOauthService {
                         .kakaoId(kakaoId)
                         .email(email)
                         .profileImageUrl(imageUrl)
-                        .point(1000000)
+                        .point(1000)
                         .credit(100.0)
-                        .firstLogin(true)
-                        .pointOnDay(0L)
-                        .numOfSelfEvent(0)
                         .numOfDone(0)
                         .password("@")
                         .userRole(Authority.valueOf("ROLE_MEMBER"))
                         .build();
             } else {
                 kakaoUser.setKakaoId(kakaoId);
-                if (kakaoUser.getEmail() == null)
-                    kakaoUser.setEmail(email);
+                kakaoUser.setEmail(email);
                 if (kakaoUser.getProfileImageUrl() == null)
                     kakaoUser.setProfileImageUrl(imageUrl);
             }
