@@ -39,7 +39,4 @@ public class Friend implements Comparable<Friend> {
         this.secondName = secondName;
     }
 
-//    @JoinColumn
-//    @OneToMany
-//    private List<Member> friends = new ArrayList<>();
 }

@@ -350,6 +350,8 @@ public class UserService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
+        friendService.deleteMySelf(request);
+
         tokenProvider.deleteRefreshToken(member);
         SecurityContextHolder.clearContext();
         memberRepository.deleteById(member.getId());
