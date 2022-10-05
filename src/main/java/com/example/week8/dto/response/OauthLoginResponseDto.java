@@ -6,6 +6,7 @@ import lombok.Getter;
 @Builder
 @Getter
 public class OauthLoginResponseDto {
+    private String nickname;
     private String phoneNumber;
     private String email;
 }
