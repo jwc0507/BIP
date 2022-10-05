@@ -110,4 +110,13 @@ public class Post extends Timestamped {
         this.point = Integer.parseInt(postRequestDto.getPoint());
     }
 
+    public void addLike(){
+        this.likes++;
+    }
+
+    public void cancelLike(){
+        this.likes--;
+    }
+
+
 }
