@@ -77,6 +77,6 @@ public class UserController {
     }
 
     //로그인한 사용자가 쓴 글 전체 조회
-    @GetMapping("api/user/myPosts")
+    @GetMapping("api/user/myposts")
     public ResponseDto<?> getMyPosts(HttpServletRequest request){ return userService.getMyPosts(request);}
 }
