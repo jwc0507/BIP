@@ -1,6 +1,5 @@
 package com.example.week8.service;
 
-import com.amazonaws.services.ec2.model.Image;
 import com.example.week8.domain.ImageFile;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
@@ -49,7 +48,9 @@ public class PostService {
 
         // 게시글 생성
         Post post = new Post(member, postRequestDto);
+
         String[] imgURLList = postRequestDto.getImgUrlList();
+        postRepository.save(post);
 
         for(String imgURL : imgURLList){
             ImageFile imageFile = imageFilesRepository.findByUrl(imgURL).orElse(null);
@@ -92,7 +93,29 @@ public class PostService {
 
         // 게시글 수정
         post.updatePost(postRequestDto);
+
+        // 이미지 수정
+        // 기존 이미지들을 찾아서 post를 null로 변경
+        setNullPost(post);
+
+        // 새로 연결된 값들로 설정.
+        String[] imgURLList = postRequestDto.getImgUrlList();
+        for(String imgURL : imgURLList){
+            ImageFile imageFile = imageFilesRepository.findByUrl(imgURL).orElse(null);
+            if(imageFile==null)
+                continue;
+            imageFile.setPost(post);
+        }
+
         return getResponseDto(post);
+    }
+
+    // 이미지들의 post값을 null로 설정해주는 메소드
+    private void setNullPost(Post post) {
+        List<ImageFile> imageList = imageFilesRepository.findAllByPost(post);
+        for(ImageFile imageFile : imageList) {
+            imageFile.setPost(null);
+        }
     }
 
     /**
@@ -156,12 +179,16 @@ public class PostService {
 
         // 게시글 조회
         Post post = isPresentPost(postId);
+        if(post == null)
+            return ResponseDto.fail("게시글이 존재하지 않습니다.");
 
         // 권한 유효성 검사
         if (!validateAuthority(post, member)) {
             return ResponseDto.fail("작성자만 삭제할 수 있습니다.");
         }
 
+        // 게시글의 이미지 null지정
+        setNullPost(post);
         // 게시글 삭제
         postRepository.deleteById(postId);
 
