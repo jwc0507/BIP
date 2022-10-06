@@ -14,6 +14,7 @@ import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class PostService {
 
     private final PostRepository postRepository;
@@ -215,6 +217,36 @@ public class PostService {
         return getResponseDto(postList, postResponseAllDtoList);
     }
 
+    /**
+     * 게시글 신고
+     */
+    public ResponseDto<?> report(Long postId, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        Post post = isPresentPost(postId);
+        if (null == post) {
+            return ResponseDto.fail("존재하지 않는 게시글 id 입니다.");
+        }
+
+        // 신고횟수 적용(게시글)
+        int reportCnt = post.addReportCnt();
+        if (reportCnt >= 10) {  // 누적 신고횟수 10 이상일 때 게시글 삭제
+            postRepository.deleteById(postId);
+            log.info("신고 10회 누적으로 게시글이 삭제되었습니다.");
+            // 삭제 시에 글 작성자에게 삭제 알림 필요
+        }
+
+        // 신고횟수 적용(작성자)
+        Member postWriter = post.getMember();
+        postWriter.addReportCnt();
+        if (reportCnt % 10 == 0) {  // 누적 신고횟수 10 누적 시마다 신용도 차감
+            postWriter.declineCredit(0.5);
+        }
+
+        return ResponseDto.success("신고가 정상적으로 처리되었습니다.");
+    }
 
     //-- 모듈 --//
 

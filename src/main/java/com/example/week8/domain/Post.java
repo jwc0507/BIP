@@ -60,17 +60,20 @@ public class Post extends Timestamped {
     @Column(nullable = false)
     private String coordinate;
 
+    private int reportCnt;  // 신고받은 횟수
+
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
         this.board = postRequestDto.getBoard();
         this.category = postRequestDto.getCategory();
-        this.address = postRequestDto.getAddress();
-//        this.imgUrl = postRequestDto.getImgUrl();
-        this.coordinate = postRequestDto.getCoordinate();
         this.content = postRequestDto.getContent();
-        this.point = Integer.parseInt(postRequestDto.getPoint());
-        this.views = 0;
         this.likes = 0;
+        this.views = 0;
+        this.point = Integer.parseInt(postRequestDto.getPoint());
+//        this.imgUrl = postRequestDto.getImgUrl();
+        this.address = postRequestDto.getAddress();
+        this.coordinate = postRequestDto.getCoordinate();
+        this.reportCnt = 0;
         this.numOfComment = 0;
     }
 
@@ -88,6 +91,12 @@ public class Post extends Timestamped {
     // 댓글수 내리기
     public void removeCommentCounter() {
         this.numOfComment--;
+    }
+
+    // 신고 횟수 올리기
+    public int addReportCnt() {
+        this.reportCnt++;
+        return reportCnt;
     }
 
     //회원정보 검증

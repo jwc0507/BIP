@@ -78,6 +78,14 @@ public class PostController {
     }
 
 
+    /**
+     * 게시글 신고
+     */
+    @PostMapping("/api/posts/report/{postId}")
+    public ResponseDto<?> report(@PathVariable Long postId,
+                                 HttpServletRequest request) {
+        return postService.report(postId, request);
+    }
 
 
 }
