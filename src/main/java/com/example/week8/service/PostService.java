@@ -1,5 +1,6 @@
 package com.example.week8.service;
 
+import com.example.week8.domain.ImageFile;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
 import com.example.week8.domain.enums.Board;
@@ -8,6 +9,7 @@ import com.example.week8.dto.request.PostRequestDto;
 import com.example.week8.dto.response.PostResponseAllDto;
 import com.example.week8.dto.response.PostResponseDto;
 import com.example.week8.dto.response.ResponseDto;
+import com.example.week8.repository.ImageFilesRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
@@ -24,11 +26,13 @@ import java.util.*;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final ImageFilesRepository imageFilesRepository;
     private final TokenProvider tokenProvider;
 
     /**
      * 게시글 작성
      */
+    @Transactional
     public ResponseDto<?> createPost(PostRequestDto postRequestDto,
                                      HttpServletRequest request) {
 
@@ -44,7 +48,16 @@ public class PostService {
 
         // 게시글 생성
         Post post = new Post(member, postRequestDto);
+
+        String[] imgURLList = postRequestDto.getImgUrlList();
         postRepository.save(post);
+
+        for(String imgURL : imgURLList){
+            ImageFile imageFile = imageFilesRepository.findByUrl(imgURL).orElse(null);
+            if(imageFile==null)
+                continue;
+            imageFile.setPost(post);
+        }
 
         return getResponseDto(post);
     }
@@ -52,6 +65,7 @@ public class PostService {
     /**
      * 게시글 수정
      */
+    @Transactional
     public ResponseDto<?> updatePost(Long postId,
                                      PostRequestDto postRequestDto,
                                      HttpServletRequest request) {
@@ -79,7 +93,29 @@ public class PostService {
 
         // 게시글 수정
         post.updatePost(postRequestDto);
+
+        // 이미지 수정
+        // 기존 이미지들을 찾아서 post를 null로 변경
+        setNullPost(post);
+
+        // 새로 연결된 값들로 설정.
+        String[] imgURLList = postRequestDto.getImgUrlList();
+        for(String imgURL : imgURLList){
+            ImageFile imageFile = imageFilesRepository.findByUrl(imgURL).orElse(null);
+            if(imageFile==null)
+                continue;
+            imageFile.setPost(post);
+        }
+
         return getResponseDto(post);
+    }
+
+    // 이미지들의 post값을 null로 설정해주는 메소드
+    private void setNullPost(Post post) {
+        List<ImageFile> imageList = imageFilesRepository.findAllByPost(post);
+        for(ImageFile imageFile : imageList) {
+            imageFile.setPost(null);
+        }
     }
 
     /**
@@ -143,12 +179,16 @@ public class PostService {
 
         // 게시글 조회
         Post post = isPresentPost(postId);
+        if(post == null)
+            return ResponseDto.fail("게시글이 존재하지 않습니다.");
 
         // 권한 유효성 검사
         if (!validateAuthority(post, member)) {
             return ResponseDto.fail("작성자만 삭제할 수 있습니다.");
         }
 
+        // 게시글의 이미지 null지정
+        setNullPost(post);
         // 게시글 삭제
         postRepository.deleteById(postId);
 
@@ -205,6 +245,16 @@ public class PostService {
     }
 
     private ResponseDto<?> getResponseDto(Post post) {
+
+
+        List<ImageFile> imageFileList = imageFilesRepository.findAllByPost(post);
+
+        String[] imageUrlList = new String[imageFileList.size()];
+        int index=0;
+        for(ImageFile imageFile : imageFileList){
+            imageUrlList[index++]=imageFile.getUrl();
+        }
+
         return ResponseDto.success(
                 PostResponseDto.builder()
                         .id(post.getId())
@@ -213,6 +263,7 @@ public class PostService {
                         .nickname(post.getMember().getNickname())
                         .profileImgUrl(post.getMember().getProfileImageUrl())
                         .content(post.getContent())
+                        .imgUrlList(imageUrlList)
                         .address(post.getAddress())
                         .coordinate(post.getCoordinate())
                         .numOfComment(post.getNumOfComment())

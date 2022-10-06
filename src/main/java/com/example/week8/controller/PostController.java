@@ -77,4 +77,7 @@ public class PostController {
         return postService.getCategoryList(Board.donation.toString(), category);
     }
 
+
+
+
 }
