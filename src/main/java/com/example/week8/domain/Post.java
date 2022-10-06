@@ -63,6 +63,8 @@ public class Post extends Timestamped {
     @Column(nullable = false)
     private String coordinate;
 
+    private int reportCnt;  // 신고받은 횟수
+
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
         this.board = Board.valueOf(postRequestDto.getBoard());
@@ -70,9 +72,12 @@ public class Post extends Timestamped {
         this.address = postRequestDto.getAddress();
         this.coordinate = postRequestDto.getCoordinate();
         this.content = postRequestDto.getContent();
-        this.point = Integer.parseInt(postRequestDto.getPoint());
-        this.views = 0;
         this.likes = 0;
+        this.views = 0;
+        this.point = Integer.parseInt(postRequestDto.getPoint());
+        this.address = postRequestDto.getAddress();
+        this.coordinate = postRequestDto.getCoordinate();
+        this.reportCnt = 0;
         this.numOfComment = 0;
     }
 
@@ -91,11 +96,12 @@ public class Post extends Timestamped {
     public void removeCommentCounter() {
         this.numOfComment--;
     }
-
-    //회원정보 검증
-    public boolean validateMember(Member member) {
-        return !this.member.equals(member);
+    // 신고 횟수 올리기
+    public int addReportCnt() {
+        this.reportCnt++;
+        return reportCnt;
     }
+
 
     // 게시글 수정
     public void updatePost(PostRequestDto postRequestDto) {
