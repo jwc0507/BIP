@@ -1,6 +1,5 @@
-package com.example.week8.dto.request;
+package com.example.week8.dto;
 
-import com.example.week8.dto.MessageDto;
 import lombok.*;
 
 

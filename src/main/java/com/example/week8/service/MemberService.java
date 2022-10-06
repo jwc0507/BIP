@@ -2,6 +2,8 @@ package com.example.week8.service;
 
 import com.example.week8.domain.LoginMember;
 import com.example.week8.domain.Member;
+import com.example.week8.domain.RefreshToken;
+import com.example.week8.domain.UserDetailsImpl;
 import com.example.week8.domain.enums.Authority;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.AuthRequestDto;
@@ -16,6 +18,7 @@ import com.example.week8.security.TokenProvider;
 // import com.example.week8.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.json.simple.parser.ParseException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -39,7 +42,7 @@ public class MemberService {
     private final TokenProvider tokenProvider;
     private final JavaMailSender javaMailSender;
     private final SseEmitterService sseEmitterService;
-  //  private final RedisUtil redisUtil;
+    //  private final RedisUtil redisUtil;
 
 
     // 인증번호 확인
@@ -79,7 +82,7 @@ public class MemberService {
 
         // 이미 있는 회원이라면 로그인메소드를 실행시킨다.
         Member member = isPresentMember(requestDto.getPhoneNumber());
-        if(member == null) {
+        if (member == null) {
             // 없는 회원이라면
             member = Member.builder()
                     .phoneNumber(phoneNumber)
@@ -104,7 +107,7 @@ public class MemberService {
         String authCode = requestDto.getAuthCode();
 
         Member member = isPresentEmail(email);
-        if(member == null)
+        if (member == null)
             return ResponseDto.fail("등록되지 않은 이메일 입니다.");
 
         // 인증번호 확인
@@ -122,12 +125,7 @@ public class MemberService {
 
         tokenToHeaders(tokenDto, response);
 
-        if(member.isFirstLogin()) {
-            member.setPoint(member.getPoint() + 100);
-            member.setFirstLogin(false);
-        }
-//
-//        sseEmitterService.subscribe(member.getId());
+        member.chkFirstLogin();
 
         return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
@@ -135,7 +133,7 @@ public class MemberService {
     // 로그아웃
     @Transactional
     public ResponseDto<?> logout(HttpServletRequest request) {
-        if(!tokenProvider.validateToken(request.getHeader("RefreshToken")))
+        if (!tokenProvider.validateToken(request.getHeader("RefreshToken")))
             return ResponseDto.fail("토큰 값이 올바르지 않습니다.");
 
         // 맴버객체 찾아오기
@@ -145,6 +143,9 @@ public class MemberService {
         if (tokenProvider.deleteRefreshToken(member))
             return ResponseDto.fail("존재하지 않는 Token 입니다.");
 
+        tokenProvider.deleteRefreshToken(member);
+
+        sseEmitterService.deleteAllEmitterStartWithId(member.getId().toString());
 
         return ResponseDto.success("로그아웃 성공");
     }
@@ -175,15 +176,15 @@ public class MemberService {
         // 등록된 이메일인지 확인
         String email = requestDto.getValue();
         Optional<Member> getMember = memberRepository.findByEmail(email);
-        if(getMember.isEmpty())
+        if (getMember.isEmpty())
             return ResponseDto.fail("등록되지 않은 이메일 입니다.");
 
         ResponseDto<?> getAuthCode = sendAuthCode(requestDto);
-        if(!getAuthCode.isSuccess())
+        if (!getAuthCode.isSuccess())
             return ResponseDto.fail("코드생성 실패");
 
         String subject = "[포도미스키퍼] 이메일 로그인 인증코드입니다";
-        String text = "인증번호 ["+getAuthCode.getData()+"] 을 입력해주세요.";
+        String text = "인증번호 [" + getAuthCode.getData() + "] 을 입력해주세요.";
 
         // simpleMailMessage를 사용하면 텍스트만 보내고 MimeMessage를 사용시 멀티파트로 보냄 (파일전송 가능)
         try {
@@ -193,8 +194,7 @@ public class MemberService {
             mailHelper.setSubject(subject);
             mailHelper.setText(text);
             javaMailSender.send(mimeMessage);
-        }
-        catch (MessagingException e) {
+        } catch (MessagingException e) {
             return ResponseDto.fail("잘못된 이메일 주소입니다.");
         }
 //        SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
@@ -209,8 +209,8 @@ public class MemberService {
     // 인증번호 생성
     private String generateCode() {
         StringBuilder stringBuilder = new StringBuilder();
-        for(int i = 0; i < 6; i++) {
-            stringBuilder.append((int)Math.floor(Math.random()*10));
+        for (int i = 0; i < 6; i++) {
+            stringBuilder.append((int) Math.floor(Math.random() * 10));
         }
         return stringBuilder.toString();
     }
@@ -282,9 +282,43 @@ public class MemberService {
         return optionalMember.orElse(null);
     }
 
+    // 토큰 재발급
+    @Transactional
+    public ResponseDto<?> reissue(HttpServletRequest request, HttpServletResponse response) throws ParseException {
+        if (!tokenProvider.validateToken(request.getHeader("RefreshToken"))) {
+            return ResponseDto.fail("토큰이 유효하지 않습니다.");
+        }
+        String memberId = tokenProvider.getMemberFromExpiredAccessToken(request);
+        if (null == memberId) {
+            return ResponseDto.fail("토큰의 값이 유효하지 않습니다.");
+        }
+        Member member = memberRepository.findById(Long.parseLong(memberId)).orElse(null);
+
+        RefreshToken refreshToken = tokenProvider.isPresentRefreshToken(member);
+
+        if (!refreshToken.getKeyValue().equals(request.getHeader("RefreshToken"))) {
+            return ResponseDto.fail("토큰이 일치하지 않습니다.");
+        }
+        assert member != null;
+        TokenDto tokenDto = tokenProvider.generateTokenDto(member);
+        refreshToken.updateValue(tokenDto.getRefreshToken());
+        tokenToHeaders(tokenDto, response);
+        return ResponseDto.success("재발급 완료");
+    }
+
+    // 로그인 체크
+    public ResponseDto<?> chkLogin(UserDetailsImpl userDetail) {
+        if(userDetail == null)
+            return ResponseDto.success(false);
+        return ResponseDto.success(true);
+    }
+
+
     // 헤더에 토큰담기
     public void tokenToHeaders(TokenDto tokenDto, HttpServletResponse response) {
         response.addHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
         response.addHeader("RefreshToken", tokenDto.getRefreshToken());
     }
+
+
 }

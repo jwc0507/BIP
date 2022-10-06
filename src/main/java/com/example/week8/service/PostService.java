@@ -13,6 +13,7 @@ import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.ImageFilesRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
+import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,8 +97,8 @@ public class PostService {
 
     /**
      * 게시글 단건 조회
+     * api 호출 시 데이터 변동사항(조회수 증가)이 발생하기 때문에 readOnly 옵션 미사용
      */
-    @Transactional(readOnly = true)
     public ResponseDto<?> getPost(Long postId) {
 
         Post post = isPresentPost(postId);
@@ -107,6 +108,7 @@ public class PostService {
 
         // 조회수 추가
         post.addViews();
+
         return getResponseDto(post);
     }
 
@@ -232,16 +234,18 @@ public class PostService {
                         .board(post.getBoard())
                         .category(post.getCategory())
                         .nickname(post.getMember().getNickname())
-                        .title(post.getTitle())
+                        .profileImgUrl(post.getMember().getProfileImageUrl())
                         .content(post.getContent())
                         .imgUrlList(imageUrlList)
                         .address(post.getAddress())
                         .coordinate(post.getCoordinate())
                         .numOfComment(post.getNumOfComment())
+                        .views(post.getViews())
                         .likes(post.getLikes())
                         .point(post.getPoint())
-                        .createdAt(post.getCreatedAt())
-                        .modifiedAt(post.getModifiedAt())
+                        .timePast(Time.convertLocaldatetimeToTimePast(post.getCreatedAt()))
+                        .createdAt(Time.serializePostDate(post.getCreatedAt()))
+                        .modifiedAt(Time.serializePostDate(post.getModifiedAt()))
                         .build()
         );
     }
@@ -251,15 +255,17 @@ public class PostService {
             postResponseAllDtoList.add(
                     PostResponseAllDto.builder()
                             .id(post.getId())
-                            .nickname(post.getMember().getNickname())
+                            .nickname(post.getMember().getNickname())   // 에러있음
                             .board(post.getBoard().toString())
                             .category(post.getCategory().toString())
-                            .title(post.getTitle())
+                            .content(post.getContent())
+                            .views(post.getViews())
                             .likes(post.getLikes())
                             .point(post.getPoint())
                             .numOfComment(post.getNumOfComment())
-                            .createdAt(post.getCreatedAt())
-                            .modifiedAt(post.getModifiedAt())
+                            .timePast(Time.convertLocaldatetimeToTimePast(post.getCreatedAt()))
+                            .createdAt(Time.serializePostDate(post.getCreatedAt()))
+                            .modifiedAt(Time.serializePostDate(post.getModifiedAt()))
                             .build()
             );
         }

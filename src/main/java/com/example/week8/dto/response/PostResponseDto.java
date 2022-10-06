@@ -8,6 +8,7 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
 @Getter
 @Builder
 public class PostResponseDto {
@@ -15,14 +16,16 @@ public class PostResponseDto {
     private Board board;
     private Category category;
     private String nickname;
-    private String title;
+    private String profileImgUrl;
     private String content;
     private String address;
     private String coordinate;
     private String[] imgUrlList;
     private int numOfComment;
+    private int views;
     private int likes;
     private int point;
-    private LocalDateTime createdAt;
-    private LocalDateTime modifiedAt;
+    private String timePast;
+    private String createdAt;
+    private String modifiedAt;
 }

@@ -33,12 +33,6 @@ public class Member extends Timestamped {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "owner")
     private List<Friend> friendListOwner = new ArrayList<>();
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "friend")
-    private Friend friendListFriend;
-
-    @OneToOne(orphanRemoval = true, mappedBy = "member")
-    private RefreshToken refreshToken;
-
     @Column(unique = true)
     private Long kakaoId;   // 카카오id
 
@@ -115,5 +109,12 @@ public class Member extends Timestamped {
 
     public void updateNumOfDone(int done) {
         numOfDone += done;
+    }
+
+    public void chkFirstLogin() {
+        if(this.firstLogin) {
+            this.point += 100;
+            this.firstLogin = false;
+        }
     }
 }

@@ -42,7 +42,7 @@ public class UserService {
     private final EventRepository eventRepository;
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final FriendService friendService;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -149,7 +149,13 @@ public class UserService {
             // 만약 먼저 회원가입한 계정에 해당 전화번호가 있다면
             else {
                 Member findMember = (Member) responseDto.getData();
+                if(findMember.equals(updateMember))
+                    return ResponseDto.fail("멤버정보 동일 에러");
+
                 if (findMember.getKakaoId() != null) {
+                    tokenProvider.deleteRefreshToken(updateMember);
+                    SecurityContextHolder.clearContext();
+                    memberRepository.deleteById(updateMember.getId());
                     return ResponseDto.fail("해당 전화번호에 가입된 카카오 아이디가 있습니다.");
                 }
                 // 계정 통합
@@ -157,34 +163,43 @@ public class UserService {
                 String url = updateMember.getProfileImageUrl();
                 Long kakaoId = updateMember.getKakaoId();
 
-      //          updateMember.setEmail(UUID.randomUUID().toString());
+                friendService.deleteMySelf(request);
+
+                tokenProvider.deleteRefreshToken(updateMember);
+                SecurityContextHolder.clearContext();
 
                 memberRepository.deleteById(updateMember.getId());
-                findMember.updateKakaoMember(email,url,kakaoId);
+                memberRepository.flush();
 
-                if(member.isFirstLogin()) {
-                    member.setPoint(member.getPoint() + 100);
-                    member.setFirstLogin(false);
-                }
-                forceLogin(findMember, request, response);
-                return ResponseDto.success("성공?");
+                findMember.updateKakaoMember(email,url,kakaoId);
+                forceLogin(findMember, response);
+
+                findMember.chkFirstLogin();
+                return ResponseDto.success(UpdateMemberResponseDto.builder()
+                        .nickname(findMember.getNickname())
+                        .phoneNumber(findMember.getPhoneNumber())
+                        .email(findMember.getEmail())
+                        .profileImgUrl(findMember.getProfileImageUrl())
+                        .point(findMember.getPoint())
+                        .creditScore(findMember.getCredit())
+                        .numOfDone(findMember.getNumOfDone())
+                        .build());
             }
 
         }
         return ResponseDto.fail(responseDto.getData());
     }
 
-    private void forceLogin(Member kakaoUser, HttpServletRequest request, HttpServletResponse response) {
-        // response header에 token 추가
-//        Member member = validateMember(request);
-//
-//        refreshTokenRepository.delete(member.getRefreshToken());
-//        refreshTokenRepository.flush();
-//        memberRepository.deleteById(member.getId());
+    private void forceLogin(Member kakaoUser, HttpServletResponse response) {
 
         TokenDto token = tokenProvider.generateTokenDto(kakaoUser);
         response.addHeader("Authorization", "Bearer " + token.getAccessToken());
         response.addHeader("RefreshToken", token.getRefreshToken());
+
+        if(kakaoUser.isFirstLogin()) {
+            kakaoUser.setPoint(kakaoUser.getPoint() + 100);
+            kakaoUser.setFirstLogin(false);
+        }
 
         UserDetails userDetails = new UserDetailsImpl(kakaoUser);
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, token.getAccessToken(), userDetails.getAuthorities());
@@ -335,6 +350,10 @@ public class UserService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
+        friendService.deleteMySelf(request);
+
+        tokenProvider.deleteRefreshToken(member);
+        SecurityContextHolder.clearContext();
         memberRepository.deleteById(member.getId());
 
         return ResponseDto.success("회원탈퇴 완료");
@@ -445,7 +464,7 @@ public class UserService {
         return EventListDto.builder()
                 .id(event.getId())
                 .title(event.getTitle())
-                .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                 .place(event.getPlace())
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
                 .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))

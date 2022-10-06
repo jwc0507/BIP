@@ -24,6 +24,7 @@ public class ImageFile {
     @Column
     private String url;
 
+
     @JoinColumn(name="post_id", nullable = true)
     @ManyToOne(fetch = FetchType.LAZY)
     private Post post;
