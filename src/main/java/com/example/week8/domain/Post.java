@@ -39,6 +39,9 @@ public class Post extends Timestamped {
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "post")
     private List<Comment> comments;
 
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "post")
+    private List<Likes> likesList;
+
     @Column(nullable = false)
     private int likes;
 
@@ -62,10 +65,9 @@ public class Post extends Timestamped {
 
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
-        this.board = postRequestDto.getBoard();
-        this.category = postRequestDto.getCategory();
+        this.board = Board.valueOf(postRequestDto.getBoard());
+        this.category = Category.valueOf(postRequestDto.getCategory());
         this.address = postRequestDto.getAddress();
-//        this.imgUrl = postRequestDto.getImgUrl();
         this.coordinate = postRequestDto.getCoordinate();
         this.content = postRequestDto.getContent();
         this.point = Integer.parseInt(postRequestDto.getPoint());
@@ -97,8 +99,8 @@ public class Post extends Timestamped {
 
     // 게시글 수정
     public void updatePost(PostRequestDto postRequestDto) {
-        this.board = postRequestDto.getBoard();
-        this.category = postRequestDto.getCategory();
+        this.board = Board.valueOf(postRequestDto.getBoard());
+        this.category = Category.valueOf(postRequestDto.getCategory());
         this.content = postRequestDto.getContent();
         this.address = postRequestDto.getAddress();
         this.coordinate = postRequestDto.getCoordinate();
