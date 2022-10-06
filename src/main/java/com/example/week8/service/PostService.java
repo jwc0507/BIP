@@ -46,6 +46,10 @@ public class PostService {
             return ResponseDto.fail("INVALID_TOKEN");
         }
 
+        chkResponse = chkCategory(postRequestDto.getBoard(), postRequestDto.getCategory());
+        if(!chkResponse.isSuccess())
+            return chkResponse;
+
         // 게시글 생성
         Post post = new Post(member, postRequestDto);
 
@@ -90,6 +94,11 @@ public class PostService {
         if (!validateAuthority(post, member)) {
             return ResponseDto.fail("작성자만 수정할 수 있습니다.");
         }
+
+        chkResponse = chkCategory(postRequestDto.getBoard(), postRequestDto.getCategory());
+        if(!chkResponse.isSuccess())
+            return chkResponse;
+
 
         // 게시글 수정
         post.updatePost(postRequestDto);
@@ -203,13 +212,12 @@ public class PostService {
 
         List<Post> postList;
         List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
-        Board boardType = getBoard(board);
-        if (boardType == null)
-            return ResponseDto.fail("게시판 종류를 확인해주세요");
-        Category categoryType = getCategory(category);
-        if (categoryType == null)
-            return ResponseDto.fail("상세카테고리를 확인해주세요");
+        ResponseDto<?> chkResponse = chkCategory(board, category);
+        if(!chkResponse.isSuccess())
+            return chkResponse;
 
+        Board boardType = getBoard(board);
+        Category categoryType = getCategory(category);
         postList = postRepository.findAllByBoardAndCategoryOrderByModifiedAtDesc(boardType, categoryType);
 
         return getResponseDto(postList, postResponseAllDtoList);
@@ -217,6 +225,17 @@ public class PostService {
 
 
     //-- 모듈 --//
+
+    // 카테고리 체크
+    private ResponseDto<?> chkCategory(String board, String category) {
+        Board boardType = getBoard(board);
+        if (boardType == null)
+            return ResponseDto.fail("게시판 종류를 확인해주세요");
+        Category categoryType = getCategory(category);
+        if (categoryType == null)
+            return ResponseDto.fail("상세카테고리를 확인해주세요");
+        return ResponseDto.success(null);
+    }
 
     // ENUM MAPPING (BOARD TYPE)
     public static final Map<String, Board> boardMap = new HashMap<>();
@@ -248,7 +267,6 @@ public class PostService {
 
 
         List<ImageFile> imageFileList = imageFilesRepository.findAllByPost(post);
-
         String[] imageUrlList = new String[imageFileList.size()];
         int index=0;
         for(ImageFile imageFile : imageFileList){
@@ -278,14 +296,20 @@ public class PostService {
     }
 
     private ResponseDto<?> getResponseDto(List<Post> postList, List<PostResponseAllDto> postResponseAllDtoList) {
+        String url;
         for (Post post : postList) {
+            url = null;
+            ImageFile imageFileList = imageFilesRepository.findFirstByPost(post);
+            if (imageFileList != null)
+                url = imageFileList.getUrl();
             postResponseAllDtoList.add(
                     PostResponseAllDto.builder()
                             .id(post.getId())
-                            .nickname(post.getMember().getNickname())   // 에러있음
+                            .nickname(post.getMember().getNickname())
                             .board(post.getBoard().toString())
                             .category(post.getCategory().toString())
                             .content(post.getContent())
+                            .firstImgUrl(url)
                             .views(post.getViews())
                             .likes(post.getLikes())
                             .point(post.getPoint())

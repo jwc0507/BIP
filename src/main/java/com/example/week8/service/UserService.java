@@ -41,6 +41,7 @@ public class UserService {
     private final JavaMailSender javaMailSender;
     private final FriendService friendService;
     private final PostRepository postRepository;
+    private final ImageFilesRepository imageFilesRepository;
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
     // 닉네임 변경
@@ -488,14 +489,20 @@ public class UserService {
     }
 
     private ResponseDto<?> getResponseDto(List<Post> postList, List<PostResponseAllDto> postResponseAllDtoList) {
+        String url;
         for (Post post : postList) {
+            url = null;
+            ImageFile imageFileList = imageFilesRepository.findFirstByPost(post);
+            if (imageFileList != null)
+                url = imageFileList.getUrl();
             postResponseAllDtoList.add(
                     PostResponseAllDto.builder()
                             .id(post.getId())
-                            .nickname(post.getMember().getNickname())   // 에러있음
+                            .nickname(post.getMember().getNickname())
                             .board(post.getBoard().toString())
                             .category(post.getCategory().toString())
                             .content(post.getContent())
+                            .firstImgUrl(url)
                             .views(post.getViews())
                             .likes(post.getLikes())
                             .point(post.getPoint())

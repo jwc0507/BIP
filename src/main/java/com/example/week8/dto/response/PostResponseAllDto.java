@@ -17,7 +17,7 @@ public class PostResponseAllDto {
     private String category;
     private String content;
     private int numOfComment;
-    private String[] imgUrls;
+    private String firstImgUrl;
     private int views;
     private int likes;
     private int point;
