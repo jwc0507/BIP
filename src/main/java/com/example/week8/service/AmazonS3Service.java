@@ -56,6 +56,7 @@ public class AmazonS3Service {
         ImageFile imageMapper = ImageFile.builder()                         // 업로드한 파일들을 관리할 테이블에 파일이름, URL넣기
                 .url(amazonS3Client.getUrl(bucketName, fileName).toString())
                 .imageName(fileName)
+                .post(null)
                 .build();
         imageFilesRepository.save(imageMapper);
         return ResponseDto.success(imageMapper);
