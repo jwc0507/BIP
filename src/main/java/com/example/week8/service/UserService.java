@@ -1,15 +1,10 @@
 package com.example.week8.service;
 
-import com.example.week8.domain.Event;
-import com.example.week8.domain.EventMember;
-import com.example.week8.domain.Member;
+import com.example.week8.domain.*;
 import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.*;
-import com.example.week8.dto.response.EventListDto;
-import com.example.week8.dto.response.ReceivePointResponseDto;
-import com.example.week8.dto.response.ResponseDto;
-import com.example.week8.dto.response.UpdateMemberResponseDto;
+import com.example.week8.dto.response.*;
 import com.example.week8.repository.EventMemberRepository;
 import com.example.week8.repository.EventRepository;
 import com.example.week8.repository.MemberRepository;
@@ -17,8 +12,13 @@ import com.example.week8.repository.RefreshTokenRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
 
@@ -39,9 +40,9 @@ public class UserService {
     private final MemberRepository memberRepository;
     private final EventMemberRepository eventMemberRepository;
     private final EventRepository eventRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
+    private final FriendService friendService;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -75,7 +76,7 @@ public class UserService {
 
     // 전화번호 변경
     @Transactional
-    public ResponseDto<?> setPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseDto<?> setPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request) {
         //== token 유효성 검사 ==//
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -86,34 +87,125 @@ public class UserService {
         if (!memberService.chkValidCode(newPhoneNumber, requestDto.getAuthCode()))
             return ResponseDto.fail("인증실패 코드를 확인해주세요");
 
+        ResponseDto<?> responseDto = memberService.getMemberByPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build());
 
-        if (memberService.checkPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build()).isSuccess()) {
+        if (responseDto.isSuccess()) {
+            if (responseDto.getData() == null) {
+                Member member = (Member) chkResponse.getData();
+                Member updateMember = memberRepository.findById(member.getId()).get();
+
+                updateMember.updatePhoneNumber(newPhoneNumber);
+
+                return ResponseDto.success(UpdateMemberResponseDto.builder()
+                        .nickname(updateMember.getNickname())
+                        .phoneNumber(updateMember.getPhoneNumber())
+                        .email(updateMember.getEmail())
+                        .profileImgUrl(updateMember.getProfileImageUrl())
+                        .point(updateMember.getPoint())
+                        .creditScore(updateMember.getCredit())
+                        .numOfDone(updateMember.getNumOfDone())
+                        .build());
+            }
+            else {
+                return ResponseDto.fail("중복된 전화번호 입니다");
+            }
+        }
+        return ResponseDto.fail(responseDto.getData());
+    }
+
+    // 카카오 로그인 전용 전화번호 설정
+    @Transactional
+    public ResponseDto<?> setKakaoPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+        //== token 유효성 검사 ==//
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        String newPhoneNumber = requestDto.getPhoneNumber();
+
+        if (!memberService.chkValidCode(newPhoneNumber, requestDto.getAuthCode()))
+            return ResponseDto.fail("인증실패 코드를 확인해주세요");
+
+        ResponseDto<?> responseDto = memberService.getMemberByPhoneNumber(DuplicationRequestDto.builder().value(newPhoneNumber).build());
+
+        if (responseDto.isSuccess()) {
             Member member = (Member) chkResponse.getData();
             Member updateMember = memberRepository.findById(member.getId()).get();
 
-            updateMember.updatePhoneNumber(newPhoneNumber);
+            // 없는 전화번호
+            if(responseDto.getData() == null) {
+                updateMember.updatePhoneNumber(newPhoneNumber);
 
-            refreshTokenRepository.delete(refreshTokenRepository.findByMember(updateMember).get());
+                return ResponseDto.success(UpdateMemberResponseDto.builder()
+                        .nickname(updateMember.getNickname())
+                        .phoneNumber(updateMember.getPhoneNumber())
+                        .email(updateMember.getEmail())
+                        .profileImgUrl(updateMember.getProfileImageUrl())
+                        .point(updateMember.getPoint())
+                        .creditScore(updateMember.getCredit())
+                        .numOfDone(updateMember.getNumOfDone())
+                        .build());
+            }
+            // 만약 먼저 회원가입한 계정에 해당 전화번호가 있다면
+            else {
+                Member findMember = (Member) responseDto.getData();
+                if(findMember.equals(updateMember))
+                    return ResponseDto.fail("멤버정보 동일 에러");
 
-            // 토큰 재생성
-            TokenDto tokenDto = tokenProvider.generateTokenDto(updateMember);
+                if (findMember.getKakaoId() != null) {
+                    tokenProvider.deleteRefreshToken(updateMember);
+                    SecurityContextHolder.clearContext();
+                    memberRepository.deleteById(updateMember.getId());
+                    return ResponseDto.fail("해당 전화번호에 가입된 카카오 아이디가 있습니다.");
+                }
+                // 계정 통합
+                String email = updateMember.getEmail();
+                String url = updateMember.getProfileImageUrl();
+                Long kakaoId = updateMember.getKakaoId();
 
-            //헤더에 반환 to FE
-            response.addHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
-            response.addHeader("RefreshToken", tokenDto.getRefreshToken());
+                friendService.deleteMySelf(request);
 
-            return ResponseDto.success(UpdateMemberResponseDto.builder()
-                    .nickname(updateMember.getNickname())
-                    .phoneNumber(updateMember.getPhoneNumber())
-                    .email(updateMember.getEmail())
-                    .profileImgUrl(updateMember.getProfileImageUrl())
-                    .point(updateMember.getPoint())
-                    .creditScore(updateMember.getCredit())
-                    .numOfDone(updateMember.getNumOfDone())
-                    .build());
+                tokenProvider.deleteRefreshToken(updateMember);
+                SecurityContextHolder.clearContext();
+
+                memberRepository.deleteById(updateMember.getId());
+                memberRepository.flush();
+
+                findMember.updateKakaoMember(email,url,kakaoId);
+                forceLogin(findMember, response);
+
+                findMember.chkFirstLogin();
+                return ResponseDto.success(UpdateMemberResponseDto.builder()
+                        .nickname(findMember.getNickname())
+                        .phoneNumber(findMember.getPhoneNumber())
+                        .email(findMember.getEmail())
+                        .profileImgUrl(findMember.getProfileImageUrl())
+                        .point(findMember.getPoint())
+                        .creditScore(findMember.getCredit())
+                        .numOfDone(findMember.getNumOfDone())
+                        .build());
+            }
+
         }
-        return ResponseDto.fail("중복된 전화번호 입니다.");
+        return ResponseDto.fail(responseDto.getData());
     }
+
+    private void forceLogin(Member kakaoUser, HttpServletResponse response) {
+
+        TokenDto token = tokenProvider.generateTokenDto(kakaoUser);
+        response.addHeader("Authorization", "Bearer " + token.getAccessToken());
+        response.addHeader("RefreshToken", token.getRefreshToken());
+
+        if(kakaoUser.isFirstLogin()) {
+            kakaoUser.setPoint(kakaoUser.getPoint() + 100);
+            kakaoUser.setFirstLogin(false);
+        }
+
+        UserDetails userDetails = new UserDetailsImpl(kakaoUser);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, token.getAccessToken(), userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
 
     // 이메일 설정
     @Transactional
@@ -153,7 +245,7 @@ public class UserService {
         if(!getAuthCode.isSuccess())
             return ResponseDto.fail("코드생성 실패");
 
-        String subject = "[포도미스키퍼] 이메일 로그인 인증코드입니다";
+        String subject = "[프로미스톡] 이메일 로그인 인증코드입니다";
         String text = "인증번호 ["+getAuthCode.getData()+"] 을 입력해주세요.";
 
         // simpleMailMessage를 사용하면 텍스트만 보내고 MimeMessage를 사용시 멀티파트로 보냄 (파일전송 가능)
@@ -258,8 +350,10 @@ public class UserService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-        tokenProvider.deleteRefreshToken(member);
+        friendService.deleteMySelf(request);
 
+        tokenProvider.deleteRefreshToken(member);
+        SecurityContextHolder.clearContext();
         memberRepository.deleteById(member.getId());
 
         return ResponseDto.success("회원탈퇴 완료");
@@ -283,7 +377,7 @@ public class UserService {
         assert member != null;  // 동작할일은 없는 코드
 
         // 잔여 포인트량 확인
-        if (member.getPoint() < point)
+        if (member.getPoint() < point || member.getPoint() < 0)
             return ResponseDto.fail("포인트가 부족합니다.");
 
         // 자기 자신인지 확인
@@ -314,7 +408,7 @@ public class UserService {
             newCredit = 200;
         }
         // 신용도의 최소치는 0이다.
-        if (0 > newCredit) {
+        else if (0 > newCredit) {
             newCredit = 0;
         }
         receiver.updateCreditScore(newCredit);
@@ -323,7 +417,7 @@ public class UserService {
         double lastPoint = lastCredit/magnification;
 
         // 포인트 감소
-        int newPoint = (point*-1)+(int)Math.floor(lastPoint);
+        int newPoint = (point*-1)+(int)lastPoint;
         member.updatePoint(newPoint);
 
         return ResponseDto.success(ReceivePointResponseDto.builder()
@@ -370,7 +464,7 @@ public class UserService {
         return EventListDto.builder()
                 .id(event.getId())
                 .title(event.getTitle())
-                .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                 .place(event.getPlace())
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
                 .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))

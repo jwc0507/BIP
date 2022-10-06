@@ -9,7 +9,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FriendInfoResponseDto {
     private final Long id;
-    private final String nickname;
+    private final String nicknameByOwner;
+    private final String nicknameByFriend;
     private final String profileImgUrl;
     private final double creditScore;//int로 정의하는게 맞지 않나?
 }

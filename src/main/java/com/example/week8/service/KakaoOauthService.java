@@ -22,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -35,6 +36,7 @@ public class KakaoOauthService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
 
+    @Transactional
     public ResponseDto<?> kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         // 1. "인가 코드"로 전체 response 요청
         String accessToken = getAccessToken(code);
@@ -47,6 +49,9 @@ public class KakaoOauthService {
 
         // 4. 강제 로그인 처리
         forceLogin(kakaoUser, response);
+
+        // 5. 첫 로그인 보너스 지급
+        kakaoUser.chkFirstLogin();
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
                 .nickname(kakaoUser.getNickname())
@@ -66,7 +71,7 @@ public class KakaoOauthService {
         body.add("grant_type", "authorization_code");
         body.add("client_id", "610f7f90999f8f182434e3cc03ad6415");
         body.add("redirect_uri", "http://localhost:3000/login/kakao");
-      //  body.add("redirect_uri", "http://localhost:8080/api/member/kakaologin");
+        //  body.add("redirect_uri", "http://localhost:8080/api/member/kakaologin");
         body.add("code", code);
 
         // HTTP 요청 보내기
@@ -141,7 +146,7 @@ public class KakaoOauthService {
                         .kakaoId(kakaoId)
                         .email(email)
                         .profileImageUrl(imageUrl)
-                        .point(1000)
+                        .point(1000000)
                         .credit(100.0)
                         .pointOnDay(0L)
                         .numOfDone(0)

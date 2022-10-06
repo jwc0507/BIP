@@ -1,11 +1,10 @@
 package com.example.week8.service;
 
-import com.example.week8.domain.CheckinMember;
-import com.example.week8.domain.Event;
-import com.example.week8.domain.EventMember;
-import com.example.week8.domain.Member;
+import com.example.week8.domain.*;
 import com.example.week8.domain.chat.ChatRoom;
+import com.example.week8.domain.enums.AlertType;
 import com.example.week8.domain.enums.Attendance;
+import com.example.week8.domain.enums.BeforeTime;
 import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.EventListDto;
@@ -42,6 +41,10 @@ public class EventService {
     private final CheckinMemberRepository checkinMemberRepository;
     private final TokenProvider tokenProvider;
     private final ChatRoomRepository chatRoomRepository;
+    private final EventScheduleRepository eventScheduleRepository;
+    private final FriendRepository friendRepository;
+    private final WeatherService weatherService;
+    private final SseEmitterService sseEmitterService;
     private final int MAG_DONE_CREDIT = 1;  // 약속완료 신용도 증감 배율 (1이 기본)
 
 
@@ -81,7 +84,7 @@ public class EventService {
         }
 
         if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
-            return ResponseDto.fail("약속 시간을 미래로 설정해주세요.");
+            return ResponseDto.success("약속 시간을 미래로 설정해주세요.");
 
 
         // 약속 생성
@@ -97,15 +100,23 @@ public class EventService {
                 .build();
         eventRepository.save(event);
 
+
         // 약속 멤버 생성
         EventMember eventMember = new EventMember(member, event);  // 생성 시에는 약속을 생성한 member만 존재
         eventMemberRepository.save(eventMember);
 
-
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
-        MemberResponseDto memberResponseDto = convertToDto(member);
+        MemberResponseDto memberResponseDto = convertToDto(member, null);
         list.add(memberResponseDto);
+
+        eventRepository.flush();
+        eventMemberRepository.flush();
+
+
+        // 약속 스케쥴 생성 - 주, 일, 시, 분
+        createEventSchedule(event);
+        createChkin(event.getId());
 
         return ResponseDto.success(
                 EventResponseDto.builder()
@@ -113,21 +124,48 @@ public class EventService {
                         .memberList(list)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
         );
     }
 
+    // 약속 스케쥴 생성
+    public void createEventSchedule(Event event) {
+        // 알림 시간이 이미 지난 시점이라면 해당 eventSchedule은 생성하지 않음
+
+        if (event.getEventDateTime().minusDays(1).isAfter(LocalDateTime.now())) {
+            EventSchedule eventScheduleDay = new EventSchedule(event);
+            eventScheduleDay.setBeforeTime(BeforeTime.DAY);
+            eventScheduleDay.setTargetTime(event.getEventDateTime().minusDays(1));
+            eventScheduleRepository.save(eventScheduleDay);
+        }
+
+        if (event.getEventDateTime().minusHours(1).isAfter(LocalDateTime.now())) {
+            EventSchedule eventScheduleHour = new EventSchedule(event);
+            eventScheduleHour.setBeforeTime(BeforeTime.HOUR);
+            eventScheduleHour.setTargetTime(event.getEventDateTime().minusHours(1));
+            eventScheduleRepository.save(eventScheduleHour);
+        }
+
+        if (event.getEventDateTime().minusMinutes(1).isAfter(LocalDateTime.now())) {
+            EventSchedule eventScheduleMinute = new EventSchedule(event);
+            eventScheduleMinute.setBeforeTime(BeforeTime.MINUTE);
+            eventScheduleMinute.setTargetTime(event.getEventDateTime().minusMinutes(10));
+            eventScheduleRepository.save(eventScheduleMinute);
+        }
+    }
+
     // 기본방장 체크인생성
-    public void createChkin(EventResponseDto eventResponseDto) {
+    public void createChkin(Long eventId) {
         // 체크인멤버 생성 - 초대하는 사람 것
-        Event event = eventRepository.findById(eventResponseDto.getId()).orElse(null);  // 이벤트 찾기
+        Event event = eventRepository.findById(eventId).orElse(null);  // 이벤트 찾기
         EventMember eventMember = eventMemberRepository.findAllByEventId(event.getId()).get(0);
         Member member = memberRepository.findById(eventMember.getMember().getId()).orElse(null);    // 멤버찾기 (방장)
 
@@ -168,13 +206,20 @@ public class EventService {
         if (!isMaster(event, member))
             return ResponseDto.fail("방장이 아닙니다.");
 
+        // eventDateTime에 변경이 있는지 확인
+        if (!event.getEventDateTime().isEqual(stringToLocalDateTime(eventRequestDto.getEventDateTime()))) {
+            event.updateEvent(eventRequestDto);  // 약속 수정
+            eventScheduleRepository.deleteAllByEventId(eventId);  // 기존 약속스케쥴 삭제
+            createEventSchedule(event);  // 새로운 약속스케쥴 생성
+        } else {
+            event.updateEvent(eventRequestDto);  // 약속 수정
+        }
 
-        // 약속 수정
-        event.updateEvent(eventRequestDto);
+
 
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
-        MemberResponseDto memberResponseDto = convertToDto(member);
+        MemberResponseDto memberResponseDto = convertToDto(member, null);
         list.add(memberResponseDto);
 
         return ResponseDto.success(
@@ -183,11 +228,12 @@ public class EventService {
                         .memberList(list)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -247,7 +293,7 @@ public class EventService {
                             chkDay = eventDateTime.getDayOfMonth();
                         if (chkDay != eventDateTime.getDayOfMonth()) {
                             monthEventListDtoList.add(MonthEventListDto.builder()
-                                    .eventDateTime(Time.serializeDate(lastEventDate))
+                                    .eventDateTime(Time.serializeEventDate(lastEventDate))
                                     .numberOfEventInToday(dateEventCounter)
                                     .build());
                             chkDay = eventDateTime.getDayOfMonth();
@@ -261,7 +307,7 @@ public class EventService {
         }
         if (unit.equals("month")) {
             monthEventListDtoList.add(MonthEventListDto.builder()
-                    .eventDateTime(Time.serializeDate(lastEventDate))
+                    .eventDateTime(Time.serializeEventDate(lastEventDate))
                     .numberOfEventInToday(dateEventCounter)
                     .build());
             return ResponseDto.success(monthEventListDtoList);
@@ -297,7 +343,7 @@ public class EventService {
         List<MemberResponseDto> tempList = new ArrayList<>();
         for (EventMember eventMember : findEventMemberList) {
             Long memberId = eventMember.getMember().getId();
-            MemberResponseDto memberResponseDto = convertToDto(isPresentMember(memberId));
+            MemberResponseDto memberResponseDto = convertToDto(member,isPresentMember(memberId));
             tempList.add(memberResponseDto);
         }
 
@@ -307,11 +353,12 @@ public class EventService {
                         .memberList(tempList)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -364,7 +411,7 @@ public class EventService {
             return ResponseDto.fail("약속 참여자가 아닙니다.");
 
         // 닉네임에 해당하는(초대할) 멤버 호출
-        Member guest = isPresentMemberByNickname(inviteMemberDto.getNickname());
+        Member guest = isPresentMemberByNickname(inviteMemberDto.getNickname()); //친구가 설정한 닉네임.
         if (null == guest) {
             return ResponseDto.fail("MEMBER_NOT_FOUND");
         }
@@ -395,7 +442,7 @@ public class EventService {
         List<EventMember> findEventMemberList = eventMemberRepository.findAllByEventId(eventId);
         List<MemberResponseDto> tempList = new ArrayList<>();
         for (EventMember eventMember : findEventMemberList) {
-            MemberResponseDto memberResponseDto = convertToDto(eventMember.getMember());
+            MemberResponseDto memberResponseDto = convertToDto(member,eventMember.getMember());
 
             // 체크인멤버 호출
             CheckinMember tempCheckinMember = isPresentCheckinMember(eventId, eventMember.getMember().getId());
@@ -409,11 +456,12 @@ public class EventService {
                         .memberList(tempList)
                         .eventStatus(event.getEventStatus())
                         .title(event.getTitle())
-                        .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                        .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                         .place(event.getPlace())
                         .coordinate(event.getCoordinate())
-                        .createdAt(event.getCreatedAt())
+                        .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
+                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -423,6 +471,7 @@ public class EventService {
     /**
      * 약속 탈퇴
      */
+    @Transactional
     public ResponseDto<?> exitEvent(Long eventId, HttpServletRequest request) {
 
         ResponseDto<?> chkResponse = validateCheck(request);
@@ -518,7 +567,7 @@ public class EventService {
 
         List<MemberResponseDto> memberResponseDtoList = new ArrayList<>();
         for (CheckinMember tempCheckinMember : findCheckinMemberList) {
-            MemberResponseDto memberResponseDto = convertToDto(tempCheckinMember.getMember());
+            MemberResponseDto memberResponseDto = convertToDto(member, tempCheckinMember.getMember());
             memberResponseDto.setAttendance(tempCheckinMember.getAttendance());
             memberResponseDtoList.add(memberResponseDto);
         }
@@ -548,7 +597,7 @@ public class EventService {
 
         List<MemberResponseDto> memberResponseDtoList = new ArrayList<>();
         for (CheckinMember tempCheckinMember : findCheckinMemberList) {
-            MemberResponseDto memberResponseDto = convertToDto(tempCheckinMember.getMember());
+            MemberResponseDto memberResponseDto = convertToDto(member, tempCheckinMember.getMember());
             memberResponseDto.setAttendance(tempCheckinMember.getAttendance());
             memberResponseDtoList.add(memberResponseDto);
         }
@@ -647,6 +696,32 @@ public class EventService {
         }
         else
             return ResponseDto.fail("약속완료 실패");
+    }
+
+    /**
+     * 약속 스케쥴러
+     */
+    public void eventAlarm() {
+        LocalDateTime now = LocalDateTime.now().withNano(0);  // LocalDateTime에서 밀리세컨드 부분 제거
+        log.info("현재시각 "+now);
+        List<EventSchedule> eventScheduleList = eventScheduleRepository.findAll();
+        for (EventSchedule eventSchedule : eventScheduleList) {
+            if (eventSchedule.getTargetTime().equals(now)) {
+                AlertType type = null;
+                if (eventSchedule.getBeforeTime() == BeforeTime.DAY) {
+                    log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 하루 남았습니다.");
+                    type = AlertType.DAY;
+                } else if (eventSchedule.getBeforeTime() == BeforeTime.HOUR) {
+                    log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 한 시간 남았습니다.");
+                    type = AlertType.HOUR;
+                } else if (eventSchedule.getBeforeTime() == BeforeTime.MINUTE) {
+                    log.info("약속(ID: " + eventSchedule.getEvent().getId() + ")이 십 분 남았습니다.");
+                    type = AlertType.MIN;
+                }
+                sseEmitterService.publishInScheduler(eventSchedule.getEvent().getId(), type);
+                eventScheduleRepository.delete(eventSchedule);
+            }
+        }
     }
 
     //== 추가 메서드 ==//
@@ -802,7 +877,7 @@ public class EventService {
     @Transactional(readOnly = true)
     public CheckinMember isPresentCheckinMember(Long eventId, Long memberId) {
         List<CheckinMember> optionalCheckinMember = checkinMemberRepository.findByEventIdAndMemberId(eventId, memberId);
-       // return optionalCheckinMember.orElse(null);
+        // return optionalCheckinMember.orElse(null);
         for(CheckinMember c : optionalCheckinMember) {
             log.info(c.getMember().getId().toString());
         }
@@ -832,16 +907,35 @@ public class EventService {
     /**
      * Member를 MemberResponseDto로 변환
      */
-    public MemberResponseDto convertToDto(Member member) {
-        return MemberResponseDto.builder()
-                .id(member.getId())
-                .phoneNumber(member.getPhoneNumber())
-                .email(member.getEmail())
-                .nickname(member.getNickname())
-                .credit(member.getCredit())
-                .point(member.getPoint())
-                .profileImageUrl(member.getProfileImageUrl())
-                .build();
+    public MemberResponseDto convertToDto(Member owner, Member friend) {
+        if(friend ==null) {//방장을 이벤트 멤버에 등록하는 경우
+            return MemberResponseDto.builder()
+                    .id(owner.getId())
+                    .phoneNumber(owner.getPhoneNumber())
+                    .email(owner.getEmail())
+                    .nicknameByOwner(owner.getNickname())
+                    .nicknameByFriend(null)
+                    .credit(owner.getCredit())
+                    .point(owner.getPoint())
+                    .profileImageUrl(owner.getProfileImageUrl())
+                    .build();
+        }
+        else {//방장 이외의 친구를 이벤트 멤버로 등록하는 경우
+            String nicknameByOwner = null;
+            Friend tempFriend = friendRepository.findByOwnerAndFriend(owner, friend).orElse(null);
+            if (tempFriend != null)
+                nicknameByOwner = tempFriend.getSecondName();
+            return MemberResponseDto.builder()
+                    .id(friend.getId())
+                    .phoneNumber(friend.getPhoneNumber())
+                    .email(friend.getEmail())
+                    .nicknameByOwner(nicknameByOwner)
+                    .nicknameByFriend(friend.getNickname())
+                    .credit(friend.getCredit())
+                    .point(friend.getPoint())
+                    .profileImageUrl(friend.getProfileImageUrl())
+                    .build();
+        }
     }
 
     /**
@@ -851,8 +945,9 @@ public class EventService {
         return EventListDto.builder()
                 .id(event.getId())
                 .title(event.getTitle())
-                .eventDateTime(Time.serializeDate(event.getEventDateTime()))
+                .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                 .place(event.getPlace())
+                .weatherResponseDto((WeatherResponseDto) weatherService.getLocalWeather(event.getCoordinate()).getData())
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
                 .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                 .build();

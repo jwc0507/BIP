@@ -6,7 +6,6 @@ import com.example.week8.domain.enums.SearchType;
 import com.example.week8.dto.request.FriendAdditionRequestDto;
 import com.example.week8.dto.request.FriendSecondNameRequestDto;
 import com.example.week8.dto.response.FriendInfoResponseDto;
-import com.example.week8.dto.response.MemberSearchResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.FriendRepository;
 import com.example.week8.repository.MemberRepository;
@@ -37,20 +36,20 @@ public class FriendService {
 
         Member member = (Member) chkResponse.getData();
         List<Friend> friendList = friendRepository.findAllByOwner(member);
-
         Collections.sort(friendList);
-        List<MemberSearchResponseDto> memberSearchResponseDtos = new ArrayList<>();
+        List<FriendInfoResponseDto> friendInfoResponseDtoList = new ArrayList<>();
+
         for (Friend friend : friendList) {
-            memberSearchResponseDtos.add(MemberSearchResponseDto.builder()
+            friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
                     .id(friend.getFriend().getId())
-                    .nickname(friend.getFriend().getNickname())
+                    .nicknameByOwner(friend.getSecondName())
+                    .nicknameByFriend(friend.getFriend().getNickname())
                     .profileImgUrl(friend.getFriend().getProfileImageUrl())
                     .creditScore(friend.getFriend().getCredit())
                     .build()
-
             );
         }
-        return ResponseDto.success(memberSearchResponseDtos);
+        return ResponseDto.success(friendInfoResponseDtoList);
     }
 
     //닉네임으로 친구 추가
@@ -88,7 +87,8 @@ public class FriendService {
 
         return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(newFriend.getFriend().getId())
-                .nickname(newFriend.getFriend().getNickname())
+                .nicknameByOwner(newFriend.getSecondName())
+                .nicknameByFriend(newFriend.getFriend().getNickname())
                 .profileImgUrl(newFriend.getFriend().getProfileImageUrl())
                 .creditScore(newFriend.getFriend().getCredit())
                 .build());
@@ -129,7 +129,8 @@ public class FriendService {
 
         return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(newFriend.getFriend().getId())
-                .nickname(newFriend.getFriend().getNickname())
+                .nicknameByOwner(newFriend.getSecondName())
+                .nicknameByFriend(newFriend.getFriend().getNickname())
                 .profileImgUrl(newFriend.getFriend().getProfileImageUrl())
                 .creditScore(newFriend.getFriend().getCredit())
                 .build());
@@ -150,6 +151,17 @@ public class FriendService {
 
         friendRepository.delete(friend);
         return ResponseDto.success("친구삭제가 완료되었습니다.");
+    }
+
+    // 자신을 친구추가한 관계삭제
+    @Transactional
+    public boolean deleteMySelf(HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return false;
+        Member mySelf = validateMember(request); // Owner
+        friendRepository.deleteAllByFriend(mySelf);
+        return true;
     }
 
     private Friend isPresentFriend(Member owner, Member friend) {
@@ -205,9 +217,10 @@ public class FriendService {
         if (friend == null)
             return ResponseDto.fail("친구리스트에 없는 멤버입니다.");
 
-        return ResponseDto.success(MemberSearchResponseDto.builder()
+        return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(findedMember.getId())
-                .nickname(findedMember.getNickname())
+                .nicknameByOwner(friend.getSecondName())
+                .nicknameByFriend(findedMember.getNickname())
                 .profileImgUrl(findedMember.getProfileImageUrl())
                 .creditScore(findedMember.getCredit())
                 .build());
@@ -218,6 +231,7 @@ public class FriendService {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
+        Member getMember = validateMember(request);
 
         Member findedMember;
         // 닉네임으로 검색
@@ -234,9 +248,16 @@ public class FriendService {
         } else {
             return ResponseDto.fail("검색 타입 에러");
         }
-        return ResponseDto.success(MemberSearchResponseDto.builder()
+
+        String secondName = null;
+        Friend friend = isPresentFriend(getMember, findedMember);
+        if(friend != null)
+            secondName = friend.getSecondName();
+
+        return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(findedMember.getId())
-                .nickname(findedMember.getNickname())
+                .nicknameByOwner(secondName)
+                .nicknameByFriend(findedMember.getNickname())
                 .profileImgUrl(findedMember.getProfileImageUrl())
                 .creditScore(findedMember.getCredit())
                 .build());
@@ -252,7 +273,7 @@ public class FriendService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-        Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
+       Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
         if (getFriend == null)
             return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
 
@@ -261,12 +282,45 @@ public class FriendService {
             return ResponseDto.fail("친구리스트에 없는 멤버입니다.");
 
         friend.setSecondName(requestDto.getSecondName());
-
-        return ResponseDto.success(MemberSearchResponseDto.builder()
+        return ResponseDto.success(FriendInfoResponseDto.builder()
                 .id(friend.getFriend().getId())
-                .nickname(friend.getSecondName())
+                .nicknameByOwner(friend.getSecondName())
+                .nicknameByFriend(friend.getFriend().getNickname())
                 .profileImgUrl(friend.getFriend().getProfileImageUrl())
                 .creditScore(friend.getFriend().getCredit())
                 .build());
+    }
+
+    //추천 친구 목록 반환 (추천 친구 = 나는 추가하지 않았지만, 나를 추가한 친구)
+    @Transactional
+    public ResponseDto<?> getRecommandFriendsList(HttpServletRequest request){
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        Member owner = (Member) chkResponse.getData();
+        List<Friend> friendsAddedMeList = friendRepository.findAllByFriend(owner); //Friend 테이블에서 오너를 친구로 등록한 친구 모두 찾기.
+        List<FriendInfoResponseDto> friendInfoResponseDtoList = new ArrayList<>();
+
+        for(Friend curFriend : friendsAddedMeList) {
+            if (friendRepository.findByOwnerAndFriend(owner, curFriend.getOwner()).isEmpty()) {//나는 특정인을 친구로 등록안하고,특정인은 나를 친구로 등록했을 때만 friendInfoResponseDtoList에 추가
+                {
+                    String nicknameByFriend=null;
+                    Friend ownerSideFriend =friendRepository.findByOwnerAndFriend(owner,curFriend.getOwner()).orElse(null);
+
+                    if(ownerSideFriend!=null)
+                        nicknameByFriend=ownerSideFriend.getSecondName();
+
+                    friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
+                            .id(curFriend.getOwner().getId())
+                            .nicknameByOwner(nicknameByFriend)
+                            .nicknameByFriend(curFriend.getOwner().getNickname())
+                            .profileImgUrl(curFriend.getOwner().getProfileImageUrl())
+                            .creditScore(curFriend.getOwner().getCredit())
+                            .build());
+                }
+            }
+        }
+        return ResponseDto.success(friendInfoResponseDtoList);
     }
 }

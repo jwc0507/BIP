@@ -38,6 +38,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
     private final JavaMailSender javaMailSender;
+    private final SseEmitterService sseEmitterService;
   //  private final RedisUtil redisUtil;
 
 
@@ -121,10 +122,7 @@ public class MemberService {
 
         tokenToHeaders(tokenDto, response);
 
-        if(member.isFirstLogin()) {
-            member.setPoint(member.getPoint() + 100);
-            member.setFirstLogin(false);
-        }
+        member.chkFirstLogin();
 
         return ResponseDto.success(LoginResponseDto.builder().nickname(member.getNickname()).build());
     }
@@ -142,6 +140,9 @@ public class MemberService {
         if (tokenProvider.deleteRefreshToken(member))
             return ResponseDto.fail("존재하지 않는 Token 입니다.");
 
+        tokenProvider.deleteRefreshToken(member);
+
+        sseEmitterService.deleteAllEmitterStartWithId(member.getId().toString());
 
         return ResponseDto.success("로그아웃 성공");
     }
@@ -212,41 +213,55 @@ public class MemberService {
         return stringBuilder.toString();
     }
 
-    // 이미 있는 회원인지 체크 (프론트에서 뷰 넘길때 사용하기 위함)
-    public ResponseDto<?> checkPhoneNumber(DuplicationRequestDto requestDto) {
-        Optional<Member> optionalMember = memberRepository.findByPhoneNumber(requestDto.getValue());
-        if (optionalMember.isPresent())
-            return ResponseDto.success(false);
-
+    // 카카오 로그인용 전화번호 체크
+    public ResponseDto<?> getMemberByPhoneNumber(DuplicationRequestDto requestDto) {
         String regExp = "(^02|[0-9]{3})([0-9]{3,4})([0-9]{4})$";
         if (!Pattern.matches(regExp, requestDto.getValue()))
             return ResponseDto.fail("전화번호 형식을 지켜주세요.");
 
+        Optional<Member> optionalMember = memberRepository.findByPhoneNumber(requestDto.getValue());
+        if (optionalMember.isPresent())
+            return ResponseDto.success(optionalMember.get());
+
+        return ResponseDto.success(null);
+    }
+
+    // 이미 있는 회원인지 체크 (프론트에서 뷰 넘길때 사용하기 위함)
+    public ResponseDto<?> checkPhoneNumber(DuplicationRequestDto requestDto) {
+        String regExp = "(^02|[0-9]{3})([0-9]{3,4})([0-9]{4})$";
+        if (!Pattern.matches(regExp, requestDto.getValue()))
+            return ResponseDto.fail("전화번호 형식을 지켜주세요.");
+
+        Optional<Member> optionalMember = memberRepository.findByPhoneNumber(requestDto.getValue());
+        if (optionalMember.isPresent())
+            return ResponseDto.success(false);
+
         return ResponseDto.success(true);
     }
 
+
     // 닉네임 중복 검사
     public ResponseDto<?> checkNickname(DuplicationRequestDto requestDto) {
-        Optional<Member> optionalMember = memberRepository.findByNickname(requestDto.getValue());
-        if (optionalMember.isPresent())
-            return ResponseDto.fail("중복된 닉네임 입니다.");
-
         String regExp = "^[가-힣a-zA-Z0-9]{2,10}$";
         if (!Pattern.matches(regExp, requestDto.getValue()))
             return ResponseDto.fail("2~10자리 한글,대소문자,숫자만 입력해주세요.");
+
+        Optional<Member> optionalMember = memberRepository.findByNickname(requestDto.getValue());
+        if (optionalMember.isPresent())
+            return ResponseDto.fail("중복된 닉네임 입니다.");
 
         return ResponseDto.success("사용 가능한 닉네임 입니다.");
     }
 
     // 이메일 중복 검사
     public ResponseDto<?> checkEmail(DuplicationRequestDto requestDto) {
-        Optional<Member> optionalMember = memberRepository.findByEmail(requestDto.getValue());
-        if (optionalMember.isPresent())
-            return ResponseDto.fail("사용중인 이메일 입니다.");
-
         String regExp = "^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$";
         if (!Pattern.matches(regExp, requestDto.getValue()))
             return ResponseDto.fail("이메일 양식을 지켜주세요.");
+
+        Optional<Member> optionalMember = memberRepository.findByEmail(requestDto.getValue());
+        if (optionalMember.isPresent())
+            return ResponseDto.fail("사용중인 이메일 입니다.");
 
         return ResponseDto.success("사용 가능한 이메일 입니다.");
     }

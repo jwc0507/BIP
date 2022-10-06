@@ -1,14 +1,16 @@
 package com.example.week8.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Builder
+import javax.validation.constraints.NotBlank;
+
 @Getter
-@NoArgsConstructor
+@Setter
 @AllArgsConstructor
+@RequiredArgsConstructor
+@Builder
 public class InviteMemberDto {
+
+    @NotBlank
     private String nickname;
 }
