@@ -1,5 +1,6 @@
 package com.example.week8.controller;
 
+import com.example.week8.domain.UserDetailsImpl;
 import com.example.week8.dto.request.AuthRequestDto;
 import com.example.week8.dto.request.DuplicationRequestDto;
 import com.example.week8.dto.request.EmailLoginRequestDto;
@@ -11,6 +12,8 @@ import com.example.week8.service.NaverOauthService;
 import com.example.week8.service.SmsService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
+import org.json.simple.parser.ParseException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -81,6 +84,18 @@ public class MemberController {
     @RequestMapping (value = "/api/member/auth/test", method = RequestMethod.POST)
     public ResponseDto<?> sendAuthCode(@RequestBody @Valid AuthRequestDto requestDto) {
         return memberService.sendAuthCode(requestDto);
+    }
+
+    // 로그인 체크용 요청 (내용 없음)
+    @RequestMapping (value = "/api/member/check/login", method = RequestMethod.GET)
+    public ResponseDto<?> chkLogin( @AuthenticationPrincipal UserDetailsImpl userDetail) {
+        return memberService.chkLogin(userDetail);
+    }
+
+    // 토큰 재발급
+    @RequestMapping (value = "/api/member/reissue", method = RequestMethod.GET)
+    public ResponseDto<?> getNewAccessToken(HttpServletRequest request, HttpServletResponse response) throws ParseException {
+        return memberService.reissue(request, response);
     }
 
     // 전화번호 중복 확인
