@@ -198,8 +198,6 @@ public class PostService {
             return ResponseDto.fail("작성자만 삭제할 수 있습니다.");
         }
 
-        // 게시글의 이미지 null지정
-        setNullPost(post);
         // 게시글 삭제
         postRepository.deleteById(postId);
 
