@@ -20,8 +20,7 @@ public class PostRequestDto {
     @NotBlank
     private String content;
 
-//    @NotNull
-//    private String imgUrl;
+    @NotNull
     private String[] imgUrlList;
 
     @NotBlank
