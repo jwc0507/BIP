@@ -27,6 +27,9 @@ public class Member extends Timestamped {
     @Column(name = "POINT_ON_DAY")
     private Long pointOnDay; //당일 포인트 획득량
 
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Post> postList;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMember> chatMember;
 
