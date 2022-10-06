@@ -183,6 +183,13 @@ public class CommentService {
     }
 
     /**
+     * 내가 쓴 댓글들 호출
+     */
+    public List<Comment> getCommentList(Member member) {
+        return commentRepository.findAllByMember(member);
+    }
+
+    /**
      * 멤버 유효성 검사
      */
     public Member validateMember(HttpServletRequest request) {

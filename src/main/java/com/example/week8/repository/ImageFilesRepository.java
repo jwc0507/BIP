@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface ImageFilesRepository extends JpaRepository<ImageFile, Long> {
     Optional<ImageFile> findByUrl(String url);
     List<ImageFile> findAllByPost(Post post);
+    ImageFile findFirstByPost(Post post);
 }
