@@ -5,10 +5,7 @@ import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.*;
-import com.example.week8.repository.EventMemberRepository;
-import com.example.week8.repository.EventRepository;
-import com.example.week8.repository.MemberRepository;
-import com.example.week8.repository.RefreshTokenRepository;
+import com.example.week8.repository.*;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +41,7 @@ public class UserService {
     private final JavaMailSender javaMailSender;
     private final FriendService friendService;
     private final EventService eventService;
+    private final PostRepository postRepository;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -468,6 +466,25 @@ public class UserService {
         return ResponseDto.success(tempList);
     }
 
+    //로그인한 사용자가 쓴 글 전체 조회
+    @Transactional
+    public ResponseDto<?> getMyPosts(HttpServletRequest request){
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 엔티티 조회
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+        List<Post> myPosts = postRepository.findAllByMember(member);
+        List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
+        return getResponseDto(myPosts,postResponseAllDtoList);
+
+
+    }
+
     // 약속 호출
     @Transactional(readOnly = true)
     public Event isPresentEvent(Long id) {
@@ -485,6 +502,28 @@ public class UserService {
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
                 .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                 .build();
+    }
+
+    private ResponseDto<?> getResponseDto(List<Post> postList, List<PostResponseAllDto> postResponseAllDtoList) {
+        for (Post post : postList) {
+            postResponseAllDtoList.add(
+                    PostResponseAllDto.builder()
+                            .id(post.getId())
+                            .nickname(post.getMember().getNickname())   // 에러있음
+                            .board(post.getBoard().toString())
+                            .category(post.getCategory().toString())
+                            .content(post.getContent())
+                            .views(post.getViews())
+                            .likes(post.getLikes())
+                            .point(post.getPoint())
+                            .numOfComment(post.getNumOfComment())
+                            .timePast(Time.convertLocaldatetimeToTimePast(post.getCreatedAt()))
+                            .createdAt(Time.serializePostDate(post.getCreatedAt()))
+                            .modifiedAt(Time.serializePostDate(post.getModifiedAt()))
+                            .build()
+            );
+        }
+        return ResponseDto.success(postResponseAllDtoList);
     }
 
 }
