@@ -684,8 +684,6 @@ public class EventService {
             return ResponseDto.fail("방장이 아닙니다.");
         // 약속 시간 후 컨펌이 이루어지는지 확인
         if (LocalDateTime.now().isBefore(event.getEventDateTime())) {
-            System.out.println("now: "+LocalDateTime.now());
-            System.out.println("event: "+event.getEventDateTime());
             return ResponseDto.fail("아직 약속시간 전입니다. 약속시간이 지난 후 다시 시도해주세요.");
         }
 
@@ -703,7 +701,6 @@ public class EventService {
      */
     public void eventAlarm() {
         LocalDateTime now = LocalDateTime.now().withNano(0);  // LocalDateTime에서 밀리세컨드 부분 제거
-        log.info("현재시각 "+now);
         List<EventSchedule> eventScheduleList = eventScheduleRepository.findAll();
         for (EventSchedule eventSchedule : eventScheduleList) {
             if (eventSchedule.getTargetTime().equals(now)) {
