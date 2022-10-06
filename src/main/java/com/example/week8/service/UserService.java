@@ -43,6 +43,7 @@ public class UserService {
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
     private final FriendService friendService;
+    private final EventService eventService;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -351,6 +352,21 @@ public class UserService {
         assert member != null;  // 동작할일은 없는 코드
 
         friendService.deleteMySelf(request);
+
+        List<Event> eventList = eventRepository.findAllByMaster(member);
+        for (Event event : eventList) {
+            if (eventMemberRepository.findAllByEventId(event.getId()).size() == 1) { // 약속참여자가 자신밖에 없을 때
+                eventRepository.deleteByMaster(member);
+            } else if (eventMemberRepository.findAllByEventId(event.getId()).size() >= 2) { // 약속참여자가 자신 외에 여러명일 때
+                List<EventMember> eventMemberList = eventMemberRepository.findAllByEventId(event.getId());
+                for (EventMember eventMember : eventMemberList) {
+                    if (!eventMember.getMember().getId().equals(member.getId())) {
+                        event.changeMaster(eventMember.getMember());
+                        break;
+                    }
+                }
+            }
+        }
 
         tokenProvider.deleteRefreshToken(member);
         SecurityContextHolder.clearContext();
