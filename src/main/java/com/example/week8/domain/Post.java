@@ -42,6 +42,9 @@ public class Post extends Timestamped {
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "post")
     private List<Likes> likesList;
 
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "post")
+    private List<ImageFile> imageFiles;
+
     @Column(nullable = false)
     private int likes;
 
