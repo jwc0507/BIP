@@ -30,6 +30,9 @@ public class Member extends Timestamped {
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Post> postList;
 
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Likes> likesList;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMember> chatMember;
 
