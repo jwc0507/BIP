@@ -77,6 +77,7 @@ public class PostController {
         return postService.getCategoryList(Board.donation.toString(), category);
     }
 
+
     /**
      * 게시글 신고
      */
@@ -85,5 +86,6 @@ public class PostController {
                                  HttpServletRequest request) {
         return postService.report(postId, request);
     }
+
 
 }
