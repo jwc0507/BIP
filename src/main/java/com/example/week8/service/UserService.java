@@ -43,6 +43,7 @@ public class UserService {
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
     private final FriendService friendService;
+    private final SseEmitterService sseEmitterService;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -350,6 +351,9 @@ public class UserService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
+        sseEmitterService.deleteAllEmitterStartWithId(member.getId().toString());
+
+        eventMemberRepository.deleteAllByMemberId(member.getId());
         friendService.deleteMySelf(request);
 
         tokenProvider.deleteRefreshToken(member);
