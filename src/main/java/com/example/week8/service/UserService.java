@@ -2,6 +2,7 @@ package com.example.week8.service;
 
 import com.example.week8.domain.*;
 import com.example.week8.domain.enums.EventStatus;
+import com.example.week8.domain.enums.PostStatus;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.*;
@@ -479,7 +480,7 @@ public class UserService {
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
-        List<Post> myPosts = postRepository.findAllByMember(member);
+        List<Post> myPosts = postRepository.findAllByMemberAndPostStatus(member, PostStatus.active);
         List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
         return getResponseDto(myPosts,postResponseAllDtoList);
 
