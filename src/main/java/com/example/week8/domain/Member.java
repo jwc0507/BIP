@@ -27,6 +27,12 @@ public class Member extends Timestamped {
     @Column(name = "POINT_ON_DAY")
     private Long pointOnDay; //당일 포인트 획득량
 
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Post> postList;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Likes> likesList;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMember> chatMember;
 
@@ -69,6 +75,8 @@ public class Member extends Timestamped {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
+
+    private int reportCnt;
 
     public void updateNickname(String name) {
         this.nickname = name;
@@ -116,5 +124,16 @@ public class Member extends Timestamped {
             this.point += 100;
             this.firstLogin = false;
         }
+    }
+
+    // 신고 횟수 올리기
+    public int addReportCnt() {
+        this.reportCnt++;
+        return reportCnt;
+    }
+
+    // 신용도 차감
+    public void declineCredit(double credit) {
+        this.credit -= credit;
     }
 }

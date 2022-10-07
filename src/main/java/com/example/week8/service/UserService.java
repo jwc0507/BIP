@@ -5,10 +5,7 @@ import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.*;
-import com.example.week8.repository.EventMemberRepository;
-import com.example.week8.repository.EventRepository;
-import com.example.week8.repository.MemberRepository;
-import com.example.week8.repository.RefreshTokenRepository;
+import com.example.week8.repository.*;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +40,9 @@ public class UserService {
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
     private final FriendService friendService;
+    private final PostRepository postRepository;
+    private final ImageFilesRepository imageFilesRepository;
+    private final CommentService commentService;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -245,7 +245,7 @@ public class UserService {
         if(!getAuthCode.isSuccess())
             return ResponseDto.fail("코드생성 실패");
 
-        String subject = "[프로미스톡] 이메일 로그인 인증코드입니다";
+        String subject = "[BIP] 이메일 로그인 인증코드입니다";
         String text = "인증번호 ["+getAuthCode.getData()+"] 을 입력해주세요.";
 
         // simpleMailMessage를 사용하면 텍스트만 보내고 MimeMessage를 사용시 멀티파트로 보냄 (파일전송 가능)
@@ -350,14 +350,29 @@ public class UserService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-        friendService.deleteMySelf(request);
+        // 탈퇴전 댓글 정리
+        clearMyContents(member);
 
+        // 나를 친구추가한 리스트 삭제
+        friendService.deleteMySelf(request);
         tokenProvider.deleteRefreshToken(member);
         SecurityContextHolder.clearContext();
         memberRepository.deleteById(member.getId());
 
         return ResponseDto.success("회원탈퇴 완료");
     }
+
+    // 탈퇴전 내가 쓴 정보들 정리 (댓글)
+    @Transactional
+    public void clearMyContents(Member member) {
+        // 내가 쓴 코멘트 관계 끊기
+        List<Comment> comments = commentService.getCommentList(member);
+        Member tempMember = memberRepository.findById(1L).orElse(null);
+        for(Comment comment : comments) {
+            comment.setTempMember(tempMember);
+        }
+    }
+
 
     // 포인트 소모 (신용도올리기)
     @Transactional
@@ -386,7 +401,7 @@ public class UserService {
         if(!member.getNickname().equals(nickname)) {
             // 자신이 아니면 상대 멤버객체를 가져오기
             receiver = memberRepository.findByNickname(nickname).orElse(null);
-            if(receiver == null)
+            if(receiver == null || receiver.getNickname().equals("탈퇴한 사용자입니다."))
                 return ResponseDto.fail("받는 사람 닉네임이 올바르지 않습니다.");
             magnification = MAG_POINT_CREDIT*2;   // 포인트로 신용도 올리기 배율을 동일화 하자는 fe요청
         }
@@ -452,6 +467,25 @@ public class UserService {
         return ResponseDto.success(tempList);
     }
 
+    //로그인한 사용자가 쓴 글 전체 조회
+    @Transactional
+    public ResponseDto<?> getMyPosts(HttpServletRequest request){
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 엔티티 조회
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+        List<Post> myPosts = postRepository.findAllByMember(member);
+        List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
+        return getResponseDto(myPosts,postResponseAllDtoList);
+
+
+    }
+
     // 약속 호출
     @Transactional(readOnly = true)
     public Event isPresentEvent(Long id) {
@@ -469,6 +503,34 @@ public class UserService {
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
                 .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                 .build();
+    }
+
+    private ResponseDto<?> getResponseDto(List<Post> postList, List<PostResponseAllDto> postResponseAllDtoList) {
+        String url;
+        for (Post post : postList) {
+            url = null;
+            ImageFile imageFileList = imageFilesRepository.findFirstByPost(post);
+            if (imageFileList != null)
+                url = imageFileList.getUrl();
+            postResponseAllDtoList.add(
+                    PostResponseAllDto.builder()
+                            .id(post.getId())
+                            .nickname(post.getMember().getNickname())
+                            .board(post.getBoard().toString())
+                            .category(post.getCategory().toString())
+                            .content(post.getContent())
+                            .firstImgUrl(url)
+                            .views(post.getViews())
+                            .likes(post.getLikes())
+                            .point(post.getPoint())
+                            .numOfComment(post.getNumOfComment())
+                            .timePast(Time.convertLocaldatetimeToTimePast(post.getCreatedAt()))
+                            .createdAt(Time.serializePostDate(post.getCreatedAt()))
+                            .modifiedAt(Time.serializePostDate(post.getModifiedAt()))
+                            .build()
+            );
+        }
+        return ResponseDto.success(postResponseAllDtoList);
     }
 
 }
