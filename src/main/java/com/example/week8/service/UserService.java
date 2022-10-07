@@ -40,7 +40,7 @@ public class UserService {
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
     private final FriendService friendService;
-    private final EventService eventService;
+    private final ChatService chatService;
     private final PostRepository postRepository;
     private final ImageFilesRepository imageFilesRepository;
     private final CommentService commentService;
@@ -353,6 +353,28 @@ public class UserService {
         clearMyContents(member);
 
 
+        // 나를 친구추가한 리스트 삭제
+        friendService.deleteMySelf(request);
+        tokenProvider.deleteRefreshToken(member);
+        SecurityContextHolder.clearContext();
+        memberRepository.deleteById(member.getId());
+
+        return ResponseDto.success("회원탈퇴 완료");
+    }
+
+    // 탈퇴전 내가 쓴 정보들 정리 (댓글, 약속)
+    @Transactional
+    public void clearMyContents(Member member) {
+        // 내가 쓴 코멘트 관계 끊기
+        List<Comment> comments = commentService.getCommentList(member);
+        Member tempMember = memberRepository.findById(1L).orElse(null);
+        for (Comment comment : comments) {
+            comment.setTempMember(tempMember);
+        }
+        // 채팅방나가기 (챗멤버 삭제) 탈퇴 문구 날리기
+        chatService.exitAllChatRoom(member);
+
+        // 약속에서 탈퇴하기
         List<Event> eventList = eventRepository.findAllByMaster(member);
         for (Event event : eventList) {
             if (eventMemberRepository.findAllByEventId(event.getId()).size() == 1) { // 약속참여자가 자신밖에 없을 때
@@ -366,24 +388,6 @@ public class UserService {
                     }
                 }
             }
-        }
-        // 나를 친구추가한 리스트 삭제
-        friendService.deleteMySelf(request);
-        tokenProvider.deleteRefreshToken(member);
-        SecurityContextHolder.clearContext();
-        memberRepository.deleteById(member.getId());
-
-        return ResponseDto.success("회원탈퇴 완료");
-    }
-
-    // 탈퇴전 내가 쓴 정보들 정리 (댓글)
-    @Transactional
-    public void clearMyContents(Member member) {
-        // 내가 쓴 코멘트 관계 끊기
-        List<Comment> comments = commentService.getCommentList(member);
-        Member tempMember = memberRepository.findById(1L).orElse(null);
-        for (Comment comment : comments) {
-            comment.setTempMember(tempMember);
         }
     }
 
