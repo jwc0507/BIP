@@ -108,6 +108,7 @@ public class Post extends Timestamped {
     public int addReportCnt() {
         this.reportCnt++;
         return reportCnt;
+    }
 
     //회원정보 검증
     public boolean validateMember(Member member) {
