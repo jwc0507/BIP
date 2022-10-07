@@ -25,6 +25,9 @@ public class Post extends Timestamped {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
 
+    // lazy타입으로 member가 설정되어 게시글의 작성자를 불러오는 과정에서 닉네임을 알 수 없어서 필드 생성.
+    private String ownerName;
+
     @Column (nullable = false)
     @Enumerated(EnumType.STRING)
     private Board board;
@@ -70,6 +73,7 @@ public class Post extends Timestamped {
 
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
+        this.ownerName = member.getNickname();
         this.board = Board.valueOf(postRequestDto.getBoard());
         this.category = Category.valueOf(postRequestDto.getCategory());
         this.address = postRequestDto.getAddress();
