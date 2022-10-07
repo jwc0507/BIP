@@ -24,7 +24,7 @@ public class CheckinMember {
     @JsonIgnore
     private Event event;
 
-    @OneToOne(fetch = FetchType.LAZY)  // 기본은 즉시로딩
+    @ManyToOne(fetch = FetchType.LAZY)  // 기본은 즉시로딩
     @JoinColumn(name = "MEMBER_ID", nullable = false)
     private Member member;
 

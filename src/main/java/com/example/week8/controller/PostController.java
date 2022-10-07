@@ -1,6 +1,7 @@
 package com.example.week8.controller;
 
 import com.example.week8.domain.enums.Board;
+import com.example.week8.dto.request.PostPointGiveRequestDto;
 import com.example.week8.dto.request.PostRequestDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.PostService;
@@ -76,8 +77,7 @@ public class PostController {
     public ResponseDto<?> getDonationList(@RequestParam("category") String category) {
         return postService.getCategoryList(Board.donation.toString(), category);
     }
-
-
+    
     /**
      * 게시글 신고
      */
@@ -85,6 +85,12 @@ public class PostController {
     public ResponseDto<?> report(@PathVariable Long postId,
                                  HttpServletRequest request) {
         return postService.report(postId, request);
+    }
+
+    //포인트증여
+    @RequestMapping(value = "/api/posts/point/give/{postId}", method = RequestMethod.PUT)
+    public ResponseDto<?> givePoint(@PathVariable Long postId, @RequestBody @Valid PostPointGiveRequestDto requestDto, HttpServletRequest request) {
+        return postService.givePoint(postId, requestDto, request);
     }
 
 

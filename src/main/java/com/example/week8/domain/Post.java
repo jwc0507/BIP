@@ -27,6 +27,9 @@ public class Post extends Timestamped {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
 
+    // lazy타입으로 member가 설정되어 게시글의 작성자를 불러오는 과정에서 닉네임을 알 수 없어서 필드 생성.
+    private String ownerName;
+
     @Column (nullable = false)
     @Enumerated(EnumType.STRING)
     private Board board;
@@ -75,6 +78,7 @@ public class Post extends Timestamped {
 
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
+        this.ownerName = member.getNickname();
         this.board = Board.valueOf(postRequestDto.getBoard());
         this.category = Category.valueOf(postRequestDto.getCategory());
         this.address = postRequestDto.getAddress();
@@ -105,17 +109,21 @@ public class Post extends Timestamped {
     public void removeCommentCounter() {
         this.numOfComment--;
     }
+
     // 신고 횟수 올리기
     public int addReportCnt() {
         this.reportCnt++;
         return reportCnt;
-    }
 
     // 게시글 비활성화
     public void inactivate() {
         this.postStatus = PostStatus.inactive;
     }
-
+    
+    //회원정보 검증
+    public boolean validateMember(Member member) {
+        return !this.member.equals(member);
+    }
 
     // 게시글 수정
     public void updatePost(PostRequestDto postRequestDto) {

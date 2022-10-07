@@ -28,6 +28,12 @@ public class Member extends Timestamped {
     private Long pointOnDay; //당일 포인트 획득량
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<EventMember> eventMemberList;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<CheckinMember> checkinMemberList;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Post> postList;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
@@ -105,10 +111,16 @@ public class Member extends Timestamped {
         this.credit = score;
     }
 
+    // 약속에서 주는 포인트 (하루 한도 존재)
     public void updatePoint(int point) {
         this.point += point;
         if (point > 0)
             pointOnDay += point;
+    }
+
+    // 재능기부로 주는 포인트 (한도 없음)
+    public void sendPoint(int point) {
+        this.point += point;
     }
 
     public void updateSelfEvent() {
