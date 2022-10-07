@@ -27,8 +27,20 @@ public class Member extends Timestamped {
     @Column(name = "POINT_ON_DAY")
     private Long pointOnDay; //당일 포인트 획득량
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ChatMember> chatMember;
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<EventMember> eventMemberList;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<CheckinMember> checkinMemberList;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Post> postList;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Likes> likesList;
+
+//    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+//    private List<ChatMember> chatMember;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "owner")
     private List<Friend> friendListOwner = new ArrayList<>();
@@ -70,6 +82,8 @@ public class Member extends Timestamped {
     @Enumerated(EnumType.STRING)
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
 
+    private int reportCnt;
+
     public void updateNickname(String name) {
         this.nickname = name;
     }
@@ -97,10 +111,16 @@ public class Member extends Timestamped {
         this.credit = score;
     }
 
+    // 약속에서 주는 포인트 (하루 한도 존재)
     public void updatePoint(int point) {
         this.point += point;
         if (point > 0)
             pointOnDay += point;
+    }
+
+    // 재능기부로 주는 포인트 (한도 없음)
+    public void sendPoint(int point) {
+        this.point += point;
     }
 
     public void updateSelfEvent() {
@@ -116,5 +136,16 @@ public class Member extends Timestamped {
             this.point += 100;
             this.firstLogin = false;
         }
+    }
+
+    // 신고 횟수 올리기
+    public int addReportCnt() {
+        this.reportCnt++;
+        return reportCnt;
+    }
+
+    // 신용도 차감
+    public void declineCredit(double credit) {
+        this.credit -= credit;
     }
 }

@@ -63,7 +63,7 @@ public class FriendService {
 
         //nickname으로 검색한 member
         Member findedMember = memberRepository.findByNickname(friendAdditionRequestDto.getValue()).orElse(null);
-        if (findedMember == null)
+        if (findedMember == null || findedMember.getNickname().equals("탈퇴한 사용자입니다."))
             return ResponseDto.fail("닉네임 친구찾기 실패");
 
         // 본인에 친구걸수 없음
@@ -201,7 +201,7 @@ public class FriendService {
         // 닉네임으로 검색
         if (type.equals(SearchType.name.toString())) {
             findedMember = memberRepository.findByNickname(value).orElse(null);
-            if (findedMember == null)
+            if (findedMember == null || findedMember.getNickname().equals("탈퇴한 사용자입니다."))
                 return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
         }
         // 전화번호로 검색
@@ -237,7 +237,7 @@ public class FriendService {
         // 닉네임으로 검색
         if (type.equals(SearchType.name.toString())) {
             findedMember = memberRepository.findByNickname(value).orElse(null);
-            if (findedMember == null)
+            if (findedMember == null || findedMember.getNickname().equals("탈퇴한 사용자입니다."))
                 return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
         }
         // 전화번호로 검색
@@ -274,7 +274,7 @@ public class FriendService {
         assert member != null;  // 동작할일은 없는 코드
 
        Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
-        if (getFriend == null)
+        if (getFriend == null || getFriend.getNickname().equals("탈퇴한 사용자입니다."))
             return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
 
         Friend friend = isPresentFriend(member, getFriend);

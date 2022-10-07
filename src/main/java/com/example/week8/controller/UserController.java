@@ -75,4 +75,8 @@ public class UserController {
     public ResponseDto<?> getClosedEvent(HttpServletRequest request) {
         return userService.getClosedEvent(request);
     }
+
+    //로그인한 사용자가 쓴 글 전체 조회
+    @GetMapping("api/user/myposts")
+    public ResponseDto<?> getMyPosts(HttpServletRequest request){ return userService.getMyPosts(request);}
 }

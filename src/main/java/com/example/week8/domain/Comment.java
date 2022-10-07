@@ -50,4 +50,8 @@ public class Comment extends Timestamped{
         this.content = content;
     }
 
+    public void setTempMember(Member member) {
+        this.member = member;
+    }
+
 }
