@@ -5,11 +5,14 @@ import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
 import com.example.week8.domain.enums.Board;
 import com.example.week8.domain.enums.Category;
+import com.example.week8.dto.request.PostPointGiveRequestDto;
 import com.example.week8.dto.request.PostRequestDto;
+import com.example.week8.dto.response.PointGiveResponseDto;
 import com.example.week8.dto.response.PostResponseAllDto;
 import com.example.week8.dto.response.PostResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.ImageFilesRepository;
+import com.example.week8.repository.MemberRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
@@ -30,6 +33,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final ImageFilesRepository imageFilesRepository;
     private final TokenProvider tokenProvider;
+    private final MemberRepository memberRepository;
 
     /**
      * 게시글 작성
@@ -47,6 +51,10 @@ public class PostService {
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
+
+        chkResponse = chkCategory(postRequestDto.getBoard(), postRequestDto.getCategory());
+        if(!chkResponse.isSuccess())
+            return chkResponse;
 
         // 게시글 생성
         Post post = new Post(member, postRequestDto);
@@ -92,6 +100,11 @@ public class PostService {
         if (!validateAuthority(post, member)) {
             return ResponseDto.fail("작성자만 수정할 수 있습니다.");
         }
+
+        chkResponse = chkCategory(postRequestDto.getBoard(), postRequestDto.getCategory());
+        if(!chkResponse.isSuccess())
+            return chkResponse;
+
 
         // 게시글 수정
         post.updatePost(postRequestDto);
@@ -189,8 +202,6 @@ public class PostService {
             return ResponseDto.fail("작성자만 삭제할 수 있습니다.");
         }
 
-        // 게시글의 이미지 null지정
-        setNullPost(post);
         // 게시글 삭제
         postRepository.deleteById(postId);
 
@@ -205,13 +216,12 @@ public class PostService {
 
         List<Post> postList;
         List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
-        Board boardType = getBoard(board);
-        if (boardType == null)
-            return ResponseDto.fail("게시판 종류를 확인해주세요");
-        Category categoryType = getCategory(category);
-        if (categoryType == null)
-            return ResponseDto.fail("상세카테고리를 확인해주세요");
+        ResponseDto<?> chkResponse = chkCategory(board, category);
+        if(!chkResponse.isSuccess())
+            return chkResponse;
 
+        Board boardType = getBoard(board);
+        Category categoryType = getCategory(category);
         postList = postRepository.findAllByBoardAndCategoryOrderByModifiedAtDesc(boardType, categoryType);
 
         return getResponseDto(postList, postResponseAllDtoList);
@@ -250,6 +260,17 @@ public class PostService {
 
     //-- 모듈 --//
 
+    // 카테고리 체크
+    private ResponseDto<?> chkCategory(String board, String category) {
+        Board boardType = getBoard(board);
+        if (boardType == null)
+            return ResponseDto.fail("게시판 종류를 확인해주세요");
+        Category categoryType = getCategory(category);
+        if (categoryType == null)
+            return ResponseDto.fail("상세카테고리를 확인해주세요");
+        return ResponseDto.success(null);
+    }
+
     // ENUM MAPPING (BOARD TYPE)
     public static final Map<String, Board> boardMap = new HashMap<>();
 
@@ -280,7 +301,6 @@ public class PostService {
 
 
         List<ImageFile> imageFileList = imageFilesRepository.findAllByPost(post);
-
         String[] imageUrlList = new String[imageFileList.size()];
         int index=0;
         for(ImageFile imageFile : imageFileList){
@@ -310,14 +330,20 @@ public class PostService {
     }
 
     private ResponseDto<?> getResponseDto(List<Post> postList, List<PostResponseAllDto> postResponseAllDtoList) {
+        String url;
         for (Post post : postList) {
+            url = null;
+            ImageFile imageFileList = imageFilesRepository.findFirstByPost(post);
+            if (imageFileList != null)
+                url = imageFileList.getUrl();
             postResponseAllDtoList.add(
                     PostResponseAllDto.builder()
                             .id(post.getId())
-                            .nickname(post.getMember().getNickname())   // 에러있음
+                            .nickname(post.getMember().getNickname())
                             .board(post.getBoard().toString())
                             .category(post.getCategory().toString())
                             .content(post.getContent())
+                            .firstImgUrl(url)
                             .views(post.getViews())
                             .likes(post.getLikes())
                             .point(post.getPoint())
@@ -330,6 +356,63 @@ public class PostService {
         }
         return ResponseDto.success(postResponseAllDtoList);
     }
+
+    /**
+     * 포인트 증여
+     * 포인트 양을 받아오는 것을
+     * 포인트를 바로 받아오기, 게시글 번호를 받아와 해당 게시글의 오너인지 확인하고, 포인트 주기 중에서 고민을 했음.
+     * 게시글 번호로 게시글 주인인지 파악하는것이 좋다고 생각해서 해당 방법으로 구현
+     */
+    @Transactional
+    public ResponseDto<?> givePoint(Long postId, PostPointGiveRequestDto requestDto, HttpServletRequest request) {
+        // 토큰확인
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 멤버정보 불러오기
+        // Member member = tokenProvider.getMemberFromAuthentication();
+        // 위에서 불러온 맴버는 2차캐시임 조회에만 사용가능.
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;  // 동작할일은 없는 코드
+
+        // dto체크 (valid 옵션이 있으니 패스)
+        String nickname = requestDto.getNickname();
+
+        /* 게시글에서 걸린 포인트양 빼오기 */
+        // 게시글 찾기
+        Post post = isPresentPost(postId);
+        if(post == null)
+            return ResponseDto.fail("게시글을 찾을 수 없습니다.");
+        // 게시글의 작성자인지 확인
+        if(!post.getOwnerName().equals(member.getNickname()))
+            return ResponseDto.fail("게시글 작성자가 아닙니다.");
+        // 포인트가 정상적인지 체크 (보유량보다 많은지 -값은아닌지)
+        int point = post.getPoint();
+        if (point < 0)
+            return ResponseDto.fail("포인트가 0미만입니다.");
+        if (point > member.getPoint())
+            return ResponseDto.fail("보유 포인트가 부족합니다.");
+
+        // 상대방 불러오기
+        Member receiver = memberRepository.findByNickname(nickname).orElse(null);
+        // 정상적인지 체크
+        if (receiver == null)
+            return ResponseDto.fail("받는사람을 찾을 수 없습니다.");
+
+        /* 포인트 증여 */
+        // 상대방에게 포인트 주기
+        receiver.sendPoint(point);
+        // 내 포인트 감소
+        member.sendPoint((-1*point));
+
+        String msg = receiver.getNickname() + "님께 포인트 전달이 완료되었습니다.";
+        return ResponseDto.success(PointGiveResponseDto.builder()
+                .message(msg)
+                .lastPoint(member.getPoint())
+                .build());
+    }
+
 
     /**
      * 게시글 호출
