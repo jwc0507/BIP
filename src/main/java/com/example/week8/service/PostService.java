@@ -3,8 +3,10 @@ package com.example.week8.service;
 import com.example.week8.domain.ImageFile;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
+import com.example.week8.domain.Report;
 import com.example.week8.domain.enums.Board;
 import com.example.week8.domain.enums.Category;
+import com.example.week8.domain.enums.PostStatus;
 import com.example.week8.dto.request.PostPointGiveRequestDto;
 import com.example.week8.dto.request.PostRequestDto;
 import com.example.week8.dto.response.PointGiveResponseDto;
@@ -14,6 +16,7 @@ import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.ImageFilesRepository;
 import com.example.week8.repository.MemberRepository;
 import com.example.week8.repository.PostRepository;
+import com.example.week8.repository.ReportRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final ImageFilesRepository imageFilesRepository;
+    private final ReportRepository reportRepository;
     private final TokenProvider tokenProvider;
     private final MemberRepository memberRepository;
 
@@ -164,13 +168,13 @@ public class PostService {
             return ResponseDto.fail("게시판 종류를 확인해주세요");
 
         if (divisionOne.equals("request")) {
-            postList = postRepository.findAllByBoardOrderByModifiedAtDesc(Board.request);
+            postList = postRepository.findAllByBoardAndPostStatusOrderByModifiedAtDesc(Board.request, PostStatus.active);
         }
         else if (divisionOne.equals("donation")) {
-            postList = postRepository.findAllByBoardOrderByModifiedAtDesc(Board.donation);
+            postList = postRepository.findAllByBoardAndPostStatusOrderByModifiedAtDesc(Board.donation, PostStatus.active);
         }
         else {
-            postList = postRepository.findAllByOrderByModifiedAtDesc();
+            postList = postRepository.findAllByPostStatusOrderByModifiedAtDesc(PostStatus.active);
         }
         return getResponseDto(postList, postResponseAllDtoList);
     }
@@ -203,7 +207,7 @@ public class PostService {
         }
 
         // 게시글 삭제
-        postRepository.deleteById(postId);
+        post.inactivate();  // 비활성화
 
         return ResponseDto.success("게시글이 삭제되었습니다.");
     }
@@ -222,7 +226,7 @@ public class PostService {
 
         Board boardType = getBoard(board);
         Category categoryType = getCategory(category);
-        postList = postRepository.findAllByBoardAndCategoryOrderByModifiedAtDesc(boardType, categoryType);
+        postList = postRepository.findAllByBoardAndCategoryAndPostStatusOrderByModifiedAtDesc(boardType, categoryType, PostStatus.active);
 
         return getResponseDto(postList, postResponseAllDtoList);
     }
@@ -235,17 +239,32 @@ public class PostService {
         if (!chkResponse.isSuccess())
             return chkResponse;
 
+        // 멤버 조회
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
         Post post = isPresentPost(postId);
         if (null == post) {
             return ResponseDto.fail("존재하지 않는 게시글 id 입니다.");
         }
 
+        // 신고(Report) 객체 생성
+        Report report = new Report(member.getId(), post.getMember().getId());
+        if (report.getToId().equals(report.getFromId())) {
+            return ResponseDto.fail("자신에게 신고할 수 없습니다.");
+        }
+        if (reportRepository.findByFromIdAndToId(member.getId(), post.getMember().getId()).isPresent()) {
+            return ResponseDto.fail("중복 신고는 불가능합니다.");
+        }
+        reportRepository.save(report);
+
         // 신고횟수 적용(게시글)
         int reportCnt = post.addReportCnt();
         if (reportCnt >= 10) {  // 누적 신고횟수 10 이상일 때 게시글 삭제
-            postRepository.deleteById(postId);
+            post.inactivate();
             log.info("신고 10회 누적으로 게시글이 삭제되었습니다.");
-            // 삭제 시에 글 작성자에게 삭제 알림 필요
         }
 
         // 신고횟수 적용(작성자)
@@ -419,7 +438,7 @@ public class PostService {
      */
     @Transactional(readOnly = true)
     public Post isPresentPost(Long postId) {
-        Optional<Post> optionalPost = postRepository.findById(postId);
+        Optional<Post> optionalPost = postRepository.findByIdAndPostStatus(postId, PostStatus.active);
         return optionalPost.orElse(null);
     }
 

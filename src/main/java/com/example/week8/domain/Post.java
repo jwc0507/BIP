@@ -2,8 +2,10 @@ package com.example.week8.domain;
 
 import com.example.week8.domain.enums.Board;
 import com.example.week8.domain.enums.Category;
+import com.example.week8.domain.enums.PostStatus;
 import com.example.week8.dto.request.PostRequestDto;
 import lombok.*;
+import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.util.List;
@@ -71,6 +73,9 @@ public class Post extends Timestamped {
 
     private int reportCnt;  // 신고받은 횟수
 
+    @Enumerated(EnumType.STRING)
+    private PostStatus postStatus;  // active, inactive
+
     public Post(Member member, PostRequestDto postRequestDto) {
         this.member = member;
         this.ownerName = member.getNickname();
@@ -86,6 +91,7 @@ public class Post extends Timestamped {
         this.coordinate = postRequestDto.getCoordinate();
         this.reportCnt = 0;
         this.numOfComment = 0;
+        this.postStatus = PostStatus.active;
     }
 
     // 조회수 올리기
@@ -110,6 +116,11 @@ public class Post extends Timestamped {
         return reportCnt;
     }
 
+    // 게시글 비활성화
+    public void inactivate() {
+        this.postStatus = PostStatus.inactive;
+    }
+    
     //회원정보 검증
     public boolean validateMember(Member member) {
         return !this.member.equals(member);
