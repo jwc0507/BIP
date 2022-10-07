@@ -103,12 +103,16 @@ public class Post extends Timestamped {
     public void removeCommentCounter() {
         this.numOfComment--;
     }
+
     // 신고 횟수 올리기
     public int addReportCnt() {
         this.reportCnt++;
         return reportCnt;
-    }
 
+    //회원정보 검증
+    public boolean validateMember(Member member) {
+        return !this.member.equals(member);
+    }
 
     // 게시글 수정
     public void updatePost(PostRequestDto postRequestDto) {

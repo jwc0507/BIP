@@ -77,8 +77,7 @@ public class PostController {
     public ResponseDto<?> getDonationList(@RequestParam("category") String category) {
         return postService.getCategoryList(Board.donation.toString(), category);
     }
-
-
+    
     /**
      * 게시글 신고
      */
@@ -93,5 +92,6 @@ public class PostController {
     public ResponseDto<?> givePoint(@PathVariable Long postId, @RequestBody @Valid PostPointGiveRequestDto requestDto, HttpServletRequest request) {
         return postService.givePoint(postId, requestDto, request);
     }
+
 
 }

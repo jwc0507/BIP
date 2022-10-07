@@ -40,6 +40,7 @@ public class UserService {
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
     private final FriendService friendService;
+    private final EventService eventService;
     private final PostRepository postRepository;
     private final ImageFilesRepository imageFilesRepository;
     private final CommentService commentService;
@@ -351,6 +352,21 @@ public class UserService {
         // 탈퇴전 댓글 정리
         clearMyContents(member);
 
+
+        List<Event> eventList = eventRepository.findAllByMaster(member);
+        for (Event event : eventList) {
+            if (eventMemberRepository.findAllByEventId(event.getId()).size() == 1) { // 약속참여자가 자신밖에 없을 때
+                eventRepository.deleteByMaster(member);
+            } else if (eventMemberRepository.findAllByEventId(event.getId()).size() >= 2) { // 약속참여자가 자신 외에 여러명일 때
+                List<EventMember> eventMemberList = eventMemberRepository.findAllByEventId(event.getId());
+                for (EventMember eventMember : eventMemberList) {
+                    if (!eventMember.getMember().getId().equals(member.getId())) {
+                        event.changeMaster(eventMember.getMember());
+                        break;
+                    }
+                }
+            }
+        }
         // 나를 친구추가한 리스트 삭제
         friendService.deleteMySelf(request);
         tokenProvider.deleteRefreshToken(member);
