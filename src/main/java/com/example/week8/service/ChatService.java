@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -107,9 +108,38 @@ public class ChatService {
         Optional<ChatMember> chatMember = chatMemberRepository.findByMemberAndChatRoom(member, chatRoom);
         if (chatMember.isEmpty())
             return ResponseDto.fail("채팅방에 없는 회원입니다.");
+
+        ChatMessageDto chatMessageDto = ChatMessageDto.builder()
+                .sender("알림")
+                .message(member.getNickname() + "님이 채팅방에서 나가셨습니다.")
+                .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ").withLocale(Locale.forLanguageTag("ko"))))
+                .build();
+
+        // 메세지 보내기
+        messageTemplate.convertAndSend("/sub/chat/room/" + eventId, chatMessageDto);
+
+
         chatMemberRepository.deleteById(chatMember.get().getId());
 
         return ResponseDto.success("나가기 완료");
+    }
+
+    // 전체 채팅방에서 나가기
+    @Transactional
+    public void exitAllChatRoom(Member member) {
+        List<ChatMember> chatMembers = chatMemberRepository.findAllByMember(member);
+        for (ChatMember chatMember : chatMembers) {
+            ChatMessageDto chatMessageDto = ChatMessageDto.builder()
+                    .sender("알림")
+                    .message(member.getNickname() + "님이 채팅방에서 나가셨습니다.")
+                    .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ").withLocale(Locale.forLanguageTag("ko"))))
+                    .build();
+
+            // 메세지 보내기
+            messageTemplate.convertAndSend("/sub/chat/room/" + chatMember.getChatRoom().getId(), chatMessageDto);
+
+            chatMemberRepository.deleteById(chatMember.getId());
+        }
     }
 
     // 메세지 보내기
@@ -143,7 +173,8 @@ public class ChatService {
         // 보낸 메세지 저장 (db바뀔때 timestamp 없애고 위의 값을 저장하는것으로 바꾸기)
         ChatMessage chatMessage = ChatMessage.builder()
                 .chatRoom(chatRoom)
-                .member(member)
+//                .member(member)
+                .senderId(member.getId())
                 .sendTime(dateNow)
                 .message(message.getMessage())
                 .build();
@@ -177,8 +208,13 @@ public class ChatService {
         List<ChatMessage> chatMessageList = chatMessageRepository.findAllByChatRoomAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(chatRoom, chatMember.getCreatedAt(), pageable);
         List<ChatMessageDto> chatMessageDtos = new ArrayList<>();
         for (ChatMessage chatMessage : chatMessageList) {
-            Member getMember = chatMessage.getMember();
+//            Member getMember = chatMessage.getMember();
 
+            Member getMember = memberRepository.findById(chatMessage.getSenderId()).orElse(null);
+            if(getMember == null)
+                getMember = memberRepository.findById(1L).orElse(null);
+
+            assert getMember != null;
             ChatMessageDto chatMsgResponseDto = ChatMessageDto.builder()
                     .sender(getMember.getNickname())
                     .message(chatMessage.getMessage())

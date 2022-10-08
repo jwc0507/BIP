@@ -41,6 +41,7 @@ public class UserService {
     private final FileService fileService;
     private final JavaMailSender javaMailSender;
     private final FriendService friendService;
+    private final ChatService chatService;
     private final PostRepository postRepository;
     private final ImageFilesRepository imageFilesRepository;
     private final CommentService commentService;
@@ -106,8 +107,7 @@ public class UserService {
                         .creditScore(updateMember.getCredit())
                         .numOfDone(updateMember.getNumOfDone())
                         .build());
-            }
-            else {
+            } else {
                 return ResponseDto.fail("중복된 전화번호 입니다");
             }
         }
@@ -134,7 +134,7 @@ public class UserService {
             Member updateMember = memberRepository.findById(member.getId()).get();
 
             // 없는 전화번호
-            if(responseDto.getData() == null) {
+            if (responseDto.getData() == null) {
                 updateMember.updatePhoneNumber(newPhoneNumber);
 
                 return ResponseDto.success(UpdateMemberResponseDto.builder()
@@ -150,7 +150,7 @@ public class UserService {
             // 만약 먼저 회원가입한 계정에 해당 전화번호가 있다면
             else {
                 Member findMember = (Member) responseDto.getData();
-                if(findMember.equals(updateMember))
+                if (findMember.equals(updateMember))
                     return ResponseDto.fail("멤버정보 동일 에러");
 
                 if (findMember.getKakaoId() != null) {
@@ -172,7 +172,7 @@ public class UserService {
                 memberRepository.deleteById(updateMember.getId());
                 memberRepository.flush();
 
-                findMember.updateKakaoMember(email,url,kakaoId);
+                findMember.updateKakaoMember(email, url, kakaoId);
                 forceLogin(findMember, response);
 
                 findMember.chkFirstLogin();
@@ -197,7 +197,7 @@ public class UserService {
         response.addHeader("Authorization", "Bearer " + token.getAccessToken());
         response.addHeader("RefreshToken", token.getRefreshToken());
 
-        if(kakaoUser.isFirstLogin()) {
+        if (kakaoUser.isFirstLogin()) {
             kakaoUser.setPoint(kakaoUser.getPoint() + 100);
             kakaoUser.setFirstLogin(false);
         }
@@ -243,11 +243,11 @@ public class UserService {
     @Transactional
     public ResponseDto<?> sendEmailCode(AuthRequestDto requestDto) {
         ResponseDto<?> getAuthCode = memberService.sendAuthCode(requestDto);
-        if(!getAuthCode.isSuccess())
+        if (!getAuthCode.isSuccess())
             return ResponseDto.fail("코드생성 실패");
 
         String subject = "[BIP] 이메일 로그인 인증코드입니다";
-        String text = "인증번호 ["+getAuthCode.getData()+"] 을 입력해주세요.";
+        String text = "인증번호 [" + getAuthCode.getData() + "] 을 입력해주세요.";
 
         // simpleMailMessage를 사용하면 텍스트만 보내고 MimeMessage를 사용시 멀티파트로 보냄 (파일전송 가능)
         try {
@@ -257,8 +257,7 @@ public class UserService {
             mailHelper.setSubject(subject);
             mailHelper.setText(text);
             javaMailSender.send(mimeMessage);
-        }
-        catch (MessagingException e) {
+        } catch (MessagingException e) {
             return ResponseDto.fail("잘못된 이메일 주소입니다.");
         }
 //        SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
@@ -354,6 +353,7 @@ public class UserService {
         // 탈퇴전 댓글 정리
         clearMyContents(member);
 
+
         // 나를 친구추가한 리스트 삭제
         friendService.deleteMySelf(request);
         tokenProvider.deleteRefreshToken(member);
@@ -363,14 +363,32 @@ public class UserService {
         return ResponseDto.success("회원탈퇴 완료");
     }
 
-    // 탈퇴전 내가 쓴 정보들 정리 (댓글)
+    // 탈퇴전 내가 쓴 정보들 정리 (댓글, 약속)
     @Transactional
     public void clearMyContents(Member member) {
         // 내가 쓴 코멘트 관계 끊기
         List<Comment> comments = commentService.getCommentList(member);
         Member tempMember = memberRepository.findById(1L).orElse(null);
-        for(Comment comment : comments) {
+        for (Comment comment : comments) {
             comment.setTempMember(tempMember);
+        }
+        // 채팅방나가기 (챗멤버 삭제) 탈퇴 문구 날리기
+        chatService.exitAllChatRoom(member);
+
+        // 약속에서 탈퇴하기
+        List<Event> eventList = eventRepository.findAllByMaster(member);
+        for (Event event : eventList) {
+            if (eventMemberRepository.findAllByEventId(event.getId()).size() == 1) { // 약속참여자가 자신밖에 없을 때
+                eventRepository.deleteByMaster(member);
+            } else if (eventMemberRepository.findAllByEventId(event.getId()).size() >= 2) { // 약속참여자가 자신 외에 여러명일 때
+                List<EventMember> eventMemberList = eventMemberRepository.findAllByEventId(event.getId());
+                for (EventMember eventMember : eventMemberList) {
+                    if (!eventMember.getMember().getId().equals(member.getId())) {
+                        event.changeMaster(eventMember.getMember());
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -399,24 +417,23 @@ public class UserService {
         // 자기 자신인지 확인
         Member receiver;
         double magnification;
-        if(!member.getNickname().equals(nickname)) {
+        if (!member.getNickname().equals(nickname)) {
             // 자신이 아니면 상대 멤버객체를 가져오기
             receiver = memberRepository.findByNickname(nickname).orElse(null);
-            if(receiver == null || receiver.getNickname().equals("탈퇴한 사용자입니다."))
+            if (receiver == null || receiver.getNickname().equals("탈퇴한 사용자입니다."))
                 return ResponseDto.fail("받는 사람 닉네임이 올바르지 않습니다.");
-            magnification = MAG_POINT_CREDIT*2;   // 포인트로 신용도 올리기 배율을 동일화 하자는 fe요청
-        }
-        else {
+            magnification = MAG_POINT_CREDIT * 2;   // 포인트로 신용도 올리기 배율을 동일화 하자는 fe요청
+        } else {
             receiver = member;
-            magnification = MAG_POINT_CREDIT*2;
+            magnification = MAG_POINT_CREDIT * 2;
         }
 
         // 신용도 추가
         if (receiver.getCredit() >= 200)
             return ResponseDto.fail("이미 신용도가 최대치 입니다.");
 
-        double calculationCredit = magnification*point; // 증가할 신용도량
-        double newCredit = receiver.getCredit()+calculationCredit;
+        double calculationCredit = magnification * point; // 증가할 신용도량
+        double newCredit = receiver.getCredit() + calculationCredit;
         double lastCredit = 0;
         // 신용도는 200까지만 증가시킬 수 있음
         if (200 < newCredit) {
@@ -430,14 +447,14 @@ public class UserService {
         receiver.updateCreditScore(newCredit);
 
         // 남은 포인트 계산
-        double lastPoint = lastCredit/magnification;
+        double lastPoint = lastCredit / magnification;
 
         // 포인트 감소
-        int newPoint = (point*-1)+(int)lastPoint;
+        int newPoint = (point * -1) + (int) lastPoint;
         member.updatePoint(newPoint);
 
         return ResponseDto.success(ReceivePointResponseDto.builder()
-                .context(receiver.getNickname()+"님의 신용도 추가가 완료되었습니다.")
+                .context(receiver.getNickname() + "님의 신용도 추가가 완료되었습니다.")
                 .newCredit(receiver.getCredit())
                 .lastPoint(member.getPoint())
                 .build());
@@ -470,7 +487,7 @@ public class UserService {
 
     //로그인한 사용자가 쓴 글 전체 조회
     @Transactional
-    public ResponseDto<?> getMyPosts(HttpServletRequest request){
+    public ResponseDto<?> getMyPosts(HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
@@ -482,7 +499,7 @@ public class UserService {
         }
         List<Post> myPosts = postRepository.findAllByMemberAndPostStatus(member, PostStatus.active);
         List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
-        return getResponseDto(myPosts,postResponseAllDtoList);
+        return getResponseDto(myPosts, postResponseAllDtoList);
 
 
     }
