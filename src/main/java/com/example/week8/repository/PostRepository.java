@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
-    List<Post> findAllByPostStatusOrderByModifiedAtDesc(PostStatus postStatus);
-    List<Post> findAllByBoardAndPostStatusOrderByModifiedAtDesc(Board board, PostStatus postStatus);
-    List<Post> findAllByBoardAndCategoryAndPostStatusOrderByModifiedAtDesc(Board board, Category category, PostStatus postStatus);
+    List<Post> findAllByPostStatusOrderByCreatedAtDesc(PostStatus postStatus);
+    List<Post> findAllByBoardAndPostStatusOrderByCreatedAtDesc(Board board, PostStatus postStatus);
+    List<Post> findAllByBoardAndCategoryAndPostStatusOrderByCreatedAtDesc(Board board, Category category, PostStatus postStatus);
     List<Post> findAllByMemberAndPostStatus(Member member, PostStatus postStatus);
     Optional<Post> findByIdAndPostStatus(Long postId, PostStatus postStatus);
 }
