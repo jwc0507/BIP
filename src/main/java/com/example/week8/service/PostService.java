@@ -168,13 +168,13 @@ public class PostService {
             return ResponseDto.fail("게시판 종류를 확인해주세요");
 
         if (divisionOne.equals("request")) {
-            postList = postRepository.findAllByBoardAndPostStatusOrderByModifiedAtDesc(Board.request, PostStatus.active);
+            postList = postRepository.findAllByBoardAndPostStatusOrderByCreatedAtDesc(Board.request, PostStatus.active);
         }
         else if (divisionOne.equals("donation")) {
-            postList = postRepository.findAllByBoardAndPostStatusOrderByModifiedAtDesc(Board.donation, PostStatus.active);
+            postList = postRepository.findAllByBoardAndPostStatusOrderByCreatedAtDesc(Board.donation, PostStatus.active);
         }
         else {
-            postList = postRepository.findAllByPostStatusOrderByModifiedAtDesc(PostStatus.active);
+            postList = postRepository.findAllByPostStatusOrderByCreatedAtDesc(PostStatus.active);
         }
         return getResponseDto(postList, postResponseAllDtoList);
     }
@@ -226,7 +226,7 @@ public class PostService {
 
         Board boardType = getBoard(board);
         Category categoryType = getCategory(category);
-        postList = postRepository.findAllByBoardAndCategoryAndPostStatusOrderByModifiedAtDesc(boardType, categoryType, PostStatus.active);
+        postList = postRepository.findAllByBoardAndCategoryAndPostStatusOrderByCreatedAtDesc(boardType, categoryType, PostStatus.active);
 
         return getResponseDto(postList, postResponseAllDtoList);
     }
