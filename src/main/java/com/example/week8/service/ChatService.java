@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -111,7 +112,7 @@ public class ChatService {
         ChatMessageDto chatMessageDto = ChatMessageDto.builder()
                 .sender("알림")
                 .message(member.getNickname() + "님이 채팅방에서 나가셨습니다.")
-                .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ")))
+                .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ").withLocale(Locale.forLanguageTag("ko"))))
                 .build();
 
         // 메세지 보내기
@@ -131,7 +132,7 @@ public class ChatService {
             ChatMessageDto chatMessageDto = ChatMessageDto.builder()
                     .sender("알림")
                     .message(member.getNickname() + "님이 채팅방에서 나가셨습니다.")
-                    .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ")))
+                    .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ").withLocale(Locale.forLanguageTag("ko"))))
                     .build();
 
             // 메세지 보내기

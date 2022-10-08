@@ -38,5 +38,6 @@ public class Scheduler {  // 스케쥴링할 메소드의 조건 2가지: void�
         eventService.eventAlarm();
     }
 
-    // 12시가되면 post가 null인 이미지 s3에서 삭제와함께 이미지 entitiy에서도 삭제하는 구문 추가해야함..
+    // 12시가되면 post가 null인 이미지 s3에서 삭제와함께 이미지 entity에서도 삭제하는 구문 추가해야함..
+    // 채팅메세지도 개선필요함.
 }

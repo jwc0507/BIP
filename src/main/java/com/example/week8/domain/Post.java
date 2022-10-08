@@ -5,7 +5,6 @@ import com.example.week8.domain.enums.Category;
 import com.example.week8.domain.enums.PostStatus;
 import com.example.week8.dto.request.PostRequestDto;
 import lombok.*;
-import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.util.List;
