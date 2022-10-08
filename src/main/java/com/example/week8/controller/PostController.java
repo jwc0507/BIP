@@ -56,7 +56,7 @@ public class PostController {
     /**
      * 게시글 삭제
      */
-    @PutMapping("/api/posts/{eventId}")
+    @PutMapping("/api/posts/delete/{eventId}")
     public ResponseDto<?> deleteEvent(@PathVariable Long eventId,
                                       HttpServletRequest request) {
         return postService.deletePost(eventId, request);

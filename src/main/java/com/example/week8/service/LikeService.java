@@ -3,6 +3,7 @@ package com.example.week8.service;
 import com.example.week8.domain.Likes;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
+import com.example.week8.domain.enums.PostStatus;
 import com.example.week8.dto.response.LikeResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.LikeRepository;
@@ -74,6 +75,22 @@ public class LikeService {
                 .build());
     }
 
+    //현재 좋아요가 눌렸는지 확인
+    public ResponseDto<?> chkLikePost(Long id, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        Member member = validateMember(request);
+        Post post = postRepository.findById(id).orElse(null);
+        if(post ==null)
+            return ResponseDto.fail("게시글 없음 or 게시글 ID 오류");
+        Likes like= likeRepository.findByMemberAndPost(member,post).orElse(null);
+        if(like ==null)
+            return ResponseDto.success(false);
+        return ResponseDto.success(true);
+    }
+
     //좋아하는 게시글 목록 반환
     @Transactional
     public ResponseDto<?> getLikeList(HttpServletRequest request){
@@ -88,10 +105,13 @@ public class LikeService {
 
         for(Likes like : likeList)
         {
-            likeResponseDtos.add(LikeResponseDto.builder()
-                    .post_id(like.getPost().getId())
-                    .category(like.getPost().getCategory())
-                    .build());
+            Post post = like.getPost();
+            if(post.getPostStatus().equals(PostStatus.active)) {
+                likeResponseDtos.add(LikeResponseDto.builder()
+                        .post_id(like.getPost().getId())
+                        .category(like.getPost().getCategory())
+                        .build());
+            }
         }
         return ResponseDto.success(likeResponseDtos);
     }
