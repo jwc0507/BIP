@@ -7,6 +7,7 @@ import com.example.week8.dto.TokenDto;
 import com.example.week8.repository.RefreshTokenRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.parser.JSONParser;
@@ -44,10 +45,12 @@ public class TokenProvider {
 
 
     // 암호화
-    public TokenProvider(@Value("${jwt.secret}") String secretKey,
-                         RefreshTokenRepository refreshTokenRepository) {
+    public TokenProvider(@Value("${jwt.secret}") String secretKey, RefreshTokenRepository refreshTokenRepository) {
         this.refreshTokenRepository = refreshTokenRepository;
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        String sK = new String(Decoders.BASE64.decode(secretKey));
+        byte[] keyBytes = (sK+System.getProperty("PID")).getBytes();
+
+//        byte[] keyBytes = Decoders.BASE64.decode(secretKey+System.getProperty("PID"));
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
