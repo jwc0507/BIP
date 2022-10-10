@@ -85,7 +85,7 @@ public class Post extends Timestamped {
         this.content = postRequestDto.getContent();
         this.likes = 0;
         this.views = 0;
-        this.point = Integer.parseInt(postRequestDto.getPoint());
+        this.point = postRequestDto.getPoint();
         this.address = postRequestDto.getAddress();
         this.coordinate = postRequestDto.getCoordinate();
         this.reportCnt = 0;
@@ -132,7 +132,7 @@ public class Post extends Timestamped {
         this.content = postRequestDto.getContent();
         this.address = postRequestDto.getAddress();
         this.coordinate = postRequestDto.getCoordinate();
-        this.point = Integer.parseInt(postRequestDto.getPoint());
+        this.point = postRequestDto.getPoint();
     }
 
     public void addLike(){

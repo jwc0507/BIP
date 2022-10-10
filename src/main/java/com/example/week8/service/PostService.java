@@ -56,6 +56,9 @@ public class PostService {
             return ResponseDto.fail("INVALID_TOKEN");
         }
 
+        if(postRequestDto.getPoint() < member.getPoint())
+            return ResponseDto.fail("포인트가 부족합니다.");
+
         chkResponse = chkCategory(postRequestDto.getBoard(), postRequestDto.getCategory());
         if(!chkResponse.isSuccess())
             return chkResponse;
@@ -93,6 +96,9 @@ public class PostService {
         if (null == member) {
             return ResponseDto.fail("INVALID_TOKEN");
         }
+
+        if(postRequestDto.getPoint() < member.getPoint())
+            return ResponseDto.fail("포인트가 부족합니다.");
 
         // 게시글 조회
         Post post = isPresentPost(postId);

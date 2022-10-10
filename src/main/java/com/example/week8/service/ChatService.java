@@ -78,7 +78,7 @@ public class ChatService {
         ChatMessageDto chatMessageDto = ChatMessageDto.builder()
                 .sender("알림")
                 .message(member.getNickname() + "님이 입장하셨습니다.")
-                .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ")))
+                .sendTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ").withLocale(Locale.forLanguageTag("ko"))))
                 .build();
 
         // 메세지 보내기
@@ -159,7 +159,7 @@ public class ChatService {
             return ResponseDto.fail("룸 번호 오류");
         }
 
-        String dateNow = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm "));
+        String dateNow = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ").withLocale(Locale.forLanguageTag("ko")));
 
         ChatMessageDto chatMessageDto = ChatMessageDto.builder()
                 .sender(member.getNickname())
