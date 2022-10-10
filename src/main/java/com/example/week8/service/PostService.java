@@ -56,7 +56,7 @@ public class PostService {
             return ResponseDto.fail("INVALID_TOKEN");
         }
 
-        if(postRequestDto.getPoint() < member.getPoint())
+        if(postRequestDto.getPoint() > member.getPoint())
             return ResponseDto.fail("포인트가 부족합니다.");
 
         chkResponse = chkCategory(postRequestDto.getBoard(), postRequestDto.getCategory());
@@ -97,7 +97,7 @@ public class PostService {
             return ResponseDto.fail("INVALID_TOKEN");
         }
 
-        if(postRequestDto.getPoint() < member.getPoint())
+        if(postRequestDto.getPoint() > member.getPoint())
             return ResponseDto.fail("포인트가 부족합니다.");
 
         // 게시글 조회
@@ -257,7 +257,7 @@ public class PostService {
         }
 
         // 신고(Report) 객체 생성
-        Report report = new Report(member.getId(), post.getMember().getId());
+        Report report = new Report(member.getId(), post.getMember().getId(), postId);
         if (report.getToId().equals(report.getFromId())) {
             return ResponseDto.fail("자신에게 신고할 수 없습니다.");
         }
