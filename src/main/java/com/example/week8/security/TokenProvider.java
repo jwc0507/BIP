@@ -36,7 +36,7 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 30;            //30분
+    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 20;            //30분
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7;     //7일
 
     private final Key key;
@@ -187,8 +187,8 @@ public class TokenProvider {
         Base64.Decoder decoder = Base64.getUrlDecoder();
         assert jwt != null;
         String[] parts = jwt.split("\\.");
-        System.out.println("Headers: "+new String(decoder.decode(parts[0]))); // Header
-        System.out.println("Payload: "+new String(decoder.decode(parts[1]))); // Payload
+//        System.out.println("Headers: "+new String(decoder.decode(parts[0]))); // Header
+//        System.out.println("Payload: "+new String(decoder.decode(parts[1]))); // Payload
 
         JSONParser parser = new JSONParser();
         JSONObject jsonObject = (JSONObject) parser.parse(new String(decoder.decode(parts[1])));
