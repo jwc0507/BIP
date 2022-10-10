@@ -85,4 +85,9 @@ public class Event extends Timestamped{
     public void changeMaster(Member member) {
         this.master = member;
     }
+
+    // 약속 컨펌
+    public void confirm() {
+        this.eventStatus = EventStatus.CLOSED;
+    }
 }

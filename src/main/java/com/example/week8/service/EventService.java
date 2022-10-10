@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -83,8 +84,8 @@ public class EventService {
             return ResponseDto.fail("INVALID_TOKEN");
         }
 
-        if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
-            return ResponseDto.success("약속 시간을 미래로 설정해주세요.");
+//        if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
+//            return ResponseDto.success("약속 시간을 미래로 설정해주세요.");
 
 
         // 약속 생성
@@ -689,7 +690,7 @@ public class EventService {
 
         // 이벤트상태
         if(calculateCredit(eventId)) {
-            event.setEventStatus(EventStatus.CLOSED);
+            event.confirm();
             return ResponseDto.success("약속을 확인했습니다. 더이상 체크인할 수 없습니다.");
         }
         else
@@ -697,7 +698,7 @@ public class EventService {
     }
 
     /**
-     * 약속 스케쥴러
+     * 약속까지 남은 시간 알림
      */
     public void eventAlarm() {
         LocalDateTime now = LocalDateTime.now().withNano(0);  // LocalDateTime에서 밀리세컨드 부분 제거
@@ -720,6 +721,23 @@ public class EventService {
             }
         }
     }
+
+    /**
+     * 약속 자동 컨펌(하루 경과 시)
+     */
+    public void scheduledConfirm() {
+        LocalDateTime now = LocalDateTime.now().withNano(0);  // LocalDateTime에서 밀리세컨드 부분 제거
+        List<Event> eventList = eventRepository.findAllByEventStatusAndEventDateTimeLessThanEqual(EventStatus.ONGOING, now.minusDays(1));
+        for (Event event : eventList) {
+            // 이벤트상태
+            if(calculateCredit(event.getId())) {
+                event.confirm();
+                eventRepository.save(event);
+                log.info("약속(ID: " + event.getId() + ")이 시간경과로 인해 자동 확인되었습니다.");
+            }
+        }
+    }
+
 
     //== 추가 메서드 ==//
 
