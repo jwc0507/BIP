@@ -40,4 +40,11 @@ public class CommentController {
     public ResponseDto<?> deleteComment(@PathVariable Long commentId, HttpServletRequest request) {
         return commentService.deleteComment(commentId, request);
     }
+
+    // 댓글 신고
+    @PostMapping("/api/comment/report/{commentId}")
+    public ResponseDto<?> report(@PathVariable Long commentId,
+                                 HttpServletRequest request) {
+        return commentService.reportComment(commentId, request);
+    }
 }
