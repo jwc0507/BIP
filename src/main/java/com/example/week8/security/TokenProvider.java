@@ -147,7 +147,7 @@ public class TokenProvider {
                             .map(SimpleGrantedAuthority::new)
                             .collect(Collectors.toList());
 
-            User principal = new User(claims.getSubject(), "", authorities);
+            User principal = new User(claims.getSubject(), "@", authorities);
 
             return new UsernamePasswordAuthenticationToken(principal, token, authorities);
         }
@@ -160,12 +160,18 @@ public class TokenProvider {
         } else {
             return null;
         }
-        Claims claims = Jwts
-                .parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        Claims claims;
+        try {
+            claims = Jwts
+                    .parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        }
+        catch (ExpiredJwtException e) {
+            return null;
+        }
 
         return claims.getSubject();
     }
@@ -188,8 +194,6 @@ public class TokenProvider {
         Base64.Decoder decoder = Base64.getUrlDecoder();
         assert jwt != null;
         String[] parts = jwt.split("\\.");
-//        System.out.println("Headers: "+new String(decoder.decode(parts[0]))); // Header
-//        System.out.println("Payload: "+new String(decoder.decode(parts[1]))); // Payload
 
         JSONParser parser = new JSONParser();
         JSONObject jsonObject = (JSONObject) parser.parse(new String(decoder.decode(parts[1])));
