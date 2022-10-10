@@ -251,7 +251,7 @@ public class PostService {
         }
 
         // 신고(Report) 객체 생성
-        Report report = new Report(member.getId(), post.getMember().getId());
+        Report report = new Report(member.getId(), post.getMember().getId(), postId);
         if (report.getToId().equals(report.getFromId())) {
             return ResponseDto.fail("자신에게 신고할 수 없습니다.");
         }

@@ -1,14 +1,13 @@
 package com.example.week8.service;
 
-import com.example.week8.domain.Comment;
-import com.example.week8.domain.Member;
-import com.example.week8.domain.Post;
+import com.example.week8.domain.*;
 import com.example.week8.domain.enums.CommentStatus;
 import com.example.week8.dto.request.CommentRequestDto;
 import com.example.week8.dto.response.CommentResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.CommentRepository;
 import com.example.week8.repository.PostRepository;
+import com.example.week8.repository.ReportCommentRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.time.Time;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +26,7 @@ import java.util.List;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final ReportCommentRepository reportCommentRepository;
     private final PostRepository postRepository;
     private final TokenProvider tokenProvider;
 
@@ -163,6 +163,54 @@ public class CommentService {
             commentResponseDtoList.add(commentResponseDto);
         }
         return ResponseDto.success(commentResponseDtoList);
+    }
+
+    /**
+     * 댓글 신고
+     */
+    public ResponseDto<?> reportComment(Long commentId, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 멤버 조회
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        // 댓글 불러오기
+        Comment comment = isPresentComment(commentId);
+        if (comment == null)
+            return ResponseDto.fail("해당 댓글이 없습니다.");
+        if (!comment.getStatus().toString().equals("normal"))
+            return ResponseDto.fail("삭제된 댓글입니다.");
+
+        // 댓글신고(ReportComment) 객체 생성
+        ReportComment report = new ReportComment(member.getId(), comment.getMember().getId(), commentId);
+        if (report.getToId().equals(report.getFromId())) {
+            return ResponseDto.fail("자신에게 신고할 수 없습니다.");
+        }
+        if (reportCommentRepository.findByFromIdAndToId(member.getId(), comment.getMember().getId()).isPresent()) {
+            return ResponseDto.fail("중복 신고는 불가능합니다.");
+        }
+        reportCommentRepository.save(report);
+
+        // 신고횟수 적용(댓글)
+        int reportCnt = comment.addReportCnt();
+        if (reportCnt >= 10) {  // 누적 신고횟수 10 이상일 때 댓글 삭제
+            comment.inactivateByReport();
+            log.info("신고 10회 누적으로 게시글이 삭제되었습니다.");
+        }
+
+        // 신고횟수 적용(작성자)
+        Member postWriter = comment.getMember();
+        postWriter.addReportCnt();
+        if (reportCnt % 10 == 0) {  // 누적 신고횟수 10 누적 시마다 신용도 차감
+            postWriter.declineCredit(0.5);
+        }
+
+        return ResponseDto.success("신고가 정상적으로 처리되었습니다.");
     }
 
     //-- 모듈 --//
