@@ -84,8 +84,8 @@ public class EventService {
             return ResponseDto.fail("INVALID_TOKEN");
         }
 
-        if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
-            return ResponseDto.success("약속 시간을 미래로 설정해주세요.");
+//        if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
+//            return ResponseDto.success("약속 시간을 미래로 설정해주세요.");
 
 
         // 약속 생성
@@ -729,9 +729,12 @@ public class EventService {
         LocalDateTime now = LocalDateTime.now().withNano(0);  // LocalDateTime에서 밀리세컨드 부분 제거
         List<Event> eventList = eventRepository.findAllByEventStatusAndEventDateTimeLessThanEqual(EventStatus.ONGOING, now.minusDays(1));
         for (Event event : eventList) {
-            event.confirm();
-            eventRepository.save(event);
-            log.info("약속(ID: " + event.getId() + ")이 시간경과로 인해 자동 확인되었습니다.");
+            // 이벤트상태
+            if(calculateCredit(event.getId())) {
+                event.confirm();
+                eventRepository.save(event);
+                log.info("약속(ID: " + event.getId() + ")이 시간경과로 인해 자동 확인되었습니다.");
+            }
         }
     }
 
