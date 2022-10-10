@@ -153,14 +153,16 @@ public class CommentService {
         List<Comment> comments = commentRepository.findByPostOrderByCreatedAtDesc(post, pageable);
         List<CommentResponseDto> commentResponseDtoList = new ArrayList<>();
         for(Comment comment : comments) {
-            CommentResponseDto commentResponseDto = CommentResponseDto.builder()
-                    .id(comment.getId())
-                    .nickname(comment.getMember().getNickname())
-                    .content(comment.getContent())
-                    .createdAt(Time.serializePostDate(comment.getCreatedAt()))
-                    .modifiedAt(Time.serializePostDate(comment.getModifiedAt()))
-                    .build();
-            commentResponseDtoList.add(commentResponseDto);
+            if(!comment.getStatus().equals(CommentStatus.deleteByReport)) {
+                CommentResponseDto commentResponseDto = CommentResponseDto.builder()
+                        .id(comment.getId())
+                        .nickname(comment.getMember().getNickname())
+                        .content(comment.getContent())
+                        .createdAt(Time.serializePostDate(comment.getCreatedAt()))
+                        .modifiedAt(Time.serializePostDate(comment.getModifiedAt()))
+                        .build();
+                commentResponseDtoList.add(commentResponseDto);
+            }
         }
         return ResponseDto.success(commentResponseDtoList);
     }
@@ -168,6 +170,7 @@ public class CommentService {
     /**
      * 댓글 신고
      */
+    @Transactional
     public ResponseDto<?> reportComment(Long commentId, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -191,7 +194,7 @@ public class CommentService {
         if (report.getToId().equals(report.getFromId())) {
             return ResponseDto.fail("자신에게 신고할 수 없습니다.");
         }
-        if (reportCommentRepository.findByFromIdAndToId(member.getId(), comment.getMember().getId()).isPresent()) {
+        if (reportCommentRepository.findByFromIdAndToIdAndCommentId(member.getId(), comment.getMember().getId(), commentId).isPresent()) {
             return ResponseDto.fail("중복 신고는 불가능합니다.");
         }
         reportCommentRepository.save(report);
