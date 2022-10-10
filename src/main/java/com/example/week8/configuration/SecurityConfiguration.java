@@ -70,7 +70,6 @@ public class SecurityConfiguration {
             .authorizeRequests()
             .antMatchers(HttpMethod.OPTIONS, "/**/*").permitAll()
             .antMatchers("/api/member/**").permitAll()
-            .antMatchers("/api/member/reissue").permitAll()
             .antMatchers("/sub/**").permitAll()
             .antMatchers("/pub/**").permitAll()
             .antMatchers("/ws-stomp/**").permitAll()

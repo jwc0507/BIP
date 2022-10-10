@@ -6,13 +6,14 @@
 //import org.springframework.data.redis.connection.RedisConnectionFactory;
 //import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 //import org.springframework.data.redis.core.RedisTemplate;
+//import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 //
 //
 //@Configuration
+//@EnableRedisRepositories
 //public class RedisConfiguration {
 //
-//    @Value("" +
-//            "${spring.redis.host}")
+//    @Value("${spring.redis.host}")
 //    private String host;
 //
 //    @Value("${spring.redis.port}")

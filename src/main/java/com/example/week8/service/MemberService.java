@@ -15,7 +15,6 @@ import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.LoginMemberRepository;
 import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
-// import com.example.week8.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.parser.ParseException;
@@ -42,7 +41,7 @@ public class MemberService {
     private final TokenProvider tokenProvider;
     private final JavaMailSender javaMailSender;
     private final SseEmitterService sseEmitterService;
-    //  private final RedisUtil redisUtil;
+//      private final RedisUtil redisUtil;
 
 
     // 인증번호 확인
@@ -61,14 +60,17 @@ public class MemberService {
 
         // redis를 활용했을 때의 코드.
 //        String getKey = redisUtil.getData(key);
-//
-//        if (!getKey.equals(authCode)) {
+//        if (!getKey.equals(authCode))
 //            return false;
-//        }
 //        redisUtil.deleteData(key);
+
 
         return true;
     }
+
+//    public String getCodeTest(String key) {
+//        return redisUtil.getData(key);
+//    }
 
     // 회원가입 or 로그인 (전화번호)
     @Transactional
@@ -153,21 +155,22 @@ public class MemberService {
     // 인증번호 생성
     @Transactional
     public ResponseDto<?> sendAuthCode(AuthRequestDto requestDto) {
+        String code = generateCode();
+
         List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(requestDto.getValue());
         for (LoginMember getLoginMember : getLogin) {
             loginMemberRepository.deleteById(getLoginMember.getId());
         }
         LoginMember loginMember = LoginMember.builder()
-                .authCode(generateCode())
+                .authCode(code)
                 .keyValue(requestDto.getValue())
                 .build();
         loginMemberRepository.save(loginMember);
 
         // redis활용시의 코드
-//
-//        redisUtil.setDataExpire(loginMember.getAuthCode(), requestDto.getValue(), 60);
+//        redisUtil.setDataExpire(requestDto.getValue(), code, 300);
 
-        return ResponseDto.success(loginMember.getAuthCode());
+        return ResponseDto.success(code);
     }
 
     // EMAIL 인증번호 발급
@@ -297,6 +300,8 @@ public class MemberService {
         RefreshToken refreshToken = tokenProvider.isPresentRefreshToken(member);
 
         if (!refreshToken.getKeyValue().equals(request.getHeader("RefreshToken"))) {
+            log.info("refreshToken : "+refreshToken.getKeyValue());
+            log.info("header rft : "+request.getHeader("RefreshToken"));
             return ResponseDto.fail("토큰이 일치하지 않습니다.");
         }
         assert member != null;
