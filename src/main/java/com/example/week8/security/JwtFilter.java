@@ -42,11 +42,11 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
 
-//        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
 //        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY+System.getProperty("PID"));
 
-        String sK = new String(Decoders.BASE64.decode(SECRET_KEY));
-        byte[] keyBytes = (sK+System.getProperty("PID")).getBytes();
+//        String sK = new String(Decoders.BASE64.decode(SECRET_KEY));
+//        byte[] keyBytes = (sK+System.getProperty("PID")).getBytes();
 
 
         Key key = Keys.hmacShaKeyFor(keyBytes);

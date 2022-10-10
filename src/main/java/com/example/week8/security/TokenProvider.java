@@ -47,10 +47,11 @@ public class TokenProvider {
     // 암호화
     public TokenProvider(@Value("${jwt.secret}") String secretKey, RefreshTokenRepository refreshTokenRepository) {
         this.refreshTokenRepository = refreshTokenRepository;
-        String sK = new String(Decoders.BASE64.decode(secretKey));
-        byte[] keyBytes = (sK+System.getProperty("PID")).getBytes();
-
+//        String sK = new String(Decoders.BASE64.decode(secretKey));
+//        byte[] keyBytes = (sK+System.getProperty("PID")).getBytes();
+//
 //        byte[] keyBytes = Decoders.BASE64.decode(secretKey+System.getProperty("PID"));
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
