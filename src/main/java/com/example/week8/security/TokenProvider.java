@@ -36,8 +36,8 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 20;            //30분
-    private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7;     //7일
+    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 5;          //30분
+    private static final long REFRESH_TOKEN_EXPRIRE_TIME = 1000 * 60 * 60 * 24 * 20;     //7일
 
     private final Key key;
 
@@ -45,12 +45,9 @@ public class TokenProvider {
 
 
     // 암호화
-    public TokenProvider(@Value("${jwt.secret}") String secretKey, RefreshTokenRepository refreshTokenRepository) {
+    public TokenProvider(@Value("${jwt.secret}") String secretKey,
+                         RefreshTokenRepository refreshTokenRepository) {
         this.refreshTokenRepository = refreshTokenRepository;
-//        String sK = new String(Decoders.BASE64.decode(secretKey));
-//        byte[] keyBytes = (sK+System.getProperty("PID")).getBytes();
-//
-//        byte[] keyBytes = Decoders.BASE64.decode(secretKey+System.getProperty("PID"));
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
@@ -68,7 +65,7 @@ public class TokenProvider {
                 .compact();
 
         String refreshToken = Jwts.builder()
-                .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
+                .setExpiration(new Date(now + REFRESH_TOKEN_EXPRIRE_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
@@ -122,6 +119,7 @@ public class TokenProvider {
     }
 
     @Transactional
+
     public boolean deleteRefreshToken(Member member) {
         RefreshToken refreshToken = isPresentRefreshToken(member);
         if (null == refreshToken) {
@@ -131,10 +129,12 @@ public class TokenProvider {
         return false;
     }
 
-    public Authentication getAuthentication(String token) {
-        if (token == null) {
+    public Authentication getAuthentication(HttpServletRequest request) {
+        String token=getAccessToken(request);
+        if(token==null) {
             return null;
-        } else {
+        }
+        else {
             Claims claims = Jwts
                     .parserBuilder()
                     .setSigningKey(key)

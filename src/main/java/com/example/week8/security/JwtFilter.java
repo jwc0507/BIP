@@ -43,12 +43,6 @@ public class JwtFilter extends OncePerRequestFilter {
             throws IOException, ServletException {
 
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-//        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY+System.getProperty("PID"));
-
-//        String sK = new String(Decoders.BASE64.decode(SECRET_KEY));
-//        byte[] keyBytes = (sK+System.getProperty("PID")).getBytes();
-
-
         Key key = Keys.hmacShaKeyFor(keyBytes);
 
         String jwt = resolveToken(request);
