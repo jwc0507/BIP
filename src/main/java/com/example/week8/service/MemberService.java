@@ -288,12 +288,15 @@ public class MemberService {
     // 토큰 재발급
     @Transactional
     public ResponseDto<?> reissue(HttpServletRequest request, HttpServletResponse response) throws ParseException {
+        if (tokenProvider.getMemberIdByToken(request.getHeader("Authorization")) !=null) {
+            return ResponseDto.fail("아직 유효한 ACT입니다.");
+        }
         if (!tokenProvider.validateToken(request.getHeader("RefreshToken"))) {
-            return ResponseDto.fail("토큰이 유효하지 않습니다.");
+            return ResponseDto.fail("RFT이 유효하지 않습니다.");
         }
         String memberId = tokenProvider.getMemberFromExpiredAccessToken(request);
         if (null == memberId) {
-            return ResponseDto.fail("토큰의 값이 유효하지 않습니다.");
+            return ResponseDto.fail("ACT의 값이 유효하지 않습니다.");
         }
         Member member = memberRepository.findById(Long.parseLong(memberId)).orElse(null);
 
