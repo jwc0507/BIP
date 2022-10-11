@@ -83,8 +83,8 @@ public class EventService {
             return ResponseDto.fail("INVALID_TOKEN");
         }
 
-//        if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
-//            return ResponseDto.success("약속 시간을 미래로 설정해주세요.");
+        if(Time.diffTime(stringToLocalDateTime(eventRequestDto.getEventDateTime()), LocalDateTime.now()))
+            return ResponseDto.success("약속 시간을 미래로 설정해주세요.");
 
 
         // 약속 생성

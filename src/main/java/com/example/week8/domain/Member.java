@@ -114,7 +114,11 @@ public class Member extends Timestamped {
 
     // 약속에서 주는 포인트 (하루 한도 존재)
     public void updatePoint(int point) {
-        this.point += point;
+        int newPoint = this.point + point;
+        if (newPoint < 0)
+            this.point = 0;
+        else
+            this.point = newPoint;
         if (point > 0)
             pointOnDay += point;
     }

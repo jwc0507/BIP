@@ -1,13 +1,13 @@
 package com.example.week8.dto.request;
 
+import com.example.week8.utils.customvalidation.ConvPointCheck;
 import lombok.Getter;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 @Getter
 public class ConversionPointToCreditDto {
-    @NotNull
+    @ConvPointCheck
     private int point;
     @NotBlank
     private String nickname;
