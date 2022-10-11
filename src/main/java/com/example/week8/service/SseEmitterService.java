@@ -245,15 +245,10 @@ public class SseEmitterService {
         }
         // 멤버 조회
         Member member = validateMember(request);
-        List<String> emitterList = new ArrayList<>();
         Map<String, SseEmitter> map = findAllEmitterStartWithByMemberId(member.getId().toString());
-        map.forEach((id, emitter) -> {
-            try {
-                emitterList.add(id);
-            } catch (Exception e) {
-                log.warn("disconnected id : {}", id);
-            }
-        });
-        return ResponseDto.success(emitterList);
+        if(map.isEmpty())
+            return ResponseDto.success(false);
+        else
+            return ResponseDto.success(true);
     }
 }
