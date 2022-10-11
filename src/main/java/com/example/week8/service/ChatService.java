@@ -159,6 +159,10 @@ public class ChatService {
             return ResponseDto.fail("룸 번호 오류");
         }
 
+        ChatMember chatMember = chatMemberRepository.findByMemberAndChatRoom(member,chatRoom).orElse(null);
+        if(chatMember == null)
+            return ResponseDto.fail("채팅 멤버를 찾을 수 없습니다.");
+
         String dateNow = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 E요일 - a hh:mm ").withLocale(Locale.forLanguageTag("ko")));
 
         ChatMessageDto chatMessageDto = ChatMessageDto.builder()
