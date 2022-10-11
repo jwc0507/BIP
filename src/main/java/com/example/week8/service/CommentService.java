@@ -9,7 +9,7 @@ import com.example.week8.repository.CommentRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.repository.ReportCommentRepository;
 import com.example.week8.security.TokenProvider;
-import com.example.week8.time.Time;
+import com.example.week8.utils.time.Time;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;

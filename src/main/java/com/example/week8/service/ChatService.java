@@ -171,15 +171,17 @@ public class ChatService {
         messageTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), chatMessageDto);
 
         // 보낸 메세지 저장 (db바뀔때 timestamp 없애고 위의 값을 저장하는것으로 바꾸기)
-        ChatMessage chatMessage = ChatMessage.builder()
-                .chatRoom(chatRoom)
-//                .member(member)
-                .senderId(member.getId())
-                .sendTime(dateNow)
-                .message(message.getMessage())
-                .build();
 
-        chatMessageRepository.save(chatMessage);
+        if(message.getMessage() != null) {
+            ChatMessage chatMessage = ChatMessage.builder()
+                    .chatRoom(chatRoom)
+                    .senderId(member.getId())
+                    .sendTime(dateNow)
+                    .message(message.getMessage())
+                    .build();
+            chatMessageRepository.save(chatMessage);
+        }
+
         return ResponseDto.success("메세지 보내기 성공");
     }
 

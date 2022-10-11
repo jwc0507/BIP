@@ -12,7 +12,7 @@ import com.example.week8.repository.ImageFilesRepository;
 import com.example.week8.repository.LikeRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
-import com.example.week8.time.Time;
+import com.example.week8.utils.time.Time;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

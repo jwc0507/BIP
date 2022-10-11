@@ -1,7 +1,8 @@
-package com.example.week8.service;
+package com.example.week8.utils;
 
 import com.example.week8.domain.Member;
 import com.example.week8.repository.MemberRepository;
+import com.example.week8.service.EventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
