@@ -444,7 +444,7 @@ public class UserService {
         else if (0 > newCredit) {
             newCredit = 0;
         }
-        receiver.updateCreditScore(newCredit);
+        receiver.setCredit(newCredit);
 
         // 남은 포인트 계산
         double lastPoint = lastCredit / magnification;
