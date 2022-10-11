@@ -88,14 +88,6 @@ public class ChatService {
         // 메세지 보내기
         messageTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), chatMessageDto);
 
-//        // 보낸 메세지 저장
-//        ChatMessage chatMessage = ChatMessage.builder()
-//                .chatRoom(chatRoom)
-//                .member(member)
-//                .message(message.getMessage())
-//                .build();
-//        chatMessageRepository.save(chatMessage);
-
         return ResponseDto.success("입장 성공");
     }
 
@@ -218,7 +210,6 @@ public class ChatService {
         List<ChatMessage> chatMessageList = chatMessageRepository.findAllByChatRoomAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(chatRoom, chatMember.getCreatedAt(), pageable);
         List<ChatMessageDto> chatMessageDtos = new ArrayList<>();
         for (ChatMessage chatMessage : chatMessageList) {
-//            Member getMember = chatMessage.getMember();
 
             Member getMember = memberRepository.findById(chatMessage.getSenderId()).orElse(null);
             if(getMember == null)
