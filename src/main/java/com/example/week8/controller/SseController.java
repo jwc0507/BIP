@@ -22,9 +22,10 @@ public class SseController {
     }
 
     // SSE Sub
-    @GetMapping("/api/subscribe")
-    public SseEmitter subscribe(HttpServletRequest request) {
-        return sseEmitterService.subscribe(request);
+    @GetMapping("/api/member/subscribe")
+    public SseEmitter subscribe(String memberId) {
+       // return sseEmitterService.subscribe(request);
+        return sseEmitterService.subscribe(memberId);
     }
 
     // SSE pubTest (실제 배포단계에선 주석 또는 삭제)

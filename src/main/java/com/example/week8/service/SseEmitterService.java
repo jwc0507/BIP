@@ -5,6 +5,7 @@ import com.example.week8.domain.enums.AlertType;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.EventMemberRepository;
 import com.example.week8.repository.EventRepository;
+import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +30,7 @@ public class SseEmitterService {
     private final TokenProvider tokenProvider;
     private final EventRepository eventRepository;
     private final EventMemberRepository eventMemberRepository;
+    private final MemberRepository memberRepository;
 
     // 구독 테스트
     public SseEmitter subscribeTest(String memberId) {
@@ -42,7 +43,7 @@ public class SseEmitterService {
         emitter.onCompletion(() -> CLIENTS.remove(emitterId));
 
         log.info(emitterId+" 테스트 구독완료");
-        sendDummyAlert(emitter, emitterId, "테스트");
+        sendDummyAlert(emitter, emitterId);
         return emitter;
     }
 
@@ -50,7 +51,7 @@ public class SseEmitterService {
     public ResponseDto<?> publishTest(HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess()) {
-            log.info("토큰오류");
+            log.info("토큰오류 (보내기 테스트)");
             return ResponseDto.fail("토큰오류");
         }
         // 멤버 조회
@@ -73,15 +74,21 @@ public class SseEmitterService {
     }
 
     // 알림 구독
-    public SseEmitter subscribe(HttpServletRequest request) {
-        ResponseDto<?> chkResponse = validateCheck(request);
-        if (!chkResponse.isSuccess()) {
-            log.info("토큰오류");
+    public SseEmitter subscribe(String id) {
+//        ResponseDto<?> chkResponse = validateCheck(request);
+//        if (!chkResponse.isSuccess()) {
+//            log.info("act: "+request.getHeader("Authorization"));
+//            log.info("rft: "+request.getHeader("RefreshToken"));
+//            log.info("토큰오류 (알림 구독)");
+//            return null;
+//        }
+        // 멤버 조회
+//        Member member = validateMember(request);
+        Member member = memberRepository.findById(Long.parseLong(id)).orElse(null);
+        if(member == null) {
+            log.info("입력받은 id:"  + id);
             return null;
         }
-        // 멤버 조회
-        Member member = validateMember(request);
-
         String emitterId = makeTimeIncludeId(member.getId().toString());
         SseEmitter emitter = save(emitterId, new SseEmitter(-1L));
 
@@ -89,15 +96,15 @@ public class SseEmitterService {
         emitter.onCompletion(() -> CLIENTS.remove(emitterId));
         log.info(emitterId+" : 구독완료");
 
-        sendDummyAlert(emitter, emitterId, member.getNickname());
+        sendDummyAlert(emitter, emitterId);
 
         return emitter;
     }
 
     // 더미데이터 / 입장 알림 보내기
-    private void sendDummyAlert(SseEmitter emitter, String emitterId, String name) {
+    private void sendDummyAlert(SseEmitter emitter, String emitterId) {
         try {
-            emitter.send("어서오세요 "+name+"님", MediaType.APPLICATION_JSON);
+            emitter.send("입장", MediaType.APPLICATION_JSON);
         }
         catch (IOException e) {
             log.info(e.toString());
@@ -133,7 +140,7 @@ public class SseEmitterService {
     public ResponseDto<?> deletePub(HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess()) {
-            log.info("토큰오류");
+            log.info("토큰오류 (전체 삭제)");
             return ResponseDto.fail("삭제실패");
         }
         // 멤버 조회
@@ -146,11 +153,12 @@ public class SseEmitterService {
     public ResponseDto<?> deleteSinglePub(HttpServletRequest request, String emitterId) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess()) {
-            log.info("토큰오류");
+            log.info("토큰오류 (단건 삭제)");
             return ResponseDto.fail("삭제실패");
         }
         // 멤버 조회
         deleteById(emitterId);
+        log.info("이미터 삭제완료");
         return ResponseDto.success("삭제완료");
     }
 
@@ -240,7 +248,7 @@ public class SseEmitterService {
     public ResponseDto<?> getSubInfo(HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess()) {
-            log.info("토큰오류");
+            log.info("토큰오류 (구독 확인)");
             return ResponseDto.fail("토큰 오류");
         }
         // 멤버 조회
