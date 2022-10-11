@@ -1,5 +1,6 @@
 package com.example.week8.dto.request;
 
+import com.example.week8.utils.customvalidation.EventPointCheck;
 import lombok.Getter;
 
 import javax.validation.constraints.NotBlank;
@@ -26,6 +27,6 @@ public class PostRequestDto {
     @NotBlank
     private String coordinate;
 
-    @NotNull
+    @EventPointCheck
     private int point;
 }
