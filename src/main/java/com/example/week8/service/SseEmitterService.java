@@ -128,6 +128,18 @@ public class SseEmitterService {
         });
     }
 
+    // 구독 전체 지우기
+    public ResponseDto<?> deletePub(HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess()) {
+            log.info("토큰오류");
+            return ResponseDto.fail("삭제실패");
+        }
+        // 멤버 조회
+        Member member = validateMember(request);
+        deleteAllEmitterStartWithId(member.getId().toString());
+        return ResponseDto.success("삭제완료");
+    }
 
     /**
      * 모듈
