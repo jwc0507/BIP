@@ -100,14 +100,10 @@ public class Time {
 //        for(String s : splitDate) {
 //            result.append(s).append("-");
 //        }
-        String dateNow = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-00"));
-        log.info(dateNow);
-        return dateNow;
+        return localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-00"));
     }
 
     public static String serializePostDate(LocalDateTime localDateTime) {
-        String dateNow = localDateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd.HH:mm"));
-        log.info(dateNow);
-        return dateNow;
+        return localDateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd.HH:mm"));
     }
 }

@@ -34,9 +34,13 @@ public class SseController {
     }
 
     // Emitter 지우기
-    @GetMapping("/api/delete")
+    @GetMapping("/api/sse/delete")
     public ResponseDto<?> deleteEmitter(HttpServletRequest request) {
         return sseEmitterService.deletePub(request);
     }
 
+    @GetMapping("/api/sse/getSubInfo")
+    public ResponseDto<?> getSubInfo(HttpServletRequest request) {
+        return sseEmitterService.getSubInfo(request);
+    }
 }

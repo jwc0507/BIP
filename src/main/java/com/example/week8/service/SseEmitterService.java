@@ -14,6 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -141,6 +142,18 @@ public class SseEmitterService {
         return ResponseDto.success("삭제완료");
     }
 
+    // 구독 단건 지우기
+    public ResponseDto<?> deleteSinglePub(HttpServletRequest request, String emitterId) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess()) {
+            log.info("토큰오류");
+            return ResponseDto.fail("삭제실패");
+        }
+        // 멤버 조회
+        deleteById(emitterId);
+        return ResponseDto.success("삭제완료");
+    }
+
     /**
      * 모듈
      */
@@ -221,4 +234,26 @@ public class SseEmitterService {
         return ResponseDto.success(member);
     }
 
+    /**
+     * 현재 구독중인 회원의 전체 emitter id를 불러온다.
+     */
+    public ResponseDto<?> getSubInfo(HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess()) {
+            log.info("토큰오류");
+            return ResponseDto.fail("토큰 오류");
+        }
+        // 멤버 조회
+        Member member = validateMember(request);
+        List<String> emitterList = new ArrayList<>();
+        Map<String, SseEmitter> map = findAllEmitterStartWithByMemberId(member.getId().toString());
+        map.forEach((id, emitter) -> {
+            try {
+                emitterList.add(id);
+            } catch (Exception e) {
+                log.warn("disconnected id : {}", id);
+            }
+        });
+        return ResponseDto.success(emitterList);
+    }
 }
