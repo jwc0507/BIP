@@ -1,8 +1,8 @@
 package com.example.week8.configuration;
 
 
-import com.example.week8.security.AccessDeniedHandlerException;
-import com.example.week8.security.AuthenticationEntryPointException;
+import com.example.week8.ExceptionHandler.AccessDeniedHandlerException;
+import com.example.week8.ExceptionHandler.AuthenticationEntryPointException;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;

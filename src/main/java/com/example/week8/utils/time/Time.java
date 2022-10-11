@@ -1,4 +1,4 @@
-package com.example.week8.time;
+package com.example.week8.utils.time;
 
 import lombok.extern.slf4j.Slf4j;
 

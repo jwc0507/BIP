@@ -8,7 +8,7 @@ import com.example.week8.dto.request.*;
 import com.example.week8.dto.response.*;
 import com.example.week8.repository.*;
 import com.example.week8.security.TokenProvider;
-import com.example.week8.time.Time;
+import com.example.week8.utils.time.Time;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;

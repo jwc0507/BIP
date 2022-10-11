@@ -14,14 +14,13 @@ import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.*;
 import com.example.week8.dto.response.*;
 import com.example.week8.security.TokenProvider;
-import com.example.week8.time.Time;
+import com.example.week8.utils.time.Time;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

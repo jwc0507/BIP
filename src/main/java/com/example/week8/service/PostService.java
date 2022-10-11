@@ -18,7 +18,7 @@ import com.example.week8.repository.MemberRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.repository.ReportRepository;
 import com.example.week8.security.TokenProvider;
-import com.example.week8.time.Time;
+import com.example.week8.utils.time.Time;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
