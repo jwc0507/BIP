@@ -604,6 +604,25 @@ public class EventService {
         return ResponseDto.success(memberResponseDtoList);
     }
 
+    /**
+     * 약속 멤버 체크
+     */
+    public ResponseDto<?> chkEventMember(Long eventId, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 멤버 호출
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        EventMember eventMember = eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).orElse(null);
+        if (eventMember == null)
+            return ResponseDto.success(false);
+        return ResponseDto.success(true);
+    }
 
     // 신용도, 포인트 증감
     // 호출하는 곳에서 얼마나 정보르 주는지에 따라 메소드가 달라 질 수 있음.
