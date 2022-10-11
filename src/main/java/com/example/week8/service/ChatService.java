@@ -1,12 +1,10 @@
 package com.example.week8.service;
 
+import com.example.week8.domain.EventMember;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.chat.*;
 import com.example.week8.dto.response.ResponseDto;
-import com.example.week8.repository.ChatMemberRepository;
-import com.example.week8.repository.ChatMessageRepository;
-import com.example.week8.repository.ChatRoomRepository;
-import com.example.week8.repository.MemberRepository;
+import com.example.week8.repository.*;
 import com.example.week8.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +32,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final MemberRepository memberRepository;
     private final ChatMemberRepository chatMemberRepository;
-
+    private final EventMemberRepository eventMemberRepository;
     // 이미 채팅방에 있는 멤버인지 확인
     public ResponseDto<?> getChatMember(Long eventId, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
@@ -66,6 +64,12 @@ public class ChatService {
             log.info("룸 번호 오류");
             return ResponseDto.fail("룸 번호 오류");
         }
+        // 이벤트 참여자가 아닐 시 fail
+        Long eventId = message.getRoomId();
+        EventMember eventMember = eventMemberRepository.findByEventIdAndMemberId(eventId, member.getId()).orElse(null);
+        if(eventMember == null)
+            return ResponseDto.fail("약속 멤버가 아닙니다.");
+
         // 이미 채팅방에 있는 멤버면 막아야함.
         if (chatMemberRepository.findByMemberAndChatRoom(member, chatRoom).isPresent())
             return ResponseDto.fail("이미 존재하는 회원입니다.");
