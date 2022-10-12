@@ -25,13 +25,13 @@ public class Event extends Timestamped{
     private Long id; // 약속 id
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)  // 약속이 삭제되면 해당 약속과 연관된 EventMember도 고아가 되어 삭제됨
-    private List<EventMember> eventMemberList = new ArrayList<>();
+    private List<EventMember> eventMemberList;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)  // 약속이 삭제되면 해당 약속과 연관된 CheckinMember도 고아가 되어 삭제됨
-    private List<CheckinMember> checkinMemberList = new ArrayList<>();
+    private List<CheckinMember> checkinMemberList;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)  // 약속이 삭제되면 해당 약속과 연관된 EventSchedule도 고아가 되어 삭제됨
-    private List<EventSchedule> eventScheduleList = new ArrayList<>();
+    private List<EventSchedule> eventScheduleList;
 
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private ChatRoom chatRoom;

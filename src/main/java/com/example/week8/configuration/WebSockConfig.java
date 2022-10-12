@@ -22,7 +22,7 @@ public class WebSockConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-stomp").setAllowedOriginPatterns("http://localhost:3000", "http://localhost:8080", "http://54.180.8.73:8080", "http://promisetalk.s3-website.ap-northeast-2.amazonaws.com")
+        registry.addEndpoint("/ws-stomp").setAllowedOriginPatterns("http://localhost:3000", "http://localhost:8080", "http://54.180.124.179:8080", "http://promisetalk.s3-website.ap-northeast-2.amazonaws.com")
                 .withSockJS(); // sock.js를 통하여 낮은 버전의 브라우저에서도 websocket이 동작할수 있게 합니다.
     }
 }
