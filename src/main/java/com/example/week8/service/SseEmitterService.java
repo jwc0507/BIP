@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -138,27 +139,28 @@ public class SseEmitterService {
 
     // 구독 전체 지우기
     public ResponseDto<?> deletePub(HttpServletRequest request) {
-        ResponseDto<?> chkResponse = validateCheck(request);
-        if (!chkResponse.isSuccess()) {
-            log.info("토큰오류 (전체 삭제)");
-            return ResponseDto.fail("삭제실패");
-        }
-        // 멤버 조회
-        Member member = validateMember(request);
-        deleteAllEmitterStartWithId(member.getId().toString());
+//        ResponseDto<?> chkResponse = validateCheck(request);
+//        if (!chkResponse.isSuccess()) {
+//            log.info("토큰오류 (전체 삭제)");
+//            return ResponseDto.fail("삭제실패");
+//        }
+//        // 멤버 조회
+//        Member member = validateMember(request);
+//        log.info("이미터 삭제완료");
+//        deleteAllEmitterStartWithId(member.getId().toString());
         return ResponseDto.success("삭제완료");
     }
 
     // 구독 단건 지우기
     public ResponseDto<?> deleteSinglePub(HttpServletRequest request, String emitterId) {
-        ResponseDto<?> chkResponse = validateCheck(request);
-        if (!chkResponse.isSuccess()) {
-            log.info("토큰오류 (단건 삭제)");
-            return ResponseDto.fail("삭제실패");
-        }
-        // 멤버 조회
-        deleteById(emitterId);
-        log.info("이미터 삭제완료");
+//        ResponseDto<?> chkResponse = validateCheck(request);
+//        if (!chkResponse.isSuccess()) {
+//            log.info("토큰오류 (단건 삭제)");
+//            return ResponseDto.fail("삭제실패");
+//        }
+//        // 멤버 조회
+//        deleteById(emitterId);
+//        log.info("이미터 삭제완료");
         return ResponseDto.success("삭제완료");
     }
 
@@ -183,7 +185,8 @@ public class SseEmitterService {
 
     // 식별가능한 id생성
     private String makeTimeIncludeId(String memberId) {
-        return memberId + "_" + System.currentTimeMillis();
+//        return memberId + "_" + System.currentTimeMillis();
+        return memberId;
     }
 
     // Emitter 저장
@@ -258,5 +261,21 @@ public class SseEmitterService {
             return ResponseDto.success(false);
         else
             return ResponseDto.success(true);
+    }
+
+    /**
+     * 현재 구독중인 회원의 전체 emitter id를 불러온다.
+     */
+    public ResponseDto<?> getSubInfotwo(Long idx) {
+        List<String> emiiterIdList = new ArrayList<>();
+        Map<String, SseEmitter> map = findAllEmitterStartWithByMemberId(idx.toString());
+        map.forEach((id, emitter) -> {
+            try {
+                emiiterIdList.add(id);
+            } catch (Exception e) {
+                log.warn("disconnected id : {}", id);
+            }
+        });
+        return ResponseDto.success(emiiterIdList);
     }
 }

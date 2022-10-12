@@ -149,7 +149,7 @@ public class MemberService {
 
         tokenProvider.deleteRefreshToken(member);
 
-        sseEmitterService.deleteAllEmitterStartWithId(member.getId().toString());
+        sseEmitterService.deletePub(request);
 
         return ResponseDto.success("로그아웃 성공");
     }
