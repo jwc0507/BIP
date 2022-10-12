@@ -45,6 +45,7 @@ public class UserService {
     private final PostRepository postRepository;
     private final ImageFilesRepository imageFilesRepository;
     private final CommentService commentService;
+    private final SseEmitterService sseEmitterService;
 
     private final double MAG_POINT_CREDIT = 0.00025;  // 포인트 환산 신용도 증가 배율 (0.00025가 기본)
 
@@ -353,6 +354,8 @@ public class UserService {
         // 탈퇴전 댓글 정리
         clearMyContents(member);
 
+        // sse Eimtter 제거
+        sseEmitterService.deletePub(request);
 
         // 나를 친구추가한 리스트 삭제
         friendService.deleteMySelf(request);
