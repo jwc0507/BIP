@@ -43,7 +43,7 @@ public class Member extends Timestamped {
 //    private List<ChatMember> chatMember;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "owner")
-    private List<Friend> friendListOwner = new ArrayList<>();
+    private List<Friend> friendListOwner;
 
     @Column(unique = true)
     private Long kakaoId;   // 카카오id
