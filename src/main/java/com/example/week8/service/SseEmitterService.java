@@ -83,6 +83,27 @@ public class SseEmitterService {
         return ResponseDto.success("발신완료");
     }
 
+    // 보내기 테스트
+    public ResponseDto<?> publishTestTwo(Long memberId) {
+        // 멤버 조회
+        Member member = memberRepository.findById(memberId).orElse(null);
+
+        String num = member.getId().toString();
+        Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(num);
+
+        ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+        sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
+            try {
+                emitter.send("알림", MediaType.APPLICATION_JSON);
+                log.info(id + " : 발신완료");
+                Thread.sleep(100);
+            } catch (Exception e) {
+                log.warn("disconnected id : {}", id);
+            }
+        }));
+        return ResponseDto.success("발신완료");
+    }
+
     // 알림 구독
     public SseEmitter subscribe(HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
