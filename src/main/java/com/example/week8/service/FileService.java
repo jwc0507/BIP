@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class FileService {
 
     private final AmazonS3Service amazonS3Service;

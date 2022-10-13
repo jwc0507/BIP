@@ -1,6 +1,5 @@
 package com.example.week8.service;
 
-import com.example.week8.domain.LoginMember;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.RefreshToken;
 import com.example.week8.domain.UserDetailsImpl;
@@ -12,7 +11,7 @@ import com.example.week8.dto.request.EmailLoginRequestDto;
 import com.example.week8.dto.request.LoginRequestDto;
 import com.example.week8.dto.response.LoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
-import com.example.week8.repository.LoginMemberRepository;
+import com.example.week8.repository.EmitterRepositoryImpl;
 import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.utils.RedisUtil;
@@ -34,13 +33,13 @@ import java.util.regex.Pattern;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class MemberService {
 
-    private final LoginMemberRepository loginMemberRepository;
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
     private final JavaMailSender javaMailSender;
-    private final SseEmitterService sseEmitterService;
+    private final EmitterRepositoryImpl emitterRepository;
       private final RedisUtil redisUtil;
 
 
@@ -149,7 +148,7 @@ public class MemberService {
 
         tokenProvider.deleteRefreshToken(member);
 
-        sseEmitterService.deleteAllEmitterStartWithId(member.getId().toString());
+        emitterRepository.deleteAllEmitterStartWithId(member.getId().toString());
 
         return ResponseDto.success("로그아웃 성공");
     }
@@ -171,7 +170,7 @@ public class MemberService {
 //        loginMemberRepository.save(loginMember);
 
         // redis 활용시의 코드
-        redisUtil.setDataExpire(requestDto.getValue(), code, 300);
+        redisUtil.setDataExpire(requestDto.getValue(), code, 180);
 
         return ResponseDto.success(code);
     }
@@ -222,6 +221,7 @@ public class MemberService {
     }
 
     // 카카오 로그인용 전화번호 체크
+    @Transactional
     public ResponseDto<?> getMemberByPhoneNumber(DuplicationRequestDto requestDto) {
         String regExp = "(^02|[0-9]{3})([0-9]{3,4})([0-9]{4})$";
         if (!Pattern.matches(regExp, requestDto.getValue()))
@@ -235,6 +235,7 @@ public class MemberService {
     }
 
     // 이미 있는 회원인지 체크 (프론트에서 뷰 넘길때 사용하기 위함)
+    @Transactional
     public ResponseDto<?> checkPhoneNumber(DuplicationRequestDto requestDto) {
         String regExp = "(^02|[0-9]{3})([0-9]{3,4})([0-9]{4})$";
         if (!Pattern.matches(regExp, requestDto.getValue()))
@@ -249,6 +250,7 @@ public class MemberService {
 
 
     // 닉네임 중복 검사
+    @Transactional (readOnly = true)
     public ResponseDto<?> checkNickname(DuplicationRequestDto requestDto) {
         String regExp = "^[가-힣a-zA-Z0-9]{2,10}$";
         if (!Pattern.matches(regExp, requestDto.getValue()))
@@ -262,6 +264,7 @@ public class MemberService {
     }
 
     // 이메일 중복 검사
+    @Transactional (readOnly = true)
     public ResponseDto<?> checkEmail(DuplicationRequestDto requestDto) {
         String regExp = "^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$";
         if (!Pattern.matches(regExp, requestDto.getValue()))

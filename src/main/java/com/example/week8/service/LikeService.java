@@ -23,6 +23,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class LikeService {
     private final LikeRepository likeRepository;
     private final PostRepository postRepository;
@@ -82,6 +83,7 @@ public class LikeService {
     }
 
     //현재 좋아요가 눌렸는지 확인
+    @Transactional (readOnly = true)
     public ResponseDto<?> chkLikePost(Long id, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -98,7 +100,7 @@ public class LikeService {
     }
 
     //좋아하는 게시글 목록 반환
-    @Transactional
+    @Transactional (readOnly = true)
     public ResponseDto<?> getLikeList(HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
