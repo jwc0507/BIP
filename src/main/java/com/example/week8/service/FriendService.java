@@ -285,7 +285,7 @@ public class FriendService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-       Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
+        Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
         if (getFriend == null || getFriend.getNickname().equals("탈퇴한 사용자입니다."))
             return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
 

@@ -199,7 +199,6 @@ public class SseEmitterService {
         // 멤버 조회
         emitterRepository.deleteById(emitterId);
         log.info("이미터 삭제완료");
-
         return ResponseDto.success("삭제완료");
     }
 
@@ -258,8 +257,6 @@ public class SseEmitterService {
     // 식별가능한 id생성
     private String makeTimeIncludeId(String memberId) {
         return memberId + "_" + System.currentTimeMillis();
-//        return memberId;
-
     }
 
     /**

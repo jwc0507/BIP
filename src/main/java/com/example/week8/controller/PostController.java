@@ -89,7 +89,7 @@ public class PostController {
     public ResponseDto<?> getDonationList(@RequestParam("category") String category) {
         return postService.getCategoryList(Board.donation.toString(), category);
     }
-    
+
     /**
      * 게시글 신고
      */

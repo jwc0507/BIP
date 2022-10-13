@@ -207,7 +207,7 @@ public class ChatService {
         if(chatMember == null)
             return ResponseDto.fail("채팅 멤버를 찾을 수 없습니다.");
 
-  //      LocalDateTime localDateTime = LocalDateTime.of(2022, 9, 28, 18, 0, 0);
+        //      LocalDateTime localDateTime = LocalDateTime.of(2022, 9, 28, 18, 0, 0);
 
         List<ChatMessage> chatMessageList = chatMessageRepository.findAllByChatRoomAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(chatRoom, chatMember.getCreatedAt(), pageable);
         List<ChatMessageDto> chatMessageDtos = new ArrayList<>();

@@ -40,7 +40,7 @@ public class MemberService {
     private final TokenProvider tokenProvider;
     private final JavaMailSender javaMailSender;
     private final EmitterRepositoryImpl emitterRepository;
-      private final RedisUtil redisUtil;
+    private final RedisUtil redisUtil;
 
 
     // 인증번호 확인

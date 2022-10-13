@@ -56,7 +56,7 @@ public class NaverOauthService {
         naverMember.chkFirstLogin();
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
-                        .nickname(naverMember.getNickname())
+                .nickname(naverMember.getNickname())
                 .phoneNumber(naverMember.getPhoneNumber())
                 .email(naverMember.getEmail())
                 .build());
