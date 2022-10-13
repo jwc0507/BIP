@@ -34,6 +34,7 @@ public class ChatService {
     private final ChatMemberRepository chatMemberRepository;
     private final EventMemberRepository eventMemberRepository;
     // 이미 채팅방에 있는 멤버인지 확인
+    @Transactional (readOnly = true)
     public ResponseDto<?> getChatMember(Long eventId, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -187,6 +188,7 @@ public class ChatService {
 
 
     // 기존 채팅방 메세지들 불러오기
+    @Transactional (readOnly = true)
     public ResponseDto<?> getMessage(Long roomId, Pageable pageable, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())

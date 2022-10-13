@@ -10,10 +10,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends JpaRepository<Post, Long>, PostCustomRepository {
     List<Post> findAllByPostStatusOrderByCreatedAtDesc(PostStatus postStatus);
     List<Post> findAllByBoardAndPostStatusOrderByCreatedAtDesc(Board board, PostStatus postStatus);
     List<Post> findAllByBoardAndCategoryAndPostStatusOrderByCreatedAtDesc(Board board, Category category, PostStatus postStatus);
     List<Post> findAllByMemberAndPostStatus(Member member, PostStatus postStatus);
     Optional<Post> findByIdAndPostStatus(Long postId, PostStatus postStatus);
+    List<Post> findAllByMember(Member member);
 }

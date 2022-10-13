@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class KakaoOauthService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
@@ -122,6 +123,7 @@ public class KakaoOauthService {
                 .imageUrl(imgUrl)
                 .build();
     }
+
 
     private Member registerKakaoUserIfNeeded(KakaoMemberInfoDto kakaoMemberInfo) {
         // DB 에 중복된 Kakao Id 가 있는지 확인

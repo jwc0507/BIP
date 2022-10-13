@@ -3,6 +3,7 @@ package com.example.week8.service;
 import com.example.week8.domain.*;
 import com.example.week8.domain.enums.AlertType;
 import com.example.week8.dto.response.ResponseDto;
+import com.example.week8.repository.EmitterRepositoryImpl;
 import com.example.week8.repository.EventMemberRepository;
 import com.example.week8.repository.EventRepository;
 import com.example.week8.repository.MemberRepository;
@@ -11,10 +12,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,22 +28,29 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class SseEmitterService {
-    private static final Map<String, SseEmitter> CLIENTS = new ConcurrentHashMap<>();
     private final TokenProvider tokenProvider;
     private final EventRepository eventRepository;
     private final EventMemberRepository eventMemberRepository;
     private final MemberRepository memberRepository;
+    private final EmitterRepositoryImpl emitterRepository;
 
     // 구독 테스트
     public SseEmitter subscribeTest(String memberId) {
         String emitterId = makeTimeIncludeId(memberId);
-        SseEmitter emitter = new SseEmitter(-1L);
+        SseEmitter emitter = new SseEmitter(60 * 1000L * 15);
 
-        CLIENTS.put(emitterId, emitter);
+        emitterRepository.save(emitterId, emitter);
 
-        emitter.onTimeout(() -> CLIENTS.remove(emitterId));
-        emitter.onCompletion(() -> CLIENTS.remove(emitterId));
+        emitter.onTimeout(() -> {
+            log.info("onTimeout callback");
+            emitterRepository.deleteById(emitterId);
+        });
+        emitter.onCompletion(() -> {
+            log.info("onCompletion callback");
+            emitterRepository.deleteById(emitterId);
+        });
 
         log.info(emitterId+" 테스트 구독완료");
         sendDummyAlert(emitter, emitterId);
@@ -58,7 +68,7 @@ public class SseEmitterService {
         Member member = validateMember(request);
 
         String num = member.getId().toString();
-        Map<String, SseEmitter> map = findAllEmitterStartWithByMemberId(num);
+        Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(num);
 
         ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
         sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
@@ -74,26 +84,35 @@ public class SseEmitterService {
     }
 
     // 알림 구독
-    public SseEmitter subscribe(String id) {
-//        ResponseDto<?> chkResponse = validateCheck(request);
-//        if (!chkResponse.isSuccess()) {
-//            log.info("act: "+request.getHeader("Authorization"));
-//            log.info("rft: "+request.getHeader("RefreshToken"));
-//            log.info("토큰오류 (알림 구독)");
-//            return null;
-//        }
+    public SseEmitter subscribe(HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess()) {
+            log.info("act: "+request.getHeader("Authorization"));
+            log.info("rft: "+request.getHeader("RefreshToken"));
+            log.info("토큰오류 (알림 구독)");
+            return null;
+        }
         // 멤버 조회
-//        Member member = validateMember(request);
+        String id = tokenProvider.getMemberIdByToken(request.getHeader("Authorization"));
+
         Member member = memberRepository.findById(Long.parseLong(id)).orElse(null);
         if(member == null) {
             log.info("입력받은 id:"  + id);
             return null;
         }
-        String emitterId = makeTimeIncludeId(member.getId().toString());
-        SseEmitter emitter = save(emitterId, new SseEmitter(-1L));
 
-        emitter.onTimeout(() -> CLIENTS.remove(emitterId));
-        emitter.onCompletion(() -> CLIENTS.remove(emitterId));
+        String emitterId = makeTimeIncludeId(member.getId().toString());
+        SseEmitter emitter = emitterRepository.save(emitterId, new SseEmitter(60 * 1000L * 15));
+
+        emitter.onTimeout(() -> {
+            log.info("onTimeout callback");
+            emitterRepository.deleteById(emitterId);
+        });
+        emitter.onCompletion(() -> {
+            log.info("onCompletion callback");
+            emitterRepository.deleteById(emitterId);
+        });
+
         log.info(emitterId+" : 구독완료");
 
         sendDummyAlert(emitter, emitterId);
@@ -108,7 +127,7 @@ public class SseEmitterService {
         }
         catch (IOException e) {
             log.info(e.toString());
-            deleteById(emitterId);
+            emitterRepository.deleteById(emitterId);
         }
     }
 
@@ -122,7 +141,7 @@ public class SseEmitterService {
         ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
         sseMvcExecutor.execute(() -> {
             for (EventMember eventMember : eventMemberList) {
-                Map<String, SseEmitter> map = findAllEmitterStartWithByMemberId(eventMember.getMember().getId().toString());
+                Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(eventMember.getMember().getId().toString());
                 map.forEach((id, emitter) -> {
                     try {
                         emitter.send(content, MediaType.APPLICATION_JSON);
@@ -145,7 +164,7 @@ public class SseEmitterService {
         }
         // 멤버 조회
         Member member = validateMember(request);
-        deleteAllEmitterStartWithId(member.getId().toString());
+        emitterRepository.deleteAllEmitterStartWithId(member.getId().toString());
         return ResponseDto.success("삭제완료");
     }
 
@@ -157,9 +176,43 @@ public class SseEmitterService {
             return ResponseDto.fail("삭제실패");
         }
         // 멤버 조회
-        deleteById(emitterId);
+        emitterRepository.deleteById(emitterId);
         log.info("이미터 삭제완료");
         return ResponseDto.success("삭제완료");
+    }
+
+    /**
+     * 현재 구독중인 회원의 전체 emitter id를 불러온다.
+     */
+    public ResponseDto<?> getSubInfo(HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess()) {
+            log.info("토큰오류 (구독 확인)");
+            return ResponseDto.fail("토큰 오류");
+        }
+        // 멤버 조회
+        Member member = validateMember(request);
+        Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(member.getId().toString());
+        if(map.isEmpty())
+            return ResponseDto.success(false);
+        else
+            return ResponseDto.success(true);
+    }
+
+    /**
+     * 현재 구독중인 회원의 전체 emitter id를 불러온다.
+     */
+    public ResponseDto<?> getSubInfoTwo(Long idx) {
+        List<String> emitterIdList = new ArrayList<>();
+        Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(idx.toString());
+        map.forEach((id, emitter) -> {
+            try {
+                emitterIdList.add(id);
+            } catch (Exception e) {
+                log.warn("disconnected id : {}", id);
+            }
+        });
+        return ResponseDto.success(emitterIdList);
     }
 
     /**
@@ -184,36 +237,37 @@ public class SseEmitterService {
     // 식별가능한 id생성
     private String makeTimeIncludeId(String memberId) {
         return memberId + "_" + System.currentTimeMillis();
+//        return memberId;
     }
 
-    // Emitter 저장
-    public SseEmitter save(String emitterId, SseEmitter sseEmitter) {
-        CLIENTS.put(emitterId, sseEmitter);
-        return sseEmitter;
-    }
-
-    // Emitter 지우기
-    public void deleteById(String id) {
-        CLIENTS.remove(id);
-    }
-
-    // 맴버의 전체 Emitter찾기 (브라우저 탭이 여러개일 경우)
-    public Map<String, SseEmitter> findAllEmitterStartWithByMemberId(String memberId) {
-        return CLIENTS.entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(memberId))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    // 회원의 Emitter 지우기 (로그아웃)
-    public void deleteAllEmitterStartWithId(String memberId) {
-        CLIENTS.forEach(
-                (key, emitter) -> {
-                    if (key.startsWith(memberId)) {
-                        CLIENTS.remove(key);
-                    }
-                }
-        );
-    }
+//    // Emitter 저장
+//    public SseEmitter save(String emitterId, SseEmitter sseEmitter) {
+//        CLIENTS.put(emitterId, sseEmitter);
+//        return sseEmitter;
+//    }
+//
+//    // Emitter 지우기
+//    public void deleteById(String id) {
+//        CLIENTS.remove(id);
+//    }
+//
+//    // 맴버의 전체 Emitter찾기 (브라우저 탭이 여러개일 경우)
+//    public Map<String, SseEmitter> findAllEmitterStartWithByMemberId(String memberId) {
+//        return CLIENTS.entrySet().stream()
+//                .filter(entry -> entry.getKey().startsWith(memberId))
+//                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+//    }
+//
+//    // 회원의 Emitter 지우기 (로그아웃)
+//    public void deleteAllEmitterStartWithId(String memberId) {
+//        CLIENTS.forEach(
+//                (key, emitter) -> {
+//                    if (key.startsWith(memberId)) {
+//                        CLIENTS.remove(key);
+//                    }
+//                }
+//        );
+//    }
 
     /**
      * 멤버 유효성 검사
@@ -242,21 +296,5 @@ public class SseEmitterService {
         return ResponseDto.success(member);
     }
 
-    /**
-     * 현재 구독중인 회원의 전체 emitter id를 불러온다.
-     */
-    public ResponseDto<?> getSubInfo(HttpServletRequest request) {
-        ResponseDto<?> chkResponse = validateCheck(request);
-        if (!chkResponse.isSuccess()) {
-            log.info("토큰오류 (구독 확인)");
-            return ResponseDto.fail("토큰 오류");
-        }
-        // 멤버 조회
-        Member member = validateMember(request);
-        Map<String, SseEmitter> map = findAllEmitterStartWithByMemberId(member.getId().toString());
-        if(map.isEmpty())
-            return ResponseDto.success(false);
-        else
-            return ResponseDto.success(true);
-    }
+
 }

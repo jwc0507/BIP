@@ -8,7 +8,6 @@ import java.util.Optional;
 
 public interface CheckinMemberRepository extends JpaRepository<CheckinMember, Long> {
     List<CheckinMember> findByEventIdAndMemberId(Long eventId, Long memberId);
-    Optional<CheckinMember> findByMemberId(Long memberId);
     List<CheckinMember> findAllByEventId(Long id);
 
 }
