@@ -199,6 +199,7 @@ public class SseEmitterService {
         // 멤버 조회
         emitterRepository.deleteById(emitterId);
         log.info("이미터 삭제완료");
+
         return ResponseDto.success("삭제완료");
     }
 
@@ -239,7 +240,6 @@ public class SseEmitterService {
     /**
      * 모듈
      */
-
     // 알림 메세지 만들기
     private String setContext(String text, AlertType type) {
         switch (type.toString()) {
@@ -259,36 +259,8 @@ public class SseEmitterService {
     private String makeTimeIncludeId(String memberId) {
         return memberId + "_" + System.currentTimeMillis();
 //        return memberId;
-    }
 
-//    // Emitter 저장
-//    public SseEmitter save(String emitterId, SseEmitter sseEmitter) {
-//        CLIENTS.put(emitterId, sseEmitter);
-//        return sseEmitter;
-//    }
-//
-//    // Emitter 지우기
-//    public void deleteById(String id) {
-//        CLIENTS.remove(id);
-//    }
-//
-//    // 맴버의 전체 Emitter찾기 (브라우저 탭이 여러개일 경우)
-//    public Map<String, SseEmitter> findAllEmitterStartWithByMemberId(String memberId) {
-//        return CLIENTS.entrySet().stream()
-//                .filter(entry -> entry.getKey().startsWith(memberId))
-//                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-//    }
-//
-//    // 회원의 Emitter 지우기 (로그아웃)
-//    public void deleteAllEmitterStartWithId(String memberId) {
-//        CLIENTS.forEach(
-//                (key, emitter) -> {
-//                    if (key.startsWith(memberId)) {
-//                        CLIENTS.remove(key);
-//                    }
-//                }
-//        );
-//    }
+    }
 
     /**
      * 멤버 유효성 검사
@@ -316,6 +288,4 @@ public class SseEmitterService {
         }
         return ResponseDto.success(member);
     }
-
-
 }

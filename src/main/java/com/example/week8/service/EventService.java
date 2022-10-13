@@ -912,10 +912,7 @@ public class EventService {
     @Transactional(readOnly = true)
     public CheckinMember isPresentCheckinMember(Long eventId, Long memberId) {
         List<CheckinMember> optionalCheckinMember = checkinMemberRepository.findByEventIdAndMemberId(eventId, memberId);
-        // return optionalCheckinMember.orElse(null);
-        for(CheckinMember c : optionalCheckinMember) {
-            log.info(c.getMember().getId().toString());
-        }
+
         if(optionalCheckinMember.size() != 0)
             return optionalCheckinMember.get(0);
         return null;
