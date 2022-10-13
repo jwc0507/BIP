@@ -138,7 +138,9 @@ public class CommentService {
 
     /**
      * 댓글 목록보기
+     *
      */
+    @Transactional (readOnly = true)
     public ResponseDto<?> getCommentList(Long postId, Pageable pageable, HttpServletRequest request) {
         // 토큰체크
         ResponseDto<?> chkResponse = validateCheck(request);
@@ -229,6 +231,7 @@ public class CommentService {
     /**
      * 댓글 호출
      */
+    @Transactional(readOnly = true)
     public Comment isPresentComment(Long commentId) {
         return commentRepository.findById(commentId).orElse(null);
     }
@@ -236,6 +239,7 @@ public class CommentService {
     /**
      * 내가 쓴 댓글들 호출
      */
+    @Transactional(readOnly = true)
     public List<Comment> getCommentList(Member member) {
         return commentRepository.findAllByMember(member);
     }

@@ -23,9 +23,10 @@ public class SseController {
 
     // SSE Sub
     @GetMapping("/api/member/subscribe")
-    public SseEmitter subscribe(String memberId) {
+    public SseEmitter subscribe(HttpServletRequest request) {
+        return sseEmitterService.subscribe(request);
 //        return sseEmitterService.subscribe(memberId);
-        return null;
+
     }
 
     // SSE pubTest (실제 배포단계에선 주석 또는 삭제)
@@ -52,5 +53,10 @@ public class SseController {
     public ResponseDto<?> getSubInfotwo(@PathVariable Long id) {
 //        return sseEmitterService.getSubInfotwo(id);
         return null;
+    }
+
+    @GetMapping("/api/sse/getSubInfoTwo/{id}")
+    public ResponseDto<?> getSubInfoTwo(@PathVariable Long id) {
+        return sseEmitterService.getSubInfoTwo(id);
     }
 }

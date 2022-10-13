@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class NaverOauthService {
 
     private final MemberRepository memberRepository;

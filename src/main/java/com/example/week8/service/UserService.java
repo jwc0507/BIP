@@ -64,6 +64,7 @@ public class UserService {
             Member updateMember = memberRepository.findById(member.getId()).get();
 
             updateMember.updateNickname(newNickname);
+
             return ResponseDto.success(UpdateMemberResponseDto.builder()
                     .nickname(updateMember.getNickname())
                     .phoneNumber(updateMember.getPhoneNumber())
@@ -294,6 +295,7 @@ public class UserService {
     }
 
     // 유저 정보 보기
+    @Transactional (readOnly = true)
     public ResponseDto<?> getMemberInfo(HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -353,7 +355,6 @@ public class UserService {
 
         // 탈퇴전 댓글 정리
         clearMyContents(member);
-
         // sse Eimtter 제거
         sseEmitterService.deletePub(request);
 

@@ -70,6 +70,7 @@ public class EventService {
     /**
      * 약속 생성
      */
+    @Transactional
     public ResponseDto<?> createEvent(EventRequestDto eventRequestDto,
                                       HttpServletRequest request) {
 
@@ -718,6 +719,7 @@ public class EventService {
     /**
      * 약속까지 남은 시간 알림
      */
+    @Transactional
     public void eventAlarm() {
         LocalDateTime now = LocalDateTime.now().withNano(0);  // LocalDateTime에서 밀리세컨드 부분 제거
         List<EventSchedule> eventScheduleList = eventScheduleRepository.findAll();

@@ -39,6 +39,16 @@ public class PostService {
     private final TokenProvider tokenProvider;
     private final MemberRepository memberRepository;
 
+
+    /**
+     * 게시글 내용 검색
+     */
+    public ResponseDto<?> searchPost(String content) {
+        List<Post> list = postRepository.searchByContent(content);
+        List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
+        return getResponseDto(list,postResponseAllDtoList);
+    }
+
     /**
      * 게시글 작성
      */
@@ -410,7 +420,7 @@ public class PostService {
         if(post == null)
             return ResponseDto.fail("게시글을 찾을 수 없습니다.");
         // 게시글의 작성자인지 확인
-        if(!post.getOwnerName().equals(member.getNickname()))
+        if(!post.getMember().equals(member))
             return ResponseDto.fail("게시글 작성자가 아닙니다.");
         // 포인트가 정상적인지 체크 (보유량보다 많은지 -값은아닌지)
         int point = post.getPoint();
