@@ -79,8 +79,8 @@ public class PostService {
         String[] imgURLList = postRequestDto.getImgUrlList();
         postRepository.save(post);
 
-        for(String imgURL : imgURLList){
-            ImageFile imageFile = imageFilesRepository.findByUrl(imgURL).orElse(null);
+        for(int i = 0; i < imgURLList.length && i < 4; i++ ) {
+            ImageFile imageFile = imageFilesRepository.findByUrl(imgURLList[i]).orElse(null);
             if(imageFile==null)
                 continue;
             imageFile.setPost(post);
@@ -135,8 +135,8 @@ public class PostService {
 
         // 새로 연결된 값들로 설정.
         String[] imgURLList = postRequestDto.getImgUrlList();
-        for(String imgURL : imgURLList){
-            ImageFile imageFile = imageFilesRepository.findByUrl(imgURL).orElse(null);
+        for(int i = 0; i < imgURLList.length && i < 4; i++ ) {
+            ImageFile imageFile = imageFilesRepository.findByUrl(imgURLList[i]).orElse(null);
             if(imageFile==null)
                 continue;
             imageFile.setPost(post);
