@@ -37,13 +37,11 @@ public class FileService {
     }
 
     @Transactional
-    public ResponseDto<?> deleteFile(String fileUrl) {
+    public void deleteFile(String fileUrl) {
         if (amazonS3Service.removeFile(fileUrl)) {
             log.info("이미지 삭제 실패");
-            return ResponseDto.fail("이미지 삭제 실패");
         }
         log.info("이미지 삭제 성공");
-        return ResponseDto.success("이미지 삭제 성공");
     }
 
     private ResponseDto<?> validateCheck(HttpServletRequest request) {
