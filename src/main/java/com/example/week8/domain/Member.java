@@ -108,8 +108,9 @@ public class Member extends Timestamped {
     }
 
     public void updateCreditScore(double score) {
-        if(this.credit+score >= 0)
+        if (this.credit + score >= 0)
             this.credit += score;
+        this.credit = Math.floor(this.credit);
     }
 
     // 약속에서 주는 포인트 (하루 한도 존재)
@@ -137,7 +138,7 @@ public class Member extends Timestamped {
     }
 
     public void chkFirstLogin() {
-        if(this.firstLogin) {
+        if (this.firstLogin) {
             this.point += 100;
             this.firstLogin = false;
         }
