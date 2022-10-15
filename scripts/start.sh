@@ -16,7 +16,7 @@ cp $PROJECT_ROOT/build/libs/*.jar $JAR_FILE
 # jar 파일 실행
 echo "$TIME_NOW > $JAR_FILE 파일 실행" >> $DEPLOY_LOG
 nohup sudo java -jar \
-                        -Duser.timezone=Asia/Seoul -Dspring.config.location=classpath:/application.properties,/home/ubuntu/app3/application-aws.properties \
+                        -Duser.timezone=Asia/Seoul -Dspring.config.location=classpath:/application.properties,/home/ubuntu/app3/application-aws.properties,/home/ubuntu/app3/keystore.p12 \
                         $JAR_FILE > $APP_LOG 2> $ERROR_LOG &
 
 CURRENT_PID=$(pgrep -f $JAR_FILE)
