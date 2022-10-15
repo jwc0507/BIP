@@ -41,6 +41,7 @@ SseTestController.java
 postTest.http
 CommentTest.http
 TestController.java
+keystore.p12
 
 ### NetBeans ###
 /nbproject/private/
