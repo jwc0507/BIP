@@ -23,7 +23,7 @@ public class Week8Application {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
-						.allowedOrigins("http://localhost:3000", "http://promisetalk.s3-website.ap-northeast-2.amazonaws.com/", "https://berryimportantpromise.com/")
+						.allowedOrigins("http://localhost:3000", "http://promisetalk.s3-website.ap-northeast-2.amazonaws.com/", "https://berryimportantpromise.com")
 						.exposedHeaders("Authorization", "RefreshToken")
 						.allowedMethods("*")
 						.allowedHeaders("*")
