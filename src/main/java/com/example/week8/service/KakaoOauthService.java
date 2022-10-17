@@ -71,8 +71,9 @@ public class KakaoOauthService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "610f7f90999f8f182434e3cc03ad6415");
-        body.add("redirect_uri", "http://localhost:3000/login/kakao");
-        //  body.add("redirect_uri", "http://localhost:8080/api/member/kakaologin");
+        body.add("redirect_uri", "https://berryimportantpromise.com/login/kakao");
+//        body.add("redirect_uri", "http://localhost:3000/login/kakao");
+//        body.add("redirect_uri", "http://localhost:8080/api/member/kakaologin");
         body.add("code", code);
 
         // HTTP 요청 보내기

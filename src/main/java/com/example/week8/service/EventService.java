@@ -668,7 +668,7 @@ public class EventService {
                     break;
             }
             // 신용도 업데이트
-            checkinMember.getMember().updateCreditScore(addCreditScore);
+            checkinMember.getMember().updateCreditScore(Math.floor(addCreditScore * 10) / (10.0));
             // 약속 카운터 올리기
             checkinMember.getMember().updateNumOfDone(done);
             // 포인트 업데이트

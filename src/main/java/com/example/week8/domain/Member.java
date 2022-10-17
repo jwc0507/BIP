@@ -110,7 +110,7 @@ public class Member extends Timestamped {
     public void updateCreditScore(double score) {
         if (this.credit + score >= 0)
             this.credit += score;
-        this.credit = Math.floor(this.credit);
+        this.credit = Math.floor(this.credit * 10) / (10.0);
     }
 
     // 약속에서 주는 포인트 (하루 한도 존재)
@@ -153,5 +153,10 @@ public class Member extends Timestamped {
     // 신용도 차감
     public void declineCredit(double credit) {
         this.credit -= credit;
+        this.credit = Math.floor(this.credit * 10) / (10.0);
+    }
+
+    public String getCredit() {
+        return String.format("%.1f", this.credit);
     }
 }

@@ -430,11 +430,11 @@ public class UserService {
         }
 
         // 신용도 추가
-        if (receiver.getCredit() >= 200)
+        if (Double.parseDouble(receiver.getCredit()) >= 200)
             return ResponseDto.fail("이미 신용도가 최대치 입니다.");
 
         double calculationCredit = magnification * point; // 증가할 신용도량
-        double newCredit = receiver.getCredit() + calculationCredit;
+        double newCredit = Double.parseDouble(receiver.getCredit()) + calculationCredit;
         double lastCredit = 0;
         // 신용도는 200까지만 증가시킬 수 있음
         if (200 < newCredit) {
@@ -445,6 +445,7 @@ public class UserService {
         else if (0 > newCredit) {
             newCredit = 0;
         }
+        newCredit = Math.floor(newCredit * 10) / (10.0);
         receiver.setCredit(newCredit);
 
         // 남은 포인트 계산
