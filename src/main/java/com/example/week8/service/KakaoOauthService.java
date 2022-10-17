@@ -73,7 +73,7 @@ public class KakaoOauthService {
         body.add("client_id", "610f7f90999f8f182434e3cc03ad6415");
         body.add("redirect_uri", "https://berryimportantpromise.com/login/kakao");
 //        body.add("redirect_uri", "http://localhost:3000/login/kakao");
-//        body.add("redirect_uri", "http://localhost:8080/api/member/kakaologin");
+//        body.add("redirect_uri", "https://localhost/api/member/kakaologin");
         body.add("code", code);
 
         // HTTP 요청 보내기
@@ -116,7 +116,12 @@ public class KakaoOauthService {
         Long id = jsonNode.get("id").asLong();
         String nickname = jsonNode.get("properties").get("nickname").asText();
         String email = jsonNode.get("kakao_account").get("email").asText();
-        String imgUrl = jsonNode.get("kakao_account").get("profile").get("profile_image_url").asText();
+        String imgUrl = null;
+        try {
+            imgUrl = jsonNode.get("kakao_account").get("profile").get("profile_image_url").asText();
+        }
+        catch (Exception ignored){
+        }
         return KakaoMemberInfoDto.builder()
                 .id(id)
                 .nickname(nickname)
