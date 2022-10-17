@@ -18,6 +18,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,7 +42,7 @@ public class KakaoOauthService {
     @Transactional
     public ResponseDto<?> kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         // 1. "인가 코드"로 전체 response 요청
-        String accessToken = getAccessToken(code);
+        String accessToken = getAccessToken(code, "login");
 
         // 2. accessToken을 이용해 카카오 api호출하여 response 받기(사용자 정보 json받아서 id, email, nickname 빼기)
         KakaoMemberInfoDto kakaoMemberInfo = getkakaoMemberInfo(accessToken);
@@ -63,7 +64,52 @@ public class KakaoOauthService {
 
     }
 
-    private String getAccessToken(String code) throws JsonProcessingException {
+    // 로그인 연동 해제
+    @Transactional
+    public ResponseDto<?> kakaoLogout(String code) throws JsonProcessingException{
+        // 1. 받은 code와 state로 accesstoken 받기
+        String accessToken = getAccessToken(code, "logout");
+        // 2. 로그인연동 해제
+        return ResponseDto.success(doLogout(accessToken));
+    }
+
+    // 연동 해제 요청 실행
+    private String doLogout(String accessToken) throws JsonProcessingException {
+        HttpHeaders logoutHeaders = new HttpHeaders();
+        logoutHeaders.add("Content-type", "application/x-www-form-urlencoded");
+        logoutHeaders.add("Authorization", "Bearer "+accessToken);
+
+        MultiValueMap<String, String> logoutRequestParam = new LinkedMultiValueMap<>();
+
+        HttpEntity<MultiValueMap<String, String>> logoutRequest = new HttpEntity<>(logoutRequestParam, logoutHeaders);
+        RestTemplate rt = new RestTemplate();
+        rt.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        ResponseEntity<String> logoutResponse = rt.exchange(
+                "https://kapi.kakao.com/v1/user/unlink",
+                HttpMethod.POST,
+                logoutRequest,
+                String.class
+        );
+        String responseBody = logoutResponse.getBody();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        return jsonNode.get("id").asText();
+    }
+
+    private String getAccessToken(String code, String mode) throws JsonProcessingException {
+
+        String redirectUrl;
+        if (mode.equals("login")) {
+//            redirectUrl = "https://localhost/api/member/kakaologin";
+//            redirectUrl = "http://localhost:3000/login/kakao";
+            redirectUrl = "https://berryimportantpromise.com/login/kakao";
+        }
+        else {
+//            redirectUrl = "https://localhost/api/member/kakaologout";
+//            redirectUrl = "http://localhost:3000/logout/kakao";
+            redirectUrl = "https://berryimportantpromise.com/logout/kakao";
+        }
+
         // HTTP Header 생성
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
@@ -72,9 +118,7 @@ public class KakaoOauthService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "610f7f90999f8f182434e3cc03ad6415");
-        body.add("redirect_uri", "https://berryimportantpromise.com/login/kakao");
-//        body.add("redirect_uri", "http://localhost:3000/login/kakao");
-//        body.add("redirect_uri", "https://localhost/api/member/kakaologin");
+        body.add("redirect_uri", redirectUrl);
         body.add("code", code);
 
         // HTTP 요청 보내기
