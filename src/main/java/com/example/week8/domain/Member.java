@@ -1,11 +1,10 @@
 package com.example.week8.domain;
 
-import com.example.week8.domain.chat.ChatMember;
 import com.example.week8.domain.enums.Authority;
+import com.example.week8.dto.SignupInfoDto;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -38,9 +37,6 @@ public class Member extends Timestamped {
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Likes> likesList;
-
-//    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<ChatMember> chatMember;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "owner")
     private List<Friend> friendListOwner;
@@ -83,6 +79,22 @@ public class Member extends Timestamped {
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
 
     private int reportCnt;
+
+    public Member (SignupInfoDto signupInfoDto) {
+        this.kakaoId = signupInfoDto.getKakaoId();
+        this.naverId = signupInfoDto.getNaverId();
+                this.email = signupInfoDto.getEmail();
+                this.profileImageUrl = signupInfoDto.getImgUrl();
+                this.phoneNumber = signupInfoDto.getPhoneNumber();
+                this.point = 1000;
+                this.credit = 100.0;
+                this.firstLogin = true;
+                this.pointOnDay = 0L;
+                this.numOfDone = 0;
+                this.numOfSelfEvent = 0;
+                this.password = "@";
+                this.userRole = signupInfoDto.getRole();
+    }
 
     public void updateNickname(String name) {
         this.nickname = name;

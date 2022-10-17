@@ -4,6 +4,7 @@ import com.example.week8.domain.Member;
 import com.example.week8.domain.UserDetailsImpl;
 import com.example.week8.domain.enums.Authority;
 import com.example.week8.dto.NaverMemberInfoDto;
+import com.example.week8.dto.SignupInfoDto;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.response.OauthLoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -60,6 +61,41 @@ public class NaverOauthService {
                 .phoneNumber(naverMember.getPhoneNumber())
                 .email(naverMember.getEmail())
                 .build());
+    }
+
+    // 로그인 연동 해제
+    @Transactional
+    public ResponseDto<?> naverLogout(String code, String state) throws JsonProcessingException{
+        // 1. 받은 code와 state로 accesstoken 받기
+        String accessToken = getAccessToken(code, state);
+        // 2. 로그인연동 해제
+        return ResponseDto.success(doLogout(accessToken));
+    }
+
+    // 연동 해제 요청 실행
+    private String doLogout(String accessToken) throws JsonProcessingException {
+        HttpHeaders logoutHeaders = new HttpHeaders();
+        logoutHeaders.add("Content-type", "application/x-www-form-urlencoded");
+
+        MultiValueMap<String, String> logoutRequestParam = new LinkedMultiValueMap<>();
+        logoutRequestParam.add("grant_type", "delete");
+        logoutRequestParam.add("client_id", "z6KYvnNk_EXQGnwgQo3u");
+        logoutRequestParam.add("client_secret", "EyjWue7YLp");
+        logoutRequestParam.add("access_token", accessToken);
+        logoutRequestParam.add("service_provider", "NAVER");    // api랑 다름 이거 안붙이면 invaild_provider 에러발생함.
+
+        HttpEntity<MultiValueMap<String, String>> logoutRequest = new HttpEntity<>(logoutRequestParam, logoutHeaders);
+        RestTemplate rt = new RestTemplate();
+        ResponseEntity<String> logoutResponse = rt.exchange(
+                "https://nid.naver.com/oauth2.0/token",
+                HttpMethod.POST,
+                logoutRequest,
+                String.class
+        );
+        String responseBody = logoutResponse.getBody();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        return jsonNode.get("result").asText();
     }
 
 
@@ -153,20 +189,28 @@ public class NaverOauthService {
                 chkExistMember = true;
             }
             if (!chkExistMember) {
-                naverMember = Member.builder()
+//                naverMember = Member.builder()
+//                        .naverId(naverId)
+//                        .email(email)
+//                        .profileImageUrl(imgUrl)
+//                        .phoneNumber(phoneNumber)
+//                        .point(1000)
+//                        .credit(100.0)
+//                        .firstLogin(true)
+//                        .pointOnDay(0L)
+//                        .numOfDone(0)
+//                        .numOfSelfEvent(0)
+//                        .password("@")
+//                        .userRole(Authority.valueOf("ROLE_MEMBER"))
+//                        .build();
+                naverMember = new Member(SignupInfoDto.builder()
+//                        .kakaoId(null)
                         .naverId(naverId)
+                        .imgUrl(imgUrl)
                         .email(email)
-                        .profileImageUrl(imgUrl)
                         .phoneNumber(phoneNumber)
-                        .point(1000000)
-                        .credit(100.0)
-                        .firstLogin(true)
-                        .pointOnDay(0L)
-                        .numOfDone(0)
-                        .numOfSelfEvent(0)
-                        .password("@")
-                        .userRole(Authority.valueOf("ROLE_MEMBER"))
-                        .build();
+                        .role(Authority.ROLE_MEMBER)
+                        .build());
             } else {
                 naverMember.setNaverId(naverId);
                 if (naverMember.getEmail() == null)
