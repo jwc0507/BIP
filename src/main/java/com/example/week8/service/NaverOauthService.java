@@ -112,7 +112,12 @@ public class NaverOauthService {
 
         String id = jsonNode.get("response").get("id").asText();
         String email = jsonNode.get("response").get("email").asText();
-        String imgUrl = jsonNode.get("response").get("profile_image").asText();
+        String imgUrl = null;
+        try {
+            imgUrl = jsonNode.get("response").get("profile_image").asText();
+        }
+        catch (Exception ignored){
+        }
         String mobile = jsonNode.get("response").get("mobile").asText();
 
         String phoneNumber = mobile.replaceAll("-", "");
