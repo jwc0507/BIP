@@ -98,17 +98,17 @@ public class KakaoOauthService {
 
     private String getAccessToken(String code, String mode) throws JsonProcessingException {
 
-        String redirectUrl;
-        if (mode.equals("login")) {
+//        String redirectUrl;
+//        if (mode.equals("login")) {
 //            redirectUrl = "https://localhost/api/member/kakaologin";
-//            redirectUrl = "http://localhost:3000/login/kakao";
-            redirectUrl = "https://berryimportantpromise.com/login/kakao";
-        }
-        else {
+////            redirectUrl = "http://localhost:3000/login/kakao";
+////            redirectUrl = "https://berryimportantpromise.com/login/kakao";
+//        }
+//        else {
 //            redirectUrl = "https://localhost/api/member/kakaologout";
-//            redirectUrl = "http://localhost:3000/logout/kakao";
-            redirectUrl = "https://berryimportantpromise.com/logout/kakao";
-        }
+////            redirectUrl = "http://localhost:3000/logout/kakao";
+////            redirectUrl = "https://berryimportantpromise.com/logout/kakao";
+//        }
 
         // HTTP Header 생성
         HttpHeaders headers = new HttpHeaders();
@@ -118,7 +118,7 @@ public class KakaoOauthService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "610f7f90999f8f182434e3cc03ad6415");
-        body.add("redirect_uri", redirectUrl);
+        body.add("redirect_uri", "https://berryimportantpromise.com/login/kakao");
         body.add("code", code);
 
         // HTTP 요청 보내기
