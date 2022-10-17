@@ -4,6 +4,7 @@ import com.example.week8.domain.Member;
 import com.example.week8.domain.UserDetailsImpl;
 import com.example.week8.domain.enums.Authority;
 import com.example.week8.dto.KakaoMemberInfoDto;
+import com.example.week8.dto.SignupInfoDto;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.response.OauthLoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -119,8 +120,7 @@ public class KakaoOauthService {
         String imgUrl = null;
         try {
             imgUrl = jsonNode.get("kakao_account").get("profile").get("profile_image_url").asText();
-        }
-        catch (Exception ignored){
+        } catch (Exception ignored) {
         }
         return KakaoMemberInfoDto.builder()
                 .id(id)
@@ -150,17 +150,25 @@ public class KakaoOauthService {
                 chkExistMember = true;
             }
             if (!chkExistMember) {
-                kakaoUser = Member.builder()
+//                kakaoUser = Member.builder()
+//                        .kakaoId(kakaoId)
+//                        .email(email)
+//                        .profileImageUrl(imageUrl)
+//                        .point(1000)
+//                        .credit(100.0)
+//                        .pointOnDay(0L)
+//                        .numOfDone(0)
+//                        .password("@")
+//                        .userRole(Authority.valueOf("ROLE_MEMBER"))
+//                        .build();
+                kakaoUser = new Member(SignupInfoDto.builder()
                         .kakaoId(kakaoId)
+//                        .naverId(null)
+                        .imgUrl(imageUrl)
                         .email(email)
-                        .profileImageUrl(imageUrl)
-                        .point(1000000)
-                        .credit(100.0)
-                        .pointOnDay(0L)
-                        .numOfDone(0)
-                        .password("@")
-                        .userRole(Authority.valueOf("ROLE_MEMBER"))
-                        .build();
+                        .phoneNumber(null)
+                        .role(Authority.ROLE_MEMBER)
+                        .build());
             } else {
                 kakaoUser.setKakaoId(kakaoId);
                 kakaoUser.setEmail(email);

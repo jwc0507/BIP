@@ -52,8 +52,14 @@ public class MemberController {
 
     // 네이버 로그인
     @RequestMapping (value = "/api/member/naverlogin", method = RequestMethod.GET)
-    public ResponseDto<?> naverlogin(@RequestParam("code") String code,@RequestParam("state") String state, HttpServletResponse response) throws JsonProcessingException {
+    public ResponseDto<?> naverlogin(@RequestParam("code") String code, @RequestParam("state") String state, HttpServletResponse response) throws JsonProcessingException {
         return naverOauthService.naverlogin(code, state, response);
+    }
+
+    // 네이버 로그아웃
+    @RequestMapping (value = "/api/member/naverlogout", method = RequestMethod.GET)
+    public ResponseDto<?> naverLogout(@RequestParam("code") String code, @RequestParam("state") String state) throws JsonProcessingException {
+        return naverOauthService.naverLogout(code, state);
     }
 
     // 회원가입
