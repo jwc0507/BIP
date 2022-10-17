@@ -5,16 +5,28 @@ import com.example.week8.dto.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.time.format.DateTimeParseException;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ErrorResponse> usernameNotFoundException(final UsernameNotFoundException e) {
+        log.error("userAuthException: {}", e.getMessage());
+//        return new ModelAndView("redirect:/intro"); // 리다이렉트 처리
+        return ResponseEntity
+                .status(ErrorResponse.ErrorCode.USERNAME_NOT_FOUND.getStatus().value())
+                .body(new ErrorResponse(ErrorResponse.ErrorCode.USERNAME_NOT_FOUND));
+    }
 
 
     // 405에러
