@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -29,18 +30,24 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 
 @RequiredArgsConstructor
 @Service
 @Transactional
+@Slf4j
 public class KakaoOauthService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
 
     @Transactional
-    public ResponseDto<?> kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+    public ResponseDto<?> kakaoLogin(String code, HttpServletResponse response, HttpServletRequest request) throws JsonProcessingException {
+
+       log.info(request.getRequestURI());
+       log.info(String.valueOf(request.getRequestURL()));
+
         // 1. "인가 코드"로 전체 response 요청
         String accessToken = getAccessToken(code, "login");
 
@@ -98,17 +105,17 @@ public class KakaoOauthService {
 
     private String getAccessToken(String code, String mode) throws JsonProcessingException {
 
-//        String redirectUrl;
-//        if (mode.equals("login")) {
+        String redirectUrl;
+        if (mode.equals("login")) {
 //            redirectUrl = "https://localhost/api/member/kakaologin";
-////            redirectUrl = "http://localhost:3000/login/kakao";
-////            redirectUrl = "https://berryimportantpromise.com/login/kakao";
-//        }
-//        else {
+//            redirectUrl = "http://localhost:3000/login/kakao";
+            redirectUrl = "https://berryimportantpromise.com/login/kakao";
+        }
+        else {
 //            redirectUrl = "https://localhost/api/member/kakaologout";
-////            redirectUrl = "http://localhost:3000/logout/kakao";
-////            redirectUrl = "https://berryimportantpromise.com/logout/kakao";
-//        }
+//            redirectUrl = "http://localhost:3000/logout/kakao";
+            redirectUrl = "https://berryimportantpromise.com/logout/kakao";
+        }
 
         // HTTP Header 생성
         HttpHeaders headers = new HttpHeaders();
@@ -118,7 +125,7 @@ public class KakaoOauthService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "610f7f90999f8f182434e3cc03ad6415");
-        body.add("redirect_uri", "https://berryimportantpromise.com/login/kakao");
+        body.add("redirect_uri", redirectUrl);
         body.add("code", code);
 
         // HTTP 요청 보내기

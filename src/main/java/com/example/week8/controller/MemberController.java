@@ -46,8 +46,8 @@ public class MemberController {
 
     // 카카오 로그인
     @RequestMapping (value = "/api/member/kakaologin", method = RequestMethod.GET)
-    public ResponseDto<?> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) throws JsonProcessingException {
-        return kakaoOauthService.kakaoLogin(code, response);
+    public ResponseDto<?> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response, HttpServletRequest request) throws JsonProcessingException {
+        return kakaoOauthService.kakaoLogin(code, response, request);
     }
 
     // 카카오 로그아웃 (연동해제)
