@@ -22,7 +22,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ErrorResponse> usernameNotFoundException(final UsernameNotFoundException e) {
         log.error("userAuthException: {}", e.getMessage());
-//        return new ModelAndView("redirect:/intro"); // 리다이렉트 처리
+//        return new ModelAndView("redirect:/intro");
+//        리다이렉트 처리, 원래 백에서 처리하려했으니 프론트에서 하겠다고 해서 뺐음.
+//        만약 백에서 처리할 경우 "잘못된 접근입니다" 라고 에러상태를 띄우고 로긘 페이지로 넘기면 될 것 같음.
         return ResponseEntity
                 .status(ErrorResponse.ErrorCode.USERNAME_NOT_FOUND.getStatus().value())
                 .body(new ErrorResponse(ErrorResponse.ErrorCode.USERNAME_NOT_FOUND));

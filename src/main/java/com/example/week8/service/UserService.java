@@ -137,6 +137,8 @@ public class UserService {
             // 없는 전화번호
             if (responseDto.getData() == null) {
                 updateMember.updatePhoneNumber(newPhoneNumber);
+                response.addHeader("Authorization", request.getHeader("Authorization"));
+                response.addHeader("RefreshToken", request.getHeader("RefreshToken"));
 
                 return ResponseDto.success(UpdateMemberResponseDto.builder()
                         .nickname(updateMember.getNickname())
