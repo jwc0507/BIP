@@ -111,6 +111,13 @@ public class Member extends Timestamped {
             this.profileImageUrl = url;
     }
 
+    public void updateNaverMember(String email, String url, String naverId) {
+        this.naverId = naverId;
+        this.email = email;
+        if (profileImageUrl == null)
+            this.profileImageUrl = url;
+    }
+
     public void updateEmail(String email) {
         this.email = email;
     }

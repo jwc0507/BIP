@@ -117,7 +117,7 @@ public class UserService {
 
     // 카카오 로그인 전용 전화번호 설정
     @Transactional
-    public ResponseDto<?> setKakaoPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseDto<?> setOauthPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response, String type) {
         //== token 유효성 검사 ==//
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -156,26 +156,51 @@ public class UserService {
                 if (findMember.equals(updateMember))
                     return ResponseDto.fail("멤버정보 동일 에러");
 
-                if (findMember.getKakaoId() != null) {
+                if(type.equals("kakao")) {
+                    if (findMember.getKakaoId() != null) {
+                        tokenProvider.deleteRefreshToken(updateMember);
+                        SecurityContextHolder.clearContext();
+                        memberRepository.deleteById(updateMember.getId());
+                        return ResponseDto.fail("해당 전화번호에 가입된 카카오 아이디가 있습니다.");
+                    }
+                    // 계정 통합
+                    String email = updateMember.getEmail();
+                    String url = updateMember.getProfileImageUrl();
+                    Long kakaoId = updateMember.getKakaoId();
+
+                    friendService.deleteMySelf(request);
+
                     tokenProvider.deleteRefreshToken(updateMember);
                     SecurityContextHolder.clearContext();
+
                     memberRepository.deleteById(updateMember.getId());
-                    return ResponseDto.fail("해당 전화번호에 가입된 카카오 아이디가 있습니다.");
+                    memberRepository.flush();
+
+                    findMember.updateKakaoMember(email, url, kakaoId);
                 }
-                // 계정 통합
-                String email = updateMember.getEmail();
-                String url = updateMember.getProfileImageUrl();
-                Long kakaoId = updateMember.getKakaoId();
+                else {
+                    if (findMember.getNaverId() != null) {
+                        tokenProvider.deleteRefreshToken(updateMember);
+                        SecurityContextHolder.clearContext();
+                        memberRepository.deleteById(updateMember.getId());
+                        return ResponseDto.fail("해당 전화번호에 가입된 네이버 아이디가 있습니다.");
+                    }
+                    // 계정 통합
+                    String email = updateMember.getEmail();
+                    String url = updateMember.getProfileImageUrl();
+                    String naverId = updateMember.getNaverId();
 
-                friendService.deleteMySelf(request);
+                    friendService.deleteMySelf(request);
 
-                tokenProvider.deleteRefreshToken(updateMember);
-                SecurityContextHolder.clearContext();
+                    tokenProvider.deleteRefreshToken(updateMember);
+                    SecurityContextHolder.clearContext();
 
-                memberRepository.deleteById(updateMember.getId());
-                memberRepository.flush();
+                    memberRepository.deleteById(updateMember.getId());
+                    memberRepository.flush();
 
-                findMember.updateKakaoMember(email, url, kakaoId);
+                    findMember.updateNaverMember(email, url, naverId);
+                }
+
                 forceLogin(findMember, response);
 
                 findMember.chkFirstLogin();

@@ -154,14 +154,13 @@ public class NaverOauthService {
         }
         catch (Exception ignored){
         }
-        String mobile = jsonNode.get("response").get("mobile").asText();
-
-        String phoneNumber = mobile.replaceAll("-", "");
+//        String mobile = jsonNode.get("response").get("mobile").asText();
+//
+//        String phoneNumber = mobile.replaceAll("-", "");
         return NaverMemberInfoDto.builder()
                 .id(id)
                 .email(email)
                 .imageUrl(imgUrl)
-                .phoneNumber(phoneNumber)
                 .build();
     }
 
@@ -172,50 +171,35 @@ public class NaverOauthService {
         if (naverMember == null) {
             String email = memberInfoDto.getEmail();
             String imgUrl = memberInfoDto.getImageUrl();
-            String phoneNumber = memberInfoDto.getPhoneNumber();
+//            String phoneNumber = memberInfoDto.getPhoneNumber();
 
             boolean chkExistMember = false;
 
-            // 같은 폰번호로 가입된 사람이 있는가?
-            Member chkMember = memberRepository.findByPhoneNumber(phoneNumber).orElse(null);
-            if (chkMember != null) {
-                naverMember = chkMember;
-                chkExistMember = true;
-            }
+//            // 같은 폰번호로 가입된 사람이 있는가?
+//            Member chkMember = memberRepository.findByPhoneNumber(phoneNumber).orElse(null);
+//            if (chkMember != null) {
+//                naverMember = chkMember;
+//                chkExistMember = true;
+//            }
             // 같은 이메일로 가입된 사람이 있는가?
-            chkMember = memberRepository.findByEmail(email).orElse(null);
+            Member chkMember = memberRepository.findByEmail(email).orElse(null);
             if (chkMember != null) {
                 naverMember = chkMember;
                 chkExistMember = true;
             }
             if (!chkExistMember) {
-//                naverMember = Member.builder()
-//                        .naverId(naverId)
-//                        .email(email)
-//                        .profileImageUrl(imgUrl)
-//                        .phoneNumber(phoneNumber)
-//                        .point(1000)
-//                        .credit(100.0)
-//                        .firstLogin(true)
-//                        .pointOnDay(0L)
-//                        .numOfDone(0)
-//                        .numOfSelfEvent(0)
-//                        .password("@")
-//                        .userRole(Authority.valueOf("ROLE_MEMBER"))
-//                        .build();
                 naverMember = new Member(SignupInfoDto.builder()
-//                        .kakaoId(null)
                         .naverId(naverId)
                         .imgUrl(imgUrl)
                         .email(email)
-                        .phoneNumber(phoneNumber)
+//                        .phoneNumber(phoneNumber)
                         .role(Authority.ROLE_MEMBER)
                         .build());
             } else {
                 naverMember.setNaverId(naverId);
                 if (naverMember.getEmail() == null)
                     naverMember.setEmail(email);
-                naverMember.setPhoneNumber(phoneNumber);
+//                naverMember.setPhoneNumber(phoneNumber);
                 if (naverMember.getProfileImageUrl() == null)
                     naverMember.setProfileImageUrl(imgUrl);
             }
