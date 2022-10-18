@@ -58,7 +58,7 @@ public class NaverOauthService {
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
                 .nickname(naverMember.getNickname())
-                .phoneNumber(null)
+                .phoneNumber(naverMember.getPhoneNumber())
                 .email(naverMember.getEmail())
                 .build());
     }
@@ -154,9 +154,6 @@ public class NaverOauthService {
         }
         catch (Exception ignored){
         }
-//        String mobile = jsonNode.get("response").get("mobile").asText();
-//
-//        String phoneNumber = mobile.replaceAll("-", "");
         return NaverMemberInfoDto.builder()
                 .id(id)
                 .email(email)
@@ -171,16 +168,9 @@ public class NaverOauthService {
         if (naverMember == null) {
             String email = memberInfoDto.getEmail();
             String imgUrl = memberInfoDto.getImageUrl();
-//            String phoneNumber = memberInfoDto.getPhoneNumber();
 
             boolean chkExistMember = false;
 
-//            // 같은 폰번호로 가입된 사람이 있는가?
-//            Member chkMember = memberRepository.findByPhoneNumber(phoneNumber).orElse(null);
-//            if (chkMember != null) {
-//                naverMember = chkMember;
-//                chkExistMember = true;
-//            }
             // 같은 이메일로 가입된 사람이 있는가?
             Member chkMember = memberRepository.findByEmail(email).orElse(null);
             if (chkMember != null) {
@@ -192,14 +182,12 @@ public class NaverOauthService {
                         .naverId(naverId)
                         .imgUrl(imgUrl)
                         .email(email)
-//                        .phoneNumber(phoneNumber)
                         .role(Authority.ROLE_MEMBER)
                         .build());
             } else {
                 naverMember.setNaverId(naverId);
                 if (naverMember.getEmail() == null)
                     naverMember.setEmail(email);
-//                naverMember.setPhoneNumber(phoneNumber);
                 naverMember.setPhoneNumber(null);
                 if (naverMember.getProfileImageUrl() == null)
                     naverMember.setProfileImageUrl(imgUrl);

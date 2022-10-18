@@ -201,20 +201,8 @@ public class KakaoOauthService {
                 chkExistMember = true;
             }
             if (!chkExistMember) {
-//                kakaoUser = Member.builder()
-//                        .kakaoId(kakaoId)
-//                        .email(email)
-//                        .profileImageUrl(imageUrl)
-//                        .point(1000)
-//                        .credit(100.0)
-//                        .pointOnDay(0L)
-//                        .numOfDone(0)
-//                        .password("@")
-//                        .userRole(Authority.valueOf("ROLE_MEMBER"))
-//                        .build();
                 kakaoUser = new Member(SignupInfoDto.builder()
                         .kakaoId(kakaoId)
-//                        .naverId(null)
                         .imgUrl(imageUrl)
                         .email(email)
                         .phoneNumber(null)
