@@ -58,7 +58,7 @@ public class NaverOauthService {
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
                 .nickname(naverMember.getNickname())
-                .phoneNumber(naverMember.getPhoneNumber())
+                .phoneNumber(null)
                 .email(naverMember.getEmail())
                 .build());
     }
@@ -200,6 +200,7 @@ public class NaverOauthService {
                 if (naverMember.getEmail() == null)
                     naverMember.setEmail(email);
 //                naverMember.setPhoneNumber(phoneNumber);
+                naverMember.setPhoneNumber(null);
                 if (naverMember.getProfileImageUrl() == null)
                     naverMember.setProfileImageUrl(imgUrl);
             }
