@@ -547,7 +547,7 @@ public class EventService {
 
         // 약속 두 시간 전부터 체크인 가능
         if (LocalDateTime.now().isBefore(event.getEventDateTime().minusHours(2)))
-            return ResponseDto.fail("아직 체크인 가능 시간이 아닙니다.");
+            return ResponseDto.fail("체크인은 2시간 전부터 가능합니다.");
 
         // 약속상태가 아직 ongoing(체크인 가능상태)인지 확인
         if (event.getEventStatus() == EventStatus.CLOSED)
