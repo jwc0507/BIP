@@ -443,7 +443,7 @@ public class EventService {
         }
 
         // 채팅방 초대 알림
-        sseEmitterService.pubEventInvite(guest.getId(), event.getTitle());
+        sseEmitterService.pubEventInvite(guest.getId(), event);
 
         return ResponseDto.success(
                 EventResponseDto.builder()
