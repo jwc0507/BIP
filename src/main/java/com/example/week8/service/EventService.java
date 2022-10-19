@@ -425,15 +425,6 @@ public class EventService {
         // 약속 멤버 생성
         EventMember tempEventMember = new EventMember(guest, event);
         eventMemberRepository.save(tempEventMember);
-//
-//        // 체크인멤버 생성 - 초대하는 사람 것
-//        if (isPresentCheckinMember(eventId, member.getId()) == null) {
-//            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
-//            checkinMemberRepository.save(checkinMember);
-//        } else {
-//            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
-//            checkinMemberRepository.save(checkinMember);
-//        }
 
         // 체크인멤버 생성 - 초대받는 사람 것이 생기고 있음
         CheckinMember checkinMemberGuest = new CheckinMember(event, isPresentMember(guest.getId()));
@@ -450,6 +441,9 @@ public class EventService {
             memberResponseDto.setAttendance(tempCheckinMember.getAttendance());
             tempList.add(memberResponseDto);
         }
+
+        // 채팅방 초대 알림
+        sseEmitterService.pubEventInvite(guest.getId(), event.getTitle());
 
         return ResponseDto.success(
                 EventResponseDto.builder()
@@ -710,6 +704,7 @@ public class EventService {
         // 이벤트상태
         if(calculateCredit(eventId)) {
             event.confirm();
+//            sseEmitterService.pubEventConfirm(event);
             return ResponseDto.success("약속을 확인했습니다. 더이상 체크인할 수 없습니다.");
         }
         else

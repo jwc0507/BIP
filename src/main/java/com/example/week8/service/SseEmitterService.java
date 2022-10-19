@@ -20,10 +20,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -102,6 +100,41 @@ public class SseEmitterService {
             }
         }));
         return ResponseDto.success("발신완료");
+    }
+
+    // 채팅방 초대 알림
+    public void pubEventInvite(Long memberId, String eventTitle) {
+        Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(memberId.toString());
+
+        ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+        sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
+            try {
+                emitter.send("["+eventTitle+"] 약속에 초대되셨습니다.", MediaType.APPLICATION_JSON);
+                log.info(id + " : 초대 알림 발신완료");
+                Thread.sleep(100);
+            } catch (Exception e) {
+                log.warn("disconnected id : {}", id);
+            }
+        }));
+    }
+
+    // 약속 컨펌 알림
+    public void pubEventConfirm(Event event) {
+        List<EventMember> eventMemberList = eventMemberRepository.findAllByEventId(event.getId());
+        for(EventMember eventMember : eventMemberList) {
+            Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(eventMember.getMember().getId().toString());
+
+            ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+            sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
+                try {
+                    emitter.send("["+event.getTitle()+"] 약속이 완료되었습니다.", MediaType.APPLICATION_JSON);
+                    log.info(id + " : 완료 알림 발신완료");
+                    Thread.sleep(100);
+                } catch (Exception e) {
+                    log.warn("disconnected id : {}", id);
+                }
+            }));
+        }
     }
 
     // 알림 구독
