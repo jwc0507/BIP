@@ -2,6 +2,7 @@ package com.example.week8.service;
 
 import com.example.week8.domain.*;
 import com.example.week8.domain.enums.AlertType;
+import com.example.week8.dto.CommentAlertDto;
 import com.example.week8.dto.InviteDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.EmitterRepositoryImpl;
@@ -119,6 +120,24 @@ public class SseEmitterService {
             try {
                 emitter.send(InviteDto.builder().message(msg).eventId(eventId).build(), MediaType.APPLICATION_JSON);
                 log.info(id + " : 초대 알림 발신완료");
+                Thread.sleep(100);
+            } catch (Exception e) {
+                log.warn("disconnected id : {}", id);
+            }
+        }));
+    }
+
+    // 채팅방 초대 알림
+    public void pubNewComment(Long memberId, Post post) {
+        Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(memberId.toString());
+        String msg = "댓글";
+        String postId = post.getId().toString();
+
+        ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+        sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
+            try {
+                emitter.send(CommentAlertDto.builder().message(msg).postId(postId).build(), MediaType.APPLICATION_JSON);
+                log.info(id + " : 댓글 알림 발신완료");
                 Thread.sleep(100);
             } catch (Exception e) {
                 log.warn("disconnected id : {}", id);
