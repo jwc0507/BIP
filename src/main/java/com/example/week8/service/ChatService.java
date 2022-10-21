@@ -190,7 +190,7 @@ public class ChatService {
 
 
     // 기존 채팅방 메세지들 불러오기
-    @Transactional (readOnly = true)
+    @Transactional
     public ResponseDto<?> getMessage(Long roomId, Pageable pageable, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
