@@ -73,8 +73,8 @@ public class SecurityConfiguration {
             .antMatchers("/pub/**").permitAll()
             .antMatchers("/ws-stomp/**").permitAll()
             .antMatchers("/h2-console/**").permitAll()
-            .anyRequest().authenticated()
-            //.anyRequest().permitAll()
+//            .anyRequest().authenticated()
+            .anyRequest().permitAll()
 
             .and()
             .apply(new JwtSecurityConfiguration(SECRET_KEY, tokenProvider, userDetailsService));
