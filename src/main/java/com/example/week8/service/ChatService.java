@@ -115,6 +115,7 @@ public class ChatService {
         // 메세지 보내기
         messageTemplate.convertAndSend("/sub/chat/room/" + eventId, chatMessageDto);
 
+        chatMember.get().setStatus(false);
 
         chatMemberRepository.deleteById(chatMember.get().getId());
 
@@ -182,6 +183,7 @@ public class ChatService {
                     .build();
             chatMessageRepository.save(chatMessage);
         }
+        chatRoom.setLastMessageTime(LocalDateTime.now());
 
         return ResponseDto.success("메세지 보내기 성공");
     }
@@ -225,7 +227,35 @@ public class ChatService {
                     .build();
             chatMessageDtos.add(chatMsgResponseDto);
         }
+        chatMember.setEnterTime();
+        chatMember.setStatus(true);
+
         return ResponseDto.success(chatMessageDtos);
+    }
+
+    // 채팅방 읽기모드 상태변경
+    @Transactional
+    public ResponseDto<?> switchChatListenStatus(Long roomId, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+        Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
+        assert member != null;
+
+        Optional<ChatRoom> getChatRoom = chatRoomRepository.findById(roomId);
+        ChatRoom chatRoom;
+        if (getChatRoom.isPresent())
+            chatRoom = getChatRoom.get();
+        else
+            return ResponseDto.fail("채팅방을 찾을 수 없습니다.");
+
+        ChatMember chatMember = chatMemberRepository.findByMemberAndChatRoom(member,chatRoom).orElse(null);
+        if(chatMember == null)
+            return ResponseDto.fail("채팅 멤버를 찾을 수 없습니다.");
+
+        chatMember.setLeftTime();
+        chatMember.setStatus(false);
+        return ResponseDto.success("접속 해제 완료");
     }
 
 
