@@ -31,4 +31,16 @@ public class ChatRoomController {
     public ResponseDto<?> exitChatRoom (@PathVariable Long eventId, HttpServletRequest request) {
         return chatService.exitChatRoom(eventId, request);
     }
+//
+//    // 채팅방 접속상태 확인 (입장)
+//    @RequestMapping (value = "/api/chat/member/connect/{eventId}", method = RequestMethod.POST)
+//    public ResponseDto<?>  enableChatListenStatus (@PathVariable Long eventId, HttpServletRequest request) {
+//        return chatService.switchChatListenStatus(eventId, request, true);
+//    }
+
+    // 채팅방 접속상태 확인 (나가기)
+    @RequestMapping (value = "/api/chat/member/disconnect/{eventId}", method = RequestMethod.POST)
+    public ResponseDto<?>  disableChatListenStatus (@PathVariable Long eventId, HttpServletRequest request) {
+        return chatService.switchChatListenStatus(eventId, request);
+    }
 }
