@@ -2,8 +2,9 @@ package com.example.week8.service;
 
 import com.example.week8.domain.*;
 import com.example.week8.domain.enums.AlertType;
-import com.example.week8.dto.CommentAlertDto;
-import com.example.week8.dto.InviteDto;
+import com.example.week8.dto.alert.ChatAlertDto;
+import com.example.week8.dto.alert.CommentAlertDto;
+import com.example.week8.dto.alert.InviteAlertDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.EmitterRepositoryImpl;
 import com.example.week8.repository.EventMemberRepository;
@@ -98,7 +99,7 @@ public class SseEmitterService {
 
         sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
             try {
-                emitter.send(InviteDto.builder().message(msg).eventId(eventId).build(), MediaType.APPLICATION_JSON);
+                emitter.send(InviteAlertDto.builder().message(msg).eventId(eventId).build(), MediaType.APPLICATION_JSON);
                 log.info(id + " : 발신완료");
                 Thread.sleep(100);
             } catch (Exception e) {
@@ -118,7 +119,7 @@ public class SseEmitterService {
         ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
         sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
             try {
-                emitter.send(InviteDto.builder().message(msg).eventId(eventId).build(), MediaType.APPLICATION_JSON);
+                emitter.send(InviteAlertDto.builder().message(msg).eventId(eventId).build(), MediaType.APPLICATION_JSON);
                 log.info(id + " : 초대 알림 발신완료");
                 Thread.sleep(100);
             } catch (Exception e) {
@@ -127,9 +128,10 @@ public class SseEmitterService {
         }));
     }
 
-    // 채팅방 초대 알림
+    // 댓글 알림
     public void pubNewComment(Long memberId, Post post) {
         Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(memberId.toString());
+
         String msg = "댓글";
         String postId = post.getId().toString();
 
@@ -138,6 +140,25 @@ public class SseEmitterService {
             try {
                 emitter.send(CommentAlertDto.builder().message(msg).postId(postId).build(), MediaType.APPLICATION_JSON);
                 log.info(id + " : 댓글 알림 발신완료");
+                Thread.sleep(100);
+            } catch (Exception e) {
+                log.warn("disconnected id : {}", id);
+            }
+        }));
+    }
+
+    // 안읽은 채팅 알림
+    public void pubNewChat(Long memberId, Long chatRoomId) {
+        Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(memberId.toString());
+
+        String msg = "채팅";
+        String eventId = chatRoomId.toString();
+
+        ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+        sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
+            try {
+                emitter.send(ChatAlertDto.builder().message(msg).eventId(eventId).build(), MediaType.APPLICATION_JSON);
+                log.info(id + " : 읽지않은 채팅 알림 발신완료");
                 Thread.sleep(100);
             } catch (Exception e) {
                 log.warn("disconnected id : {}", id);
@@ -204,7 +225,7 @@ public class SseEmitterService {
     // 더미데이터 / 입장 알림 보내기
     private void sendDummyAlert(SseEmitter emitter, String emitterId) {
         try {
-            emitter.send(InviteDto.builder().message("입장").build(), MediaType.APPLICATION_JSON);
+            emitter.send(InviteAlertDto.builder().message("입장").build(), MediaType.APPLICATION_JSON);
         }
         catch (IOException e) {
             log.info(e.toString());

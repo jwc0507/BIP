@@ -1,4 +1,4 @@
-package com.example.week8.dto;
+package com.example.week8.dto.alert;
 
 import lombok.Builder;
 import lombok.Getter;

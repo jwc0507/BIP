@@ -29,12 +29,18 @@ public class QChatMember extends EntityPathBase<ChatMember> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
+    public final DateTimePath<java.time.LocalDateTime> enterTime = createDateTime("enterTime", java.time.LocalDateTime.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final DateTimePath<java.time.LocalDateTime> leftTime = createDateTime("leftTime", java.time.LocalDateTime.class);
 
     public final com.example.week8.domain.QMember member;
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> modifiedAt = _super.modifiedAt;
+
+    public final BooleanPath status = createBoolean("status");
 
     public QChatMember(String variable) {
         this(ChatMember.class, forVariable(variable), INITS);

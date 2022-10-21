@@ -1,11 +1,11 @@
-package com.example.week8.dto;
+package com.example.week8.dto.alert;
 
 import lombok.Builder;
 import lombok.Getter;
 
 @Builder
 @Getter
-public class InviteDto {
+public class InviteAlertDto {
     private String message;
     private String eventId;
 }
