@@ -55,9 +55,11 @@ public class Scheduler {  // 스케쥴링할 메소드의 조건 2가지: void�
         // 안읽은 채팅 알림.
         List<ChatRoom> chatRooms = chatRoomRepository.findAll();
         for (ChatRoom chatRoom : chatRooms) {
-            List<ChatMember> chatMembers = chatMemberRepository.searchUnReadChatMember(false, chatRoom.getLastMessageTime(), chatRoom.getId());
-            for (ChatMember chatMember : chatMembers) {
-                sseEmitterService.pubNewChat(chatMember.getMember().getId(), chatMember.getChatRoom().getId());
+            if(chatRoom.getLastMessageTime() != null) {
+                List<ChatMember> chatMembers = chatMemberRepository.searchUnReadChatMember(false, chatRoom.getLastMessageTime(), chatRoom.getId());
+                for (ChatMember chatMember : chatMembers) {
+                    sseEmitterService.pubNewChat(chatMember.getMember().getId(), chatMember.getChatRoom().getId());
+                }
             }
         }
 
