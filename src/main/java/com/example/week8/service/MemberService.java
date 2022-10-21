@@ -315,6 +315,8 @@ public class MemberService {
         TokenDto tokenDto = tokenProvider.generateTokenDto(member);
         refreshToken.updateValue(tokenDto.getRefreshToken());
         tokenToHeaders(tokenDto, response);
+        member.chkFirstLogin();
+
         return ResponseDto.success("재발급 완료");
     }
 

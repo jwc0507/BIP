@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @AllArgsConstructor
@@ -27,4 +28,24 @@ public class ChatMember extends Timestamped {
     @ManyToOne(fetch = FetchType.LAZY)
     private ChatRoom chatRoom;
 
+    @Column
+    private boolean status; // 채팅방에 접속중인지 확인
+
+    @Column
+    private LocalDateTime leftTime; // 채팅을 마지막으로 읽은 시간 확인
+
+    @Column
+    private LocalDateTime enterTime; // 채팅방에 다시 접속한 시간 확인
+
+    public void setStatus (boolean status) {
+        this.status = status;
+    }
+
+    public void setLeftTime () {
+        leftTime = LocalDateTime.now();
+    }
+
+    public void setEnterTime () {
+        enterTime = LocalDateTime.now();
+    }
 }
