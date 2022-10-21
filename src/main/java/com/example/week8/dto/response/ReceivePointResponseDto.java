@@ -7,6 +7,6 @@ import lombok.Getter;
 @Builder
 public class ReceivePointResponseDto {
     private String context;
-    private double newCredit;
+    private String newCredit;
     private int lastPoint;
 }

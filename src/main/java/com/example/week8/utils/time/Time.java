@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 
 @Slf4j
 public class Time {
@@ -95,15 +96,14 @@ public class Time {
     }
 
     public static String serializeEventDate(LocalDateTime localDateTime) {
-//        StringBuilder result = new StringBuilder();
-//        String[] splitDate = localDateTime.toString().split("T|:| ");
-//        for(String s : splitDate) {
-//            result.append(s).append("-");
-//        }
         return localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-00"));
     }
 
     public static String serializePostDate(LocalDateTime localDateTime) {
         return localDateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd.HH:mm"));
+    }
+
+    public static String serializeEventAlertDate(LocalDateTime localDateTime) {
+        return localDateTime.format(DateTimeFormatter.ofPattern("yy년 MM월 dd일").withLocale(Locale.forLanguageTag("ko")));
     }
 }

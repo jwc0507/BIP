@@ -117,7 +117,7 @@ public class UserService {
 
     // 카카오 로그인 전용 전화번호 설정
     @Transactional
-    public ResponseDto<?> setKakaoPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseDto<?> setOauthPhoneNumber(LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response, String type) {
         //== token 유효성 검사 ==//
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -137,6 +137,8 @@ public class UserService {
             // 없는 전화번호
             if (responseDto.getData() == null) {
                 updateMember.updatePhoneNumber(newPhoneNumber);
+                response.addHeader("Authorization", request.getHeader("Authorization"));
+                response.addHeader("RefreshToken", request.getHeader("RefreshToken"));
 
                 return ResponseDto.success(UpdateMemberResponseDto.builder()
                         .nickname(updateMember.getNickname())
@@ -154,26 +156,51 @@ public class UserService {
                 if (findMember.equals(updateMember))
                     return ResponseDto.fail("멤버정보 동일 에러");
 
-                if (findMember.getKakaoId() != null) {
+                if(type.equals("kakao")) {
+                    if (findMember.getKakaoId() != null) {
+                        tokenProvider.deleteRefreshToken(updateMember);
+                        SecurityContextHolder.clearContext();
+                        memberRepository.deleteById(updateMember.getId());
+                        return ResponseDto.fail("해당 전화번호에 가입된 카카오 아이디가 있습니다.");
+                    }
+                    // 계정 통합
+                    String email = updateMember.getEmail();
+                    String url = updateMember.getProfileImageUrl();
+                    Long kakaoId = updateMember.getKakaoId();
+
+                    friendService.deleteMySelf(request);
+
                     tokenProvider.deleteRefreshToken(updateMember);
                     SecurityContextHolder.clearContext();
+
                     memberRepository.deleteById(updateMember.getId());
-                    return ResponseDto.fail("해당 전화번호에 가입된 카카오 아이디가 있습니다.");
+                    memberRepository.flush();
+
+                    findMember.updateKakaoMember(email, url, kakaoId);
                 }
-                // 계정 통합
-                String email = updateMember.getEmail();
-                String url = updateMember.getProfileImageUrl();
-                Long kakaoId = updateMember.getKakaoId();
+                else {
+                    if (findMember.getNaverId() != null) {
+                        tokenProvider.deleteRefreshToken(updateMember);
+                        SecurityContextHolder.clearContext();
+                        memberRepository.deleteById(updateMember.getId());
+                        return ResponseDto.fail("해당 전화번호에 가입된 네이버 아이디가 있습니다.");
+                    }
+                    // 계정 통합
+                    String email = updateMember.getEmail();
+                    String url = updateMember.getProfileImageUrl();
+                    String naverId = updateMember.getNaverId();
 
-                friendService.deleteMySelf(request);
+                    friendService.deleteMySelf(request);
 
-                tokenProvider.deleteRefreshToken(updateMember);
-                SecurityContextHolder.clearContext();
+                    tokenProvider.deleteRefreshToken(updateMember);
+                    SecurityContextHolder.clearContext();
 
-                memberRepository.deleteById(updateMember.getId());
-                memberRepository.flush();
+                    memberRepository.deleteById(updateMember.getId());
+                    memberRepository.flush();
 
-                findMember.updateKakaoMember(email, url, kakaoId);
+                    findMember.updateNaverMember(email, url, naverId);
+                }
+
                 forceLogin(findMember, response);
 
                 findMember.chkFirstLogin();
@@ -430,11 +457,11 @@ public class UserService {
         }
 
         // 신용도 추가
-        if (receiver.getCredit() >= 200)
+        if (Double.parseDouble(receiver.getCredit()) >= 200)
             return ResponseDto.fail("이미 신용도가 최대치 입니다.");
 
         double calculationCredit = magnification * point; // 증가할 신용도량
-        double newCredit = receiver.getCredit() + calculationCredit;
+        double newCredit = Double.parseDouble(receiver.getCredit()) + calculationCredit;
         double lastCredit = 0;
         // 신용도는 200까지만 증가시킬 수 있음
         if (200 < newCredit) {
@@ -445,6 +472,7 @@ public class UserService {
         else if (0 > newCredit) {
             newCredit = 0;
         }
+        newCredit = Math.floor(newCredit * 10) / (10.0);
         receiver.setCredit(newCredit);
 
         // 남은 포인트 계산

@@ -11,6 +11,6 @@ public class UpdateMemberResponseDto {
     private String email;
     private String profileImgUrl;
     private int point;
-    private double creditScore;
+    private String creditScore;
     private int numOfDone;
 }

@@ -31,7 +31,13 @@ public class UserController {
     // 카카오 전화번호 설정
     @RequestMapping(value = "/api/user/phonenumber/kakao", method = RequestMethod.PUT)
     public ResponseDto<?> updateKakaoPhoneNumber(@RequestBody @Valid LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
-        return userService.setKakaoPhoneNumber(requestDto, request, response);
+        return userService.setOauthPhoneNumber(requestDto, request, response, "kakao");
+    }
+
+    // 네이버 전화번호 설정
+    @RequestMapping(value = "/api/user/phonenumber/naver", method = RequestMethod.PUT)
+    public ResponseDto<?> updateNaverPhoneNumber(@RequestBody @Valid LoginRequestDto requestDto, HttpServletRequest request, HttpServletResponse response) {
+        return userService.setOauthPhoneNumber(requestDto, request, response, "naver");
     }
 
     // 이메일 설정

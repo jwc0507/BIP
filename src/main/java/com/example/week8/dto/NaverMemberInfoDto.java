@@ -11,5 +11,5 @@ public class NaverMemberInfoDto {
     private String id;
     private String email;
     private String imageUrl;
-    private String phoneNumber;
+//    private String phoneNumber;
 }

@@ -425,15 +425,6 @@ public class EventService {
         // 약속 멤버 생성
         EventMember tempEventMember = new EventMember(guest, event);
         eventMemberRepository.save(tempEventMember);
-//
-//        // 체크인멤버 생성 - 초대하는 사람 것
-//        if (isPresentCheckinMember(eventId, member.getId()) == null) {
-//            CheckinMember checkinMember = new CheckinMember(event, isPresentMember(member.getId()));
-//            checkinMemberRepository.save(checkinMember);
-//        } else {
-//            CheckinMember checkinMember = isPresentCheckinMember(event.getId(), member.getId());
-//            checkinMemberRepository.save(checkinMember);
-//        }
 
         // 체크인멤버 생성 - 초대받는 사람 것이 생기고 있음
         CheckinMember checkinMemberGuest = new CheckinMember(event, isPresentMember(guest.getId()));
@@ -450,6 +441,9 @@ public class EventService {
             memberResponseDto.setAttendance(tempCheckinMember.getAttendance());
             tempList.add(memberResponseDto);
         }
+
+        // 채팅방 초대 알림
+        sseEmitterService.pubEventInvite(guest.getId(), event);
 
         return ResponseDto.success(
                 EventResponseDto.builder()
@@ -547,7 +541,7 @@ public class EventService {
 
         // 약속 두 시간 전부터 체크인 가능
         if (LocalDateTime.now().isBefore(event.getEventDateTime().minusHours(2)))
-            return ResponseDto.fail("아직 체크인 가능 시간이 아닙니다.");
+            return ResponseDto.fail("체크인은 2시간 전부터 가능합니다.");
 
         // 약속상태가 아직 ongoing(체크인 가능상태)인지 확인
         if (event.getEventStatus() == EventStatus.CLOSED)
@@ -668,7 +662,7 @@ public class EventService {
                     break;
             }
             // 신용도 업데이트
-            checkinMember.getMember().updateCreditScore(addCreditScore);
+            checkinMember.getMember().updateCreditScore(Math.floor(addCreditScore * 10) / (10.0));
             // 약속 카운터 올리기
             checkinMember.getMember().updateNumOfDone(done);
             // 포인트 업데이트
@@ -710,6 +704,7 @@ public class EventService {
         // 이벤트상태
         if(calculateCredit(eventId)) {
             event.confirm();
+//            sseEmitterService.pubEventConfirm(event);
             return ResponseDto.success("약속을 확인했습니다. 더이상 체크인할 수 없습니다.");
         }
         else

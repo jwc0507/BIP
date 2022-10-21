@@ -5,16 +5,30 @@ import com.example.week8.dto.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.time.format.DateTimeParseException;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ErrorResponse> usernameNotFoundException(final UsernameNotFoundException e) {
+        log.error("userAuthException: {}", e.getMessage());
+//        return new ModelAndView("redirect:/intro");
+//        리다이렉트 처리, 원래 백에서 처리하려했으니 프론트에서 하겠다고 해서 뺐음.
+//        만약 백에서 처리할 경우 "잘못된 접근입니다" 라고 에러상태를 띄우고 로긘 페이지로 넘기면 될 것 같음.
+        return ResponseEntity
+                .status(ErrorResponse.ErrorCode.USERNAME_NOT_FOUND.getStatus().value())
+                .body(new ErrorResponse(ErrorResponse.ErrorCode.USERNAME_NOT_FOUND));
+    }
 
 
     // 405에러
