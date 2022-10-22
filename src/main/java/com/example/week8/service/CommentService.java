@@ -58,7 +58,8 @@ public class CommentService {
         post.addCommentCounter();
         commentRepository.save(comment);
 
-        sseEmitterService.pubNewComment(post.getMember().getId(), post);
+        if(!post.getMember().getId().equals(member.getId()))
+            sseEmitterService.pubNewComment(post.getMember().getId(), post);
 
         return ResponseDto.success(CommentResponseDto.builder()
                 .id(comment.getId())
