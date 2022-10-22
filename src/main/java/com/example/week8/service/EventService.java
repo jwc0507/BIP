@@ -701,6 +701,11 @@ public class EventService {
             return ResponseDto.fail("아직 약속시간 전입니다. 약속시간이 지난 후 다시 시도해주세요.");
         }
 
+        // 이미 종료시킨 약속에 대해서는 다시 종료처리 불가능
+        if (event.getEventStatus() == EventStatus.CLOSED) {
+            return ResponseDto.fail("이미 종료시킨 약속입니다.");
+        }
+
         // 이벤트상태
         if(calculateCredit(eventId)) {
             event.confirm();

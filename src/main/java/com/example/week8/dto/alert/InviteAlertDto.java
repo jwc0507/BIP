@@ -7,5 +7,6 @@ import lombok.Getter;
 @Getter
 public class InviteAlertDto {
     private String message;
+    private String title;
     private String eventId;
 }
