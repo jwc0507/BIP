@@ -4,6 +4,7 @@ import com.example.week8.domain.*;
 import com.example.week8.domain.enums.AlertType;
 import com.example.week8.dto.alert.ChatAlertDto;
 import com.example.week8.dto.alert.CommentAlertDto;
+import com.example.week8.dto.alert.EventAlertDto;
 import com.example.week8.dto.alert.InviteAlertDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.EmitterRepositoryImpl;
@@ -175,7 +176,7 @@ public class SseEmitterService {
             ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
             sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
                 try {
-                    emitter.send("["+event.getTitle()+"] 약속이 완료되었습니다.", MediaType.APPLICATION_JSON);
+                    emitter.send(EventAlertDto.builder().title(event.getTitle()).message("["+event.getTitle()+"] 약속이 완료되었습니다.").eventId(event.getId().toString()), MediaType.APPLICATION_JSON);
                     log.info(id + " : 완료 알림 발신완료");
                     Thread.sleep(100);
                 } catch (Exception e) {
@@ -246,8 +247,8 @@ public class SseEmitterService {
                 Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(eventMember.getMember().getId().toString());
                 map.forEach((id, emitter) -> {
                     try {
-                        emitter.send(content, MediaType.APPLICATION_JSON);
-                        log.info(id + ": " + content + ", 발신완료");
+                        emitter.send(EventAlertDto.builder().title(event.getTitle()).message(content).eventId(eventId.toString()), MediaType.APPLICATION_JSON);
+                        log.info(id + " : " + content + ", 발신완료");
                         Thread.sleep(100);
                     } catch (Exception e) {
                         log.warn("disconnected id : {}", id);
