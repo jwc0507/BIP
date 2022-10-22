@@ -247,7 +247,7 @@ public class SseEmitterService {
                 Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(eventMember.getMember().getId().toString());
                 map.forEach((id, emitter) -> {
                     try {
-                        emitter.send(EventAlertDto.builder().title(event.getTitle()).message(content).eventId(eventId.toString()), MediaType.APPLICATION_JSON);
+                        emitter.send(EventAlertDto.builder().title(event.getTitle()).message(content).eventId(eventId.toString()).build(), MediaType.APPLICATION_JSON);
                         log.info(id + " : " + content + ", 발신완료");
                         Thread.sleep(100);
                     } catch (Exception e) {
