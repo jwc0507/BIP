@@ -1,6 +1,5 @@
 package com.example.week8.service;
 
-import com.example.week8.domain.LoginMember;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.RefreshToken;
 import com.example.week8.domain.UserDetailsImpl;
@@ -14,9 +13,9 @@ import com.example.week8.dto.request.LoginRequestDto;
 import com.example.week8.dto.response.LoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.EmitterRepositoryImpl;
-import com.example.week8.repository.LoginMemberRepository;
 import com.example.week8.repository.MemberRepository;
 import com.example.week8.security.TokenProvider;
+import com.example.week8.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.parser.ParseException;
@@ -29,7 +28,6 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -40,35 +38,33 @@ import java.util.regex.Pattern;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final LoginMemberRepository loginMemberRepository;
-
     private final TokenProvider tokenProvider;
     private final JavaMailSender javaMailSender;
     private final EmitterRepositoryImpl emitterRepository;
-//    private final RedisUtil redisUtil;
+    private final RedisUtil redisUtil;
 
 
     // 인증번호 확인
     public boolean chkValidCode(String key, String authCode) {
 
-        // rds 활용코드
-        // 인증번호 테이블에서 전화번호에 해당하는 인증번호 찾기
-        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(key);
-        if (getLogin.isEmpty())
-            return false;
-        // 여러개의 인증번호가 있을 수 있지만 마지막 값을 찾기 (코드 수정해서 첫 값만 가지게 됨)
-        String getAuthCode = getLogin.get(0).getAuthCode();
-        // 입력된 값과 DB의 인증번호가 같은지 확인
-        if (!getAuthCode.equals(authCode))
-            return false;
-        // 인증완료되었다면 인증번호 테이블 비워주기
-        loginMemberRepository.deleteById(getLogin.get(0).getId());
-
-//        // redis를 활용했을 때의 코드.
-//        String getKey = redisUtil.getData(key);
-//        if (!getKey.equals(authCode))
+//        // rds 활용코드
+//        // 인증번호 테이블에서 전화번호에 해당하는 인증번호 찾기
+//        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(key);
+//        if (getLogin.isEmpty())
 //            return false;
-//        redisUtil.deleteData(key);
+//        // 여러개의 인증번호가 있을 수 있지만 마지막 값을 찾기 (코드 수정해서 첫 값만 가지게 됨)
+//        String getAuthCode = getLogin.get(0).getAuthCode();
+//        // 입력된 값과 DB의 인증번호가 같은지 확인
+//        if (!getAuthCode.equals(authCode))
+//            return false;
+//        // 인증완료되었다면 인증번호 테이블 비워주기
+//        loginMemberRepository.deleteById(getLogin.get(0).getId());
+
+        // redis를 활용했을 때의 코드.
+        String getKey = redisUtil.getData(key);
+        if (!getKey.equals(authCode))
+            return false;
+        redisUtil.deleteData(key);
 
 
         return true;
@@ -160,19 +156,19 @@ public class MemberService {
     public ResponseDto<?> sendAuthCode(AuthRequestDto requestDto) {
         String code = generateCode();
 
-        //rds 활용시의 코드
-        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(requestDto.getValue());
-        for (LoginMember getLoginMember : getLogin) {
-            loginMemberRepository.deleteById(getLoginMember.getId());
-        }
-        LoginMember loginMember = LoginMember.builder()
-                .authCode(code)
-                .keyValue(requestDto.getValue())
-                .build();
-        loginMemberRepository.save(loginMember);
+        // rds 활용시의 코드
+//        List<LoginMember> getLogin = loginMemberRepository.findByKeyValue(requestDto.getValue());
+//        for (LoginMember getLoginMember : getLogin) {
+//            loginMemberRepository.deleteById(getLoginMember.getId());
+//        }
+//        LoginMember loginMember = LoginMember.builder()
+//                .authCode(code)
+//                .keyValue(requestDto.getValue())
+//                .build();
+//        loginMemberRepository.save(loginMember);
 
-//        // redis 활용시의 코드
-//        redisUtil.setDataExpire(requestDto.getValue(), code, 180);
+        // redis 활용시의 코드
+        redisUtil.setDataExpire(requestDto.getValue(), code, 180);
 
         return ResponseDto.success(code);
     }
