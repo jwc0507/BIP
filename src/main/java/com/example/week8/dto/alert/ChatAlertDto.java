@@ -7,5 +7,6 @@ import lombok.Getter;
 @Getter
 public class ChatAlertDto {
     private String message;
+    private String title;
     private String eventId;
 }

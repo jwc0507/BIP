@@ -47,23 +47,29 @@ public class Scheduler {  // 스케쥴링할 메소드의 조건 2가지: void�
 
     @Async
     @Scheduled(cron = "0 */10 * * * *")
-    @Transactional
     public void eventAlarm() {
         eventService.eventAlarm();
         eventService.scheduledConfirm();
+    }
 
+
+    @Async
+    @Scheduled(cron = "0 */10 * * * *")
+    @Transactional
+    public void chatAlarm() {
         // 안읽은 채팅 알림.
         List<ChatRoom> chatRooms = chatRoomRepository.findAll();
         for (ChatRoom chatRoom : chatRooms) {
             if(chatRoom.getLastMessageTime() != null) {
                 List<ChatMember> chatMembers = chatMemberRepository.searchUnReadChatMember(false, chatRoom.getLastMessageTime(), chatRoom.getId());
                 for (ChatMember chatMember : chatMembers) {
-                    sseEmitterService.pubNewChat(chatMember.getMember().getId(), chatMember.getChatRoom().getId());
+                    sseEmitterService.pubNewChat(chatMember.getMember().getId(), chatMember.getChatRoom().getId(), chatMember.getChatRoom().getEvent().getTitle());
                 }
             }
         }
 
     }
+
 
 
     @Async

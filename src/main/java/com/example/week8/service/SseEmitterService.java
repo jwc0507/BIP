@@ -41,7 +41,7 @@ public class SseEmitterService {
     // 구독 테스트
     public SseEmitter subscribeTest(String memberId) {
         String emitterId = makeTimeIncludeId(memberId);
-        SseEmitter emitter = new SseEmitter(60 * 1000L * 15);
+        SseEmitter emitter = new SseEmitter(60 * 1000L * 120);
 
         emitterRepository.save(emitterId, emitter);
 
@@ -99,7 +99,7 @@ public class SseEmitterService {
 
         sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
             try {
-                emitter.send(InviteAlertDto.builder().message(msg).eventId(eventId).build(), MediaType.APPLICATION_JSON);
+                emitter.send(InviteAlertDto.builder().message(msg).title("제목").eventId(eventId).build(), MediaType.APPLICATION_JSON);
                 log.info(id + " : 발신완료");
                 Thread.sleep(100);
             } catch (Exception e) {
@@ -119,7 +119,7 @@ public class SseEmitterService {
         ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
         sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
             try {
-                emitter.send(InviteAlertDto.builder().message(msg).eventId(eventId).build(), MediaType.APPLICATION_JSON);
+                emitter.send(InviteAlertDto.builder().message(msg).title(event.getTitle()).eventId(eventId).build(), MediaType.APPLICATION_JSON);
                 log.info(id + " : 초대 알림 발신완료");
                 Thread.sleep(100);
             } catch (Exception e) {
@@ -138,7 +138,7 @@ public class SseEmitterService {
         ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
         sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
             try {
-                emitter.send(CommentAlertDto.builder().message(msg).postId(postId).build(), MediaType.APPLICATION_JSON);
+                emitter.send(CommentAlertDto.builder().message(msg).title(post.getContent()).postId(postId).build(), MediaType.APPLICATION_JSON);
                 log.info(id + " : 댓글 알림 발신완료");
                 Thread.sleep(100);
             } catch (Exception e) {
@@ -148,7 +148,7 @@ public class SseEmitterService {
     }
 
     // 안읽은 채팅 알림
-    public void pubNewChat(Long memberId, Long chatRoomId) {
+    public void pubNewChat(Long memberId, Long chatRoomId, String title) {
         Map<String, SseEmitter> map = emitterRepository.findAllEmitterStartWithByMemberId(memberId.toString());
 
         String msg = "채팅";
@@ -157,7 +157,7 @@ public class SseEmitterService {
         ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
         sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
             try {
-                emitter.send(ChatAlertDto.builder().message(msg).eventId(eventId).build(), MediaType.APPLICATION_JSON);
+                emitter.send(ChatAlertDto.builder().message(msg).title(title).eventId(eventId).build(), MediaType.APPLICATION_JSON);
                 log.info(id + " : 읽지않은 채팅 알림 발신완료");
                 Thread.sleep(100);
             } catch (Exception e) {
@@ -204,7 +204,7 @@ public class SseEmitterService {
         }
 
         String emitterId = makeTimeIncludeId(member.getId().toString());
-        SseEmitter emitter = emitterRepository.save(emitterId, new SseEmitter(60 * 1000L * 15));
+        SseEmitter emitter = emitterRepository.save(emitterId, new SseEmitter(60 * 1000L * 120));
 
         emitter.onTimeout(() -> {
             log.info("onTimeout callback");
@@ -337,8 +337,10 @@ public class SseEmitterService {
 
     // 식별가능한 id생성
     private String makeTimeIncludeId(String memberId) {
-        return memberId + "_" + System.currentTimeMillis();
+//        return memberId + "_" + System.currentTimeMillis();
+        return memberId;
     }
+
 
     /**
      * 멤버 유효성 검사
