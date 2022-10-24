@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 @Service
 @Slf4j
@@ -22,7 +23,7 @@ public class FileService {
     private final TokenProvider tokenProvider;
 
     @Transactional
-    public ResponseDto<?> imageUpload(MultipartFile file, HttpServletRequest request) {
+    public ResponseDto<?> imageUpload(MultipartFile file, HttpServletRequest request) throws IOException {
         // 로그인 확인
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
