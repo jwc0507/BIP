@@ -370,7 +370,7 @@ public class PostService {
             url = null;
             ImageFile imageFileList = imageFilesRepository.findFirstByPost(post);
             if (imageFileList != null)
-                url = imageFileList.getUrl();
+                url = imageFileList.getThumbUrl();
             postResponseAllDtoList.add(
                     PostResponseAllDto.builder()
                             .id(post.getId())
