@@ -140,6 +140,8 @@ public class WeatherService {
     @Transactional
     public WeatherResponseDto getWeatherInfo(Event event) {
         WeatherInfo weatherInfo = event.getWeather();
+        if(weatherInfo==null)
+            return null;
         return WeatherResponseDto.builder()
                 .name(weatherInfo.getName())
                 .temperature(weatherInfo.getTemperature())

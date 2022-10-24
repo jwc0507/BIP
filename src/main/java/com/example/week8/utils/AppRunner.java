@@ -3,6 +3,7 @@ package com.example.week8.utils;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.enums.Authority;
 import com.example.week8.repository.MemberRepository;
+import com.example.week8.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class AppRunner implements ApplicationRunner {
 
     private final MemberRepository memberRepository;
+    private final WeatherService weatherService;
 
     @Override
     @Transactional
@@ -35,5 +37,6 @@ public class AppRunner implements ApplicationRunner {
                     .build();
             memberRepository.save(member);
         }
+        weatherService.saveLocalWeatherInfoList();
     }
 }
