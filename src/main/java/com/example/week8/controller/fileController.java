@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 
 @RestController
@@ -19,7 +20,7 @@ public class fileController {
     private final FileService fileService;
 
     @RequestMapping (value = "/api/image", method = RequestMethod.POST, consumes = {"multipart/form-data"})
-    public ResponseDto<?> imageUpload(@RequestPart("file") MultipartFile file, HttpServletRequest request) {
+    public ResponseDto<?> imageUpload(@RequestPart("file") MultipartFile file, HttpServletRequest request) throws IOException {
         return fileService.imageUpload(file, request);
     }
 }

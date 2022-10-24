@@ -56,6 +56,8 @@ public class QEvent extends EntityPathBase<Event> {
 
     public final StringPath title = createString("title");
 
+    public final QWeatherInfo weather;
+
     public QEvent(String variable) {
         this(Event.class, forVariable(variable), INITS);
     }
@@ -76,6 +78,7 @@ public class QEvent extends EntityPathBase<Event> {
         super(type, metadata, inits);
         this.chatRoom = inits.isInitialized("chatRoom") ? new com.example.week8.domain.chat.QChatRoom(forProperty("chatRoom"), inits.get("chatRoom")) : null;
         this.master = inits.isInitialized("master") ? new QMember(forProperty("master")) : null;
+        this.weather = inits.isInitialized("weather") ? new QWeatherInfo(forProperty("weather"), inits.get("weather")) : null;
     }
 
 }

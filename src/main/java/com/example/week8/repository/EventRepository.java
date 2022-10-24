@@ -7,11 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.OptionalInt;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
     void deleteByMaster(Member member);
     List<Event> findAllByMaster(Member member);
     List<Event> findAllByEventStatusAndEventDateTimeLessThanEqual(EventStatus eventStatus, LocalDateTime nowMinusOneDay);
+    List<Event> findAllByEventStatusAndEventDateTimeGreaterThanEqual(EventStatus eventStatus, LocalDateTime localDateTime);
 }

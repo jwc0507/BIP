@@ -28,6 +28,8 @@ public class QImageFile extends EntityPathBase<ImageFile> {
 
     public final QPost post;
 
+    public final StringPath thumbUrl = createString("thumbUrl");
+
     public final StringPath url = createString("url");
 
     public QImageFile(String variable) {

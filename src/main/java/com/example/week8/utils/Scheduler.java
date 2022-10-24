@@ -10,6 +10,7 @@ import com.example.week8.repository.MemberRepository;
 import com.example.week8.service.EventService;
 import com.example.week8.service.FileService;
 import com.example.week8.service.SseEmitterService;
+import com.example.week8.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -18,6 +19,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -32,6 +34,7 @@ public class Scheduler {  // 스케쥴링할 메소드의 조건 2가지: void�
     private final SseEmitterService sseEmitterService;
     private final ChatMemberRepository chatMemberRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final WeatherService weatherService;
 
     @Async
     @Transactional
@@ -52,6 +55,12 @@ public class Scheduler {  // 스케쥴링할 메소드의 조건 2가지: void�
         eventService.scheduledConfirm();
     }
 
+    @Async
+    @Scheduled(cron = "0 5 */1 * * *")
+    public void loadWeatherInfo() {
+        log.info(LocalDateTime.now()+": 날씨갱신");
+        weatherService.saveLocalWeatherInfoList();
+    }
 
     @Async
     @Scheduled(cron = "0 */10 * * * *")

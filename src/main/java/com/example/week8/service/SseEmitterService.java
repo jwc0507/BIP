@@ -176,7 +176,7 @@ public class SseEmitterService {
             ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
             sseMvcExecutor.execute(() -> map.forEach((id, emitter) -> {
                 try {
-                    emitter.send(EventAlertDto.builder().title(event.getTitle()).message("["+event.getTitle()+"] 약속이 완료되었습니다.").eventId(event.getId().toString()), MediaType.APPLICATION_JSON);
+                    emitter.send(EventAlertDto.builder().title(event.getTitle()).message("["+event.getTitle()+"] 약속이 완료되었습니다.").eventId(event.getId().toString()).build(), MediaType.APPLICATION_JSON);
                     log.info(id + " : 완료 알림 발신완료");
                     Thread.sleep(100);
                 } catch (Exception e) {
