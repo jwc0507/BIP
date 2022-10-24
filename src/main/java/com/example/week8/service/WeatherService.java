@@ -56,11 +56,20 @@ public class WeatherService {
     }
 
     @Transactional
-    public void saveLocalWeatherInfoList() {
+    public void updateLocalWeatherInfoList() {
         LocalDateTime now = LocalDateTime.now().withNano(0);
         List<Event> events = eventRepository.findAllByEventStatusAndEventDateTimeGreaterThanEqual(EventStatus.ONGOING, now);
         for(Event event : events) {
             updateLocalWeatherInfo(event, event.getCoordinate());
+        }
+    }
+
+    @Transactional
+    public void saveLocalWeatherInfoList() {
+        LocalDateTime now = LocalDateTime.now().withNano(0);
+        List<Event> events = eventRepository.findAllByEventStatusAndEventDateTimeGreaterThanEqual(EventStatus.ONGOING, now);
+        for(Event event : events) {
+            saveLocalWeatherInfo(event, event.getCoordinate());
         }
     }
 

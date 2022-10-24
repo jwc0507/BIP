@@ -59,7 +59,7 @@ public class Scheduler {  // 스케쥴링할 메소드의 조건 2가지: void�
     @Scheduled(cron = "0 5 */1 * * *")
     public void loadWeatherInfo() {
         log.info(LocalDateTime.now()+": 날씨갱신");
-        weatherService.saveLocalWeatherInfoList();
+        weatherService.updateLocalWeatherInfoList();
     }
 
     @Async
