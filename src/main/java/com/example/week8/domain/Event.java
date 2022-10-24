@@ -8,7 +8,6 @@ import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -35,6 +34,9 @@ public class Event extends Timestamped{
 
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private ChatRoom chatRoom;
+
+    @OneToOne (mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private WeatherInfo weather;
 
     @OneToOne
     private Member master; // 방장 (Event에서는 방장이 누구인지 궁금하지만 member에서는 자기가 방장인지 궁금하지는 않다 = 단방향)

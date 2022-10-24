@@ -118,6 +118,8 @@ public class EventService {
         // 약속 스케쥴 생성 - 주, 일, 시, 분
         createEventSchedule(event);
         createChkin(event.getId());
+        WeatherInfo weatherInfo = weatherService.saveLocalWeatherInfo(event, event.getCoordinate());
+        event.setWeather(weatherInfo);
 
         return ResponseDto.success(
                 EventResponseDto.builder()
@@ -130,7 +132,7 @@ public class EventService {
                         .coordinate(event.getCoordinate())
                         .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
-                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
+                        .weatherResponseDto(weatherService.getWeatherInfo(event))
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -207,16 +209,17 @@ public class EventService {
         if (!isMaster(event, member))
             return ResponseDto.fail("방장이 아닙니다.");
 
+        if(!event.getCoordinate().equals(eventRequestDto.getCoordinate())) {
+            weatherService.updateLocalWeatherInfo(event, eventRequestDto.getCoordinate());
+        }
+
         // eventDateTime에 변경이 있는지 확인
         if (!event.getEventDateTime().isEqual(stringToLocalDateTime(eventRequestDto.getEventDateTime()))) {
             event.updateEvent(eventRequestDto);  // 약속 수정
             eventScheduleRepository.deleteAllByEventId(eventId);  // 기존 약속스케쥴 삭제
             createEventSchedule(event);  // 새로운 약속스케쥴 생성
-        } else {
-            event.updateEvent(eventRequestDto);  // 약속 수정
         }
-
-
+        event.updateEvent(eventRequestDto);  // 약속 수정
 
         // MemberResponseDto에 Member 담기
         List<MemberResponseDto> list = new ArrayList<>();
@@ -234,7 +237,8 @@ public class EventService {
                         .coordinate(event.getCoordinate())
                         .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
-                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
+//                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
+                        .weatherResponseDto(weatherService.getWeatherInfo(event))
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -359,7 +363,7 @@ public class EventService {
                         .coordinate(event.getCoordinate())
                         .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
-                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
+                        .weatherResponseDto(weatherService.getWeatherInfo(event))
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -456,7 +460,7 @@ public class EventService {
                         .coordinate(event.getCoordinate())
                         .createdAt(Time.serializePostDate(event.getCreatedAt()))
                         .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
-                        .weatherResponseDto((WeatherResponseDto)weatherService.getLocalWeather(event.getCoordinate()).getData())
+                        .weatherResponseDto(weatherService.getWeatherInfo(event))
                         .content(event.getContent())
                         .point(event.getPoint())
                         .build()
@@ -979,7 +983,7 @@ public class EventService {
                 .title(event.getTitle())
                 .eventDateTime(Time.serializeEventDate(event.getEventDateTime()))
                 .place(event.getPlace())
-                .weatherResponseDto((WeatherResponseDto) weatherService.getLocalWeather(event.getCoordinate()).getData())
+                .weatherResponseDto(weatherService.getWeatherInfo(event))
                 .memberCount(eventMemberRepository.findAllByEventId(event.getId()).size())
                 .lastTime(Time.convertLocaldatetimeToTime(event.getEventDateTime()))
                 .build();
