@@ -71,6 +71,10 @@ dependencies {
 	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
 	implementation "com.querydsl:querydsl-apt:${queryDslVersion}"
 
+// https://mvnrepository.com/artifact/com.mortennobel/java-image-scaling
+	implementation group: 'com.mortennobel', name: 'java-image-scaling', version: '0.8.5'
+
+
 
 }
 
