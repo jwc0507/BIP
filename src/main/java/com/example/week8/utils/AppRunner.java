@@ -37,6 +37,6 @@ public class AppRunner implements ApplicationRunner {
                     .build();
             memberRepository.save(member);
         }
-        weatherService.saveLocalWeatherInfoList();
+//        weatherService.saveLocalWeatherInfoList();
     }
 }
