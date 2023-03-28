@@ -131,4 +131,10 @@ public class EventController {
     public ResponseDto<?> chkDateTime(@RequestBody @Valid DuplicationRequestDto requestDto) {
         return eventService.chkDateTime(requestDto);
     }
+
+    // 약속멤버인지체크
+    @RequestMapping (value = "/api/events/member/{eventId}", method = RequestMethod.GET)
+    public ResponseDto<?> chkEventMember(@PathVariable Long eventId, HttpServletRequest request) {
+        return eventService.chkEventMember(eventId, request);
+    }
 }

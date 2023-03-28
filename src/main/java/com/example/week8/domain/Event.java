@@ -8,7 +8,6 @@ import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,16 +24,19 @@ public class Event extends Timestamped{
     private Long id; // 약속 id
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)  // 약속이 삭제되면 해당 약속과 연관된 EventMember도 고아가 되어 삭제됨
-    private List<EventMember> eventMemberList = new ArrayList<>();
+    private List<EventMember> eventMemberList;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)  // 약속이 삭제되면 해당 약속과 연관된 CheckinMember도 고아가 되어 삭제됨
-    private List<CheckinMember> checkinMemberList = new ArrayList<>();
+    private List<CheckinMember> checkinMemberList;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)  // 약속이 삭제되면 해당 약속과 연관된 EventSchedule도 고아가 되어 삭제됨
-    private List<EventSchedule> eventScheduleList = new ArrayList<>();
+    private List<EventSchedule> eventScheduleList;
 
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private ChatRoom chatRoom;
+
+    @OneToOne (mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private WeatherInfo weather;
 
     @OneToOne
     private Member master; // 방장 (Event에서는 방장이 누구인지 궁금하지만 member에서는 자기가 방장인지 궁금하지는 않다 = 단방향)
@@ -84,5 +86,10 @@ public class Event extends Timestamped{
     // 방장 위임
     public void changeMaster(Member member) {
         this.master = member;
+    }
+
+    // 약속 컨펌
+    public void confirm() {
+        this.eventStatus = EventStatus.CLOSED;
     }
 }

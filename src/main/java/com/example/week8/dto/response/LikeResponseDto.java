@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 public class LikeResponseDto {
 
     private final Long post_id;
-    private final String title;
     private final Category category;
 
     //프론트와 상의 후 attribute 추가 예정

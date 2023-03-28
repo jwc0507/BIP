@@ -40,6 +40,10 @@ index.html
 SseTestController.java
 postTest.http
 CommentTest.http
+TestController.java
+TestService.java
+keystore.p12
+Test.http
 
 ### NetBeans ###
 /nbproject/private/

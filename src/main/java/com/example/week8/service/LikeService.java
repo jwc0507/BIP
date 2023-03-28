@@ -1,13 +1,18 @@
 package com.example.week8.service;
 
+import com.example.week8.domain.ImageFile;
 import com.example.week8.domain.Likes;
 import com.example.week8.domain.Member;
 import com.example.week8.domain.Post;
+import com.example.week8.domain.enums.PostStatus;
 import com.example.week8.dto.response.LikeResponseDto;
+import com.example.week8.dto.response.PostResponseAllDto;
 import com.example.week8.dto.response.ResponseDto;
+import com.example.week8.repository.ImageFilesRepository;
 import com.example.week8.repository.LikeRepository;
 import com.example.week8.repository.PostRepository;
 import com.example.week8.security.TokenProvider;
+import com.example.week8.utils.time.Time;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +23,16 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class LikeService {
     private final LikeRepository likeRepository;
     private final PostRepository postRepository;
     private final TokenProvider tokenProvider;
+    private final ImageFilesRepository imageFilesRepository;
 
     //좋아요 표시
     @Transactional
-    public ResponseDto<?> markLike(Long post_id, HttpServletRequest request){
+    public ResponseDto<?> markLike(Long post_id, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
@@ -34,15 +41,15 @@ public class LikeService {
 
         Post post = postRepository.findById(post_id).orElse(null);
 
-        if(post ==null)
+        if (post == null)
             return ResponseDto.fail("게시글 없음 or 게시글 ID 오류");
-        if(likeRepository.findByMemberAndPost(member,post).orElse(null)!=null)
+        if (likeRepository.findByMemberAndPost(member, post).orElse(null) != null)
             return ResponseDto.fail("이미 해당 게시물을 '좋아하는' 상태입니다.");
 
         Likes like = Likes.builder()
-                    .member(member)
-                    .post(post)
-                    .build();
+                .member(member)
+                .post(post)
+                .build();
 
         likeRepository.save(like);
         post.addLike();
@@ -51,22 +58,23 @@ public class LikeService {
                 .category(like.getPost().getCategory())
                 .build());
     }
+
     //좋아요 취소
     @Transactional
-    public ResponseDto<?> cancelLike(Long post_id, HttpServletRequest request){
+    public ResponseDto<?> cancelLike(Long post_id, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
 
         Member member = (Member) chkResponse.getData();
         Post post = postRepository.findById(post_id).orElse(null);
-        if(post ==null)
+        if (post == null)
             return ResponseDto.fail("게시글 없음 or 게시글 ID 오류");
 
-        Likes like= likeRepository.findByMemberAndPost(member,post).orElse(null);
-        if(like ==null)
+        Likes like = likeRepository.findByMemberAndPost(member, post).orElse(null);
+        if (like == null)
             return ResponseDto.fail("이미 해당 게시물을 '좋아하지 않는' 상태입니다.");
-        likeRepository.deleteByMemberAndPost(member,post);
+        likeRepository.deleteByMemberAndPost(member, post);
         post.cancelLike();
         return ResponseDto.success(LikeResponseDto.builder()
                 .post_id(like.getPost().getId())
@@ -74,9 +82,26 @@ public class LikeService {
                 .build());
     }
 
+    //현재 좋아요가 눌렸는지 확인
+    @Transactional (readOnly = true)
+    public ResponseDto<?> chkLikePost(Long id, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        Member member = validateMember(request);
+        Post post = postRepository.findById(id).orElse(null);
+        if (post == null)
+            return ResponseDto.fail("게시글 없음 or 게시글 ID 오류");
+        Likes like = likeRepository.findByMemberAndPost(member, post).orElse(null);
+        if (like == null)
+            return ResponseDto.success(false);
+        return ResponseDto.success(true);
+    }
+
     //좋아하는 게시글 목록 반환
-    @Transactional
-    public ResponseDto<?> getLikeList(HttpServletRequest request){
+    @Transactional (readOnly = true)
+    public ResponseDto<?> getLikeList(HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
@@ -84,16 +109,33 @@ public class LikeService {
         Member member = (Member) chkResponse.getData();
 
         List<Likes> likeList = likeRepository.findAllByMember(member);
-        List<LikeResponseDto> likeResponseDtos = new ArrayList<>();
+        List<PostResponseAllDto> postResponseAllDtoList = new ArrayList<>();
 
-        for(Likes like : likeList)
-        {
-            likeResponseDtos.add(LikeResponseDto.builder()
-                    .post_id(like.getPost().getId())
-                    .category(like.getPost().getCategory())
-                    .build());
+        for (Likes like : likeList) {
+            Post post = like.getPost();
+            if (post.getPostStatus().equals(PostStatus.active)) {
+                String url = null;
+                ImageFile imageFileList = imageFilesRepository.findFirstByPost(post);
+                if (imageFileList != null)
+                    url = imageFileList.getUrl();
+                postResponseAllDtoList.add(PostResponseAllDto.builder()
+                        .id(post.getId())
+                        .nickname(post.getMember().getNickname())
+                        .board(post.getBoard().toString())
+                        .category(post.getCategory().toString())
+                        .content(post.getContent())
+                        .firstImgUrl(url)
+                        .views(post.getViews())
+                        .likes(post.getLikes())
+                        .point(post.getPoint())
+                        .numOfComment(post.getNumOfComment())
+                        .timePast(Time.convertLocaldatetimeToTimePast(post.getCreatedAt()))
+                        .createdAt(Time.serializePostDate(post.getCreatedAt()))
+                        .modifiedAt(Time.serializePostDate(post.getModifiedAt()))
+                        .build());
+            }
         }
-        return ResponseDto.success(likeResponseDtos);
+        return ResponseDto.success(postResponseAllDtoList);
     }
 
     // 토큰체크

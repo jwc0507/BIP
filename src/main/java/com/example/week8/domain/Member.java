@@ -1,11 +1,10 @@
 package com.example.week8.domain;
 
-import com.example.week8.domain.chat.ChatMember;
 import com.example.week8.domain.enums.Authority;
+import com.example.week8.dto.SignupInfoDto;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -27,11 +26,20 @@ public class Member extends Timestamped {
     @Column(name = "POINT_ON_DAY")
     private Long pointOnDay; //당일 포인트 획득량
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ChatMember> chatMember;
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<EventMember> eventMemberList;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<CheckinMember> checkinMemberList;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Post> postList;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Likes> likesList;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "owner")
-    private List<Friend> friendListOwner = new ArrayList<>();
+    private List<Friend> friendListOwner;
 
     @Column(unique = true)
     private Long kakaoId;   // 카카오id
@@ -70,6 +78,24 @@ public class Member extends Timestamped {
     @Enumerated(EnumType.STRING)
     private Authority userRole;     // 유저 권한 (erd에 추가해야함)
 
+    private int reportCnt;
+
+    public Member (SignupInfoDto signupInfoDto) {
+        this.kakaoId = signupInfoDto.getKakaoId();
+        this.naverId = signupInfoDto.getNaverId();
+                this.email = signupInfoDto.getEmail();
+                this.profileImageUrl = signupInfoDto.getImgUrl();
+                this.phoneNumber = signupInfoDto.getPhoneNumber();
+                this.point = 1000;
+                this.credit = 100.0;
+                this.firstLogin = true;
+                this.pointOnDay = 0L;
+                this.numOfDone = 0;
+                this.numOfSelfEvent = 0;
+                this.password = "@";
+                this.userRole = signupInfoDto.getRole();
+    }
+
     public void updateNickname(String name) {
         this.nickname = name;
     }
@@ -85,6 +111,13 @@ public class Member extends Timestamped {
             this.profileImageUrl = url;
     }
 
+    public void updateNaverMember(String email, String url, String naverId) {
+        this.naverId = naverId;
+        this.email = email;
+        if (profileImageUrl == null)
+            this.profileImageUrl = url;
+    }
+
     public void updateEmail(String email) {
         this.email = email;
     }
@@ -94,13 +127,25 @@ public class Member extends Timestamped {
     }
 
     public void updateCreditScore(double score) {
-        this.credit = score;
+        if (this.credit + score >= 0)
+            this.credit += score;
+        this.credit = Math.floor(this.credit * 10) / (10.0);
     }
 
+    // 약속에서 주는 포인트 (하루 한도 존재)
     public void updatePoint(int point) {
-        this.point += point;
+        int newPoint = this.point + point;
+        if (newPoint < 0)
+            this.point = 0;
+        else
+            this.point = newPoint;
         if (point > 0)
             pointOnDay += point;
+    }
+
+    // 재능기부로 주는 포인트 (한도 없음)
+    public void sendPoint(int point) {
+        this.point += point;
     }
 
     public void updateSelfEvent() {
@@ -112,9 +157,25 @@ public class Member extends Timestamped {
     }
 
     public void chkFirstLogin() {
-        if(this.firstLogin) {
+        if (this.firstLogin) {
             this.point += 100;
             this.firstLogin = false;
         }
+    }
+
+    // 신고 횟수 올리기
+    public int addReportCnt() {
+        this.reportCnt++;
+        return reportCnt;
+    }
+
+    // 신용도 차감
+    public void declineCredit(double credit) {
+        this.credit -= credit;
+        this.credit = Math.floor(this.credit * 10) / (10.0);
+    }
+
+    public String getCredit() {
+        return String.format("%.1f", this.credit);
     }
 }

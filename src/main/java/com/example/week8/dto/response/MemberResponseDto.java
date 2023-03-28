@@ -15,7 +15,7 @@ public class MemberResponseDto {
     private String email;
     private String nicknameByOwner;
     private String nicknameByFriend;
-    private double credit;
+    private String credit;
     private int point;
     private String profileImageUrl;
     private Attendance attendance;

@@ -1,10 +1,11 @@
-package com.example.week8.time;
+package com.example.week8.utils.time;
 
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 
 @Slf4j
 public class Time {
@@ -95,19 +96,14 @@ public class Time {
     }
 
     public static String serializeEventDate(LocalDateTime localDateTime) {
-//        StringBuilder result = new StringBuilder();
-//        String[] splitDate = localDateTime.toString().split("T|:| ");
-//        for(String s : splitDate) {
-//            result.append(s).append("-");
-//        }
-        String dateNow = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-00"));
-        log.info(dateNow);
-        return dateNow;
+        return localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-00"));
     }
 
     public static String serializePostDate(LocalDateTime localDateTime) {
-        String dateNow = localDateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd.HH:mm"));
-        log.info(dateNow);
-        return dateNow;
+        return localDateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd.HH:mm"));
+    }
+
+    public static String serializeEventAlertDate(LocalDateTime localDateTime) {
+        return localDateTime.format(DateTimeFormatter.ofPattern("yy년 MM월 dd일").withLocale(Locale.forLanguageTag("ko")));
     }
 }

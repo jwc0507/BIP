@@ -1,9 +1,9 @@
 package com.example.week8.dto.request;
 
+import com.example.week8.utils.customvalidation.EventPointCheck;
 import lombok.Getter;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 @Getter
 public class EventRequestDto {
@@ -23,7 +23,7 @@ public class EventRequestDto {
     @NotBlank
     private String content;
 
-    @NotNull
+    @EventPointCheck
     private int point;
 
 }

@@ -10,6 +10,8 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.example.week8.domain.ImageFile;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.ImageFilesRepository;
+import com.mortennobel.imagescaling.AdvancedResizeOp;
+import com.mortennobel.imagescaling.MultiStepRescaleOp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,8 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.InputStream;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,7 +38,7 @@ public class AmazonS3Service {
 
     //파일업로드
     @Transactional
-    public ResponseDto<?> uploadFile(MultipartFile multipartFile) {
+    public ResponseDto<?> uploadFile(MultipartFile multipartFile) throws IOException {
         if (validateFileExists(multipartFile))      // 빈 파일인지 확인
             return ResponseDto.fail("등록된 이미지가 없습니다.");
         String contentType = multipartFile.getContentType();
@@ -53,9 +56,56 @@ public class AmazonS3Service {
         } catch (IOException e) {
             return ResponseDto.fail("파일 업로드 실패");
         }
+
+
+        // 이미지 섬네일 저장
+        BufferedImage image = ImageIO.read(multipartFile.getInputStream());
+        double originWidth = image.getWidth();
+        double originHeight = image.getHeight();
+        int targetWidth = 800;
+        String thumbName = null;
+
+
+        if(originWidth > targetWidth) {
+            double ratio = (originWidth / originHeight);
+            int targetHeight = (int) Math.floor((targetWidth * 100) / (ratio * 100));
+            String formatName = contentType.split("/")[1];
+
+            MultiStepRescaleOp rescale = new MultiStepRescaleOp(targetWidth, targetHeight);
+            rescale.setUnsharpenMask(AdvancedResizeOp.UnsharpenMask.Soft);
+            BufferedImage resizedImage = rescale.filter(image, null);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ImageIO.write(resizedImage, formatName, out);
+
+            thumbName = "thumb_"+fileName;
+            ObjectMetadata thumbObjectMetadata = new ObjectMetadata();
+            thumbObjectMetadata.setContentType(multipartFile.getContentType());          // ObjectMetadata에 파일 타입, byte크기 넣어주기. 넣지않으면 IDE상에서 설정하라는 권장로그가 뜸
+            thumbObjectMetadata.setContentLength(out.size());
+
+            try (InputStream inputStream = new ByteArrayInputStream(out.toByteArray())) {
+                amazonS3Client.putObject(new PutObjectRequest(bucketName, thumbName, inputStream, thumbObjectMetadata)
+                        .withCannedAcl(CannedAccessControlList.PublicRead));        // S3에 업로드
+            } catch (IOException e) {
+                return ResponseDto.fail("썸네일 파일 업로드 실패");
+            }
+
+            ImageFile imageMapper = ImageFile.builder()                         // 업로드한 파일들을 관리할 테이블에 파일이름, URL넣기
+                    .url(amazonS3Client.getUrl(bucketName, fileName).toString())
+                    .imageName(fileName)
+                    .thumbUrl(amazonS3Client.getUrl(bucketName, thumbName).toString())
+                    .post(null)
+                    .build();
+            imageFilesRepository.save(imageMapper);
+            return ResponseDto.success(imageMapper);
+
+        }
+
         ImageFile imageMapper = ImageFile.builder()                         // 업로드한 파일들을 관리할 테이블에 파일이름, URL넣기
                 .url(amazonS3Client.getUrl(bucketName, fileName).toString())
                 .imageName(fileName)
+                .thumbUrl(amazonS3Client.getUrl(bucketName, fileName).toString())
+                .post(null)
                 .build();
         imageFilesRepository.save(imageMapper);
         return ResponseDto.success(imageMapper);

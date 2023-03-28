@@ -11,17 +11,19 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class FileService {
 
     private final AmazonS3Service amazonS3Service;
     private final TokenProvider tokenProvider;
 
     @Transactional
-    public ResponseDto<?> imageUpload(MultipartFile file, HttpServletRequest request) {
+    public ResponseDto<?> imageUpload(MultipartFile file, HttpServletRequest request) throws IOException {
         // 로그인 확인
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -36,13 +38,11 @@ public class FileService {
     }
 
     @Transactional
-    public ResponseDto<?> deleteFile(String fileUrl) {
+    public void deleteFile(String fileUrl) {
         if (amazonS3Service.removeFile(fileUrl)) {
             log.info("이미지 삭제 실패");
-            return ResponseDto.fail("이미지 삭제 실패");
         }
         log.info("이미지 삭제 성공");
-        return ResponseDto.success("이미지 삭제 성공");
     }
 
     private ResponseDto<?> validateCheck(HttpServletRequest request) {

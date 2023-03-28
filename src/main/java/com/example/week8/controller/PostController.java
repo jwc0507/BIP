@@ -1,14 +1,19 @@
 package com.example.week8.controller;
 
+import com.example.week8.domain.Post;
 import com.example.week8.domain.enums.Board;
+import com.example.week8.dto.request.PostPointGiveRequestDto;
 import com.example.week8.dto.request.PostRequestDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.service.PostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +28,14 @@ public class PostController {
     public ResponseDto<?> createEvent(@RequestBody @Valid PostRequestDto postRequestDto,
                                       HttpServletRequest request) {
         return postService.createPost(postRequestDto, request);
+    }
+
+    /**
+     * 게시글 검색
+     */
+    @GetMapping("/api/posts/search")
+    public ResponseDto<?> searchPost(@RequestParam("content") String content) {
+        return postService.searchPost(content);
     }
 
     /**
@@ -55,7 +68,7 @@ public class PostController {
     /**
      * 게시글 삭제
      */
-    @DeleteMapping("/api/posts/{eventId}")
+    @PutMapping("/api/posts/delete/{eventId}")
     public ResponseDto<?> deleteEvent(@PathVariable Long eventId,
                                       HttpServletRequest request) {
         return postService.deletePost(eventId, request);
@@ -76,5 +89,21 @@ public class PostController {
     public ResponseDto<?> getDonationList(@RequestParam("category") String category) {
         return postService.getCategoryList(Board.donation.toString(), category);
     }
+
+    /**
+     * 게시글 신고
+     */
+    @PostMapping("/api/posts/report/{postId}")
+    public ResponseDto<?> report(@PathVariable Long postId,
+                                 HttpServletRequest request) {
+        return postService.report(postId, request);
+    }
+
+    //포인트증여
+    @RequestMapping(value = "/api/posts/point/give/{postId}", method = RequestMethod.PUT)
+    public ResponseDto<?> givePoint(@PathVariable Long postId, @RequestBody @Valid PostPointGiveRequestDto requestDto, HttpServletRequest request) {
+        return postService.givePoint(postId, requestDto, request);
+    }
+
 
 }

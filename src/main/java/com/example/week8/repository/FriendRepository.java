@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface FriendRepository extends JpaRepository<Friend, Long> {
+public interface FriendRepository extends JpaRepository<Friend, Long>, FriendCustomRepository {
 
     Optional<Friend> findByOwnerAndFriend(Member member, Member friend);
     List<Friend> findAllByOwner(Member owner);

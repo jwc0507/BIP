@@ -1,7 +1,6 @@
 package com.example.week8.dto.request;
 
-import com.example.week8.domain.enums.Board;
-import com.example.week8.domain.enums.Category;
+import com.example.week8.utils.customvalidation.EventPointCheck;
 import lombok.Getter;
 
 import javax.validation.constraints.NotBlank;
@@ -10,17 +9,17 @@ import javax.validation.constraints.NotNull;
 @Getter
 public class PostRequestDto {
 
-    @NotNull
-    private Board board;
+    @NotBlank
+    private String board;
 
-    @NotNull
-    private Category category;
+    @NotBlank
+    private String category;
 
     @NotBlank
     private String content;
 
-//    @NotNull
-//    private String imgUrl;
+    @NotNull
+    private String[] imgUrlList;
 
     @NotBlank
     private String address;
@@ -28,6 +27,6 @@ public class PostRequestDto {
     @NotBlank
     private String coordinate;
 
-    @NotBlank
-    private String point;
+    @EventPointCheck
+    private int point;
 }

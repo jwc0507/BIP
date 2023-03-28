@@ -1,8 +1,8 @@
 package com.example.week8.configuration;
 
 
-import com.example.week8.security.AccessDeniedHandlerException;
-import com.example.week8.security.AuthenticationEntryPointException;
+import com.example.week8.ExceptionHandler.AccessDeniedHandlerException;
+import com.example.week8.ExceptionHandler.AuthenticationEntryPointException;
 import com.example.week8.security.TokenProvider;
 import com.example.week8.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,12 +35,12 @@ public class SecurityConfiguration {
   private final AuthenticationEntryPointException authenticationEntryPointException;
   private final AccessDeniedHandlerException accessDeniedHandlerException;
 
-  @Bean
-  public WebSecurityCustomizer webSecurityCustomizer() {
-    // h2-console 사용에 대한 허용 (CSRF, FrameOptions 무시)
-    return (web) -> web.ignoring()
-            .antMatchers("/h2-console/**");
-  }
+//  @Bean
+//  public WebSecurityCustomizer webSecurityCustomizer() {
+//    // h2-console 사용에 대한 허용 (CSRF, FrameOptions 무시)
+//    return (web) -> web.ignoring()
+//            .antMatchers("/h2-console/**");
+//  }
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -73,8 +72,9 @@ public class SecurityConfiguration {
             .antMatchers("/sub/**").permitAll()
             .antMatchers("/pub/**").permitAll()
             .antMatchers("/ws-stomp/**").permitAll()
+            .antMatchers("/h2-console/**").permitAll()
             .anyRequest().authenticated()
-            //.anyRequest().permitAll()
+//            .anyRequest().permitAll()
 
             .and()
             .apply(new JwtSecurityConfiguration(SECRET_KEY, tokenProvider, userDetailsService));

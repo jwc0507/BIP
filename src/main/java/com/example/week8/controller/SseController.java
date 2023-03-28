@@ -22,15 +22,37 @@ public class SseController {
     }
 
     // SSE Sub
-    @GetMapping("/api/subscribe")
+    @GetMapping("/api/member/subscribe")
     public SseEmitter subscribe(HttpServletRequest request) {
         return sseEmitterService.subscribe(request);
     }
 
     // SSE pubTest (실제 배포단계에선 주석 또는 삭제)
-     @GetMapping("/api/publish")
+    @GetMapping("/api/publish")
     public ResponseDto<?> publish(HttpServletRequest request) {
        return sseEmitterService.publishTest(request);
+    }
+
+    // SSE pubTest (실제 배포단계에선 주석 또는 삭제)
+    @GetMapping("/api/publish/testTwo/{id}")
+    public ResponseDto<?> publish(@PathVariable Long id) {
+        return sseEmitterService.publishTestTwo(id);
+    }
+
+    // Emitter 지우기
+    @GetMapping("/api/sse/delete")
+    public ResponseDto<?> deleteEmitter(HttpServletRequest request) {
+        return sseEmitterService.deletePub(request);
+    }
+
+    @GetMapping("/api/sse/getSubInfo")
+    public ResponseDto<?> getSubInfo(HttpServletRequest request) {
+        return sseEmitterService.getSubInfo(request);
+    }
+
+    @GetMapping("/api/sse/getSubInfoTwo/{id}")
+    public ResponseDto<?> getSubInfoTwo(@PathVariable Long id) {
+       return sseEmitterService.getSubInfoTwo(id);
     }
 
 }

@@ -14,12 +14,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class FriendService {
 
     private final FriendRepository friendRepository;
@@ -27,7 +28,7 @@ public class FriendService {
     private final TokenProvider tokenProvider;
 
     //친구 목록 조회
-    @Transactional
+    @Transactional (readOnly = true)
     public ResponseDto<?> getFriendList(HttpServletRequest request) {
 
         ResponseDto<?> chkResponse = validateCheck(request);
@@ -63,7 +64,7 @@ public class FriendService {
 
         //nickname으로 검색한 member
         Member findedMember = memberRepository.findByNickname(friendAdditionRequestDto.getValue()).orElse(null);
-        if (findedMember == null)
+        if (findedMember == null || findedMember.getNickname().equals("탈퇴한 사용자입니다."))
             return ResponseDto.fail("닉네임 친구찾기 실패");
 
         // 본인에 친구걸수 없음
@@ -191,42 +192,53 @@ public class FriendService {
     }
 
     // 친구검색
+    @Transactional (readOnly = true)
     public ResponseDto<?> searchFriend(String value, String type, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
             return chkResponse;
         Member member = (Member) chkResponse.getData();
 
-        Member findedMember;
+//        Member findedMember;
+        List<FriendInfoResponseDto> friendInfoResponseDtoList;
         // 닉네임으로 검색
         if (type.equals(SearchType.name.toString())) {
-            findedMember = memberRepository.findByNickname(value).orElse(null);
-            if (findedMember == null)
-                return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
+            List<Friend> friendList = friendRepository.SearchByNickname(value, member.getNickname());
+            friendInfoResponseDtoList = new ArrayList<>();
+            for (Friend friend : friendList) {
+                Member findedMember = friend.getFriend();
+                friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
+                        .id(findedMember.getId())
+                        .nicknameByOwner(friend.getSecondName())
+                        .nicknameByFriend(findedMember.getNickname())
+                        .profileImgUrl(findedMember.getProfileImageUrl())
+                        .creditScore(findedMember.getCredit())
+                        .build());
+            }
         }
         // 전화번호로 검색
         else if (type.equals(SearchType.phone.toString())) {
-            findedMember = memberRepository.findByPhoneNumber(value).orElse(null);
-            if (findedMember == null)
-                return ResponseDto.fail("전화번호를 찾을 수 없습니다.");
-        } else {
+            List<Friend> friendList = friendRepository.SearchByPhoneNumber(value, member.getNickname());
+            friendInfoResponseDtoList = new ArrayList<>();
+            for (Friend friend : friendList) {
+                Member findedMember = friend.getFriend();
+                friendInfoResponseDtoList.add(FriendInfoResponseDto.builder()
+                        .id(findedMember.getId())
+                        .nicknameByOwner(friend.getSecondName())
+                        .nicknameByFriend(findedMember.getNickname())
+                        .profileImgUrl(findedMember.getProfileImageUrl())
+                        .creditScore(findedMember.getCredit())
+                        .build());
+            }
+        }
+        else {
             return ResponseDto.fail("검색 타입 에러");
         }
-
-        Friend friend = isPresentFriend(member, findedMember);
-        if (friend == null)
-            return ResponseDto.fail("친구리스트에 없는 멤버입니다.");
-
-        return ResponseDto.success(FriendInfoResponseDto.builder()
-                .id(findedMember.getId())
-                .nicknameByOwner(friend.getSecondName())
-                .nicknameByFriend(findedMember.getNickname())
-                .profileImgUrl(findedMember.getProfileImageUrl())
-                .creditScore(findedMember.getCredit())
-                .build());
+        return ResponseDto.success(friendInfoResponseDtoList);
     }
 
     // 유저 검색
+    @Transactional (readOnly = true)
     public ResponseDto<?> searchMember(String value, String type, HttpServletRequest request) {
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())
@@ -237,7 +249,7 @@ public class FriendService {
         // 닉네임으로 검색
         if (type.equals(SearchType.name.toString())) {
             findedMember = memberRepository.findByNickname(value).orElse(null);
-            if (findedMember == null)
+            if (findedMember == null || findedMember.getNickname().equals("탈퇴한 사용자입니다."))
                 return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
         }
         // 전화번호로 검색
@@ -273,8 +285,8 @@ public class FriendService {
         Member member = memberRepository.findById(((Member) chkResponse.getData()).getId()).orElse(null);
         assert member != null;  // 동작할일은 없는 코드
 
-       Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
-        if (getFriend == null)
+        Member getFriend = memberRepository.findByNickname(requestDto.getFriendNickname()).orElse(null);
+        if (getFriend == null || getFriend.getNickname().equals("탈퇴한 사용자입니다."))
             return ResponseDto.fail("닉네임을 찾을 수 없습니다.");
 
         Friend friend = isPresentFriend(member, getFriend);
@@ -292,7 +304,7 @@ public class FriendService {
     }
 
     //추천 친구 목록 반환 (추천 친구 = 나는 추가하지 않았지만, 나를 추가한 친구)
-    @Transactional
+    @Transactional (readOnly = true)
     public ResponseDto<?> getRecommandFriendsList(HttpServletRequest request){
         ResponseDto<?> chkResponse = validateCheck(request);
         if (!chkResponse.isSuccess())

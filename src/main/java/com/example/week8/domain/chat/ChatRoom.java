@@ -5,6 +5,7 @@ import com.example.week8.domain.Timestamped;
 import lombok.*;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -31,4 +32,11 @@ public class ChatRoom extends Timestamped {
     // 챗 멤버 객체
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMember> chatMember;
+
+    // 챗 메세지들
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<ChatMessage> chatMessageList;
+
+    @Column
+    private LocalDateTime lastMessageTime; // 마지막 채팅 메세지 시간
 }

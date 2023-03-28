@@ -1,16 +1,15 @@
 package com.example.week8.service;
 
-import com.example.week8.domain.Comment;
-import com.example.week8.domain.Member;
-import com.example.week8.domain.Post;
+import com.example.week8.domain.*;
 import com.example.week8.domain.enums.CommentStatus;
 import com.example.week8.dto.request.CommentRequestDto;
 import com.example.week8.dto.response.CommentResponseDto;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.repository.CommentRepository;
 import com.example.week8.repository.PostRepository;
+import com.example.week8.repository.ReportCommentRepository;
 import com.example.week8.security.TokenProvider;
-import com.example.week8.time.Time;
+import com.example.week8.utils.time.Time;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -27,8 +26,10 @@ import java.util.List;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final ReportCommentRepository reportCommentRepository;
     private final PostRepository postRepository;
     private final TokenProvider tokenProvider;
+    private final SseEmitterService sseEmitterService;
 
     /**
      * 댓글 작성
@@ -56,6 +57,9 @@ public class CommentService {
 
         post.addCommentCounter();
         commentRepository.save(comment);
+
+        if(!post.getMember().getId().equals(member.getId()))
+            sseEmitterService.pubNewComment(post.getMember().getId(), post);
 
         return ResponseDto.success(CommentResponseDto.builder()
                 .id(comment.getId())
@@ -138,7 +142,9 @@ public class CommentService {
 
     /**
      * 댓글 목록보기
+     *
      */
+    @Transactional (readOnly = true)
     public ResponseDto<?> getCommentList(Long postId, Pageable pageable, HttpServletRequest request) {
         // 토큰체크
         ResponseDto<?> chkResponse = validateCheck(request);
@@ -153,16 +159,67 @@ public class CommentService {
         List<Comment> comments = commentRepository.findByPostOrderByCreatedAtDesc(post, pageable);
         List<CommentResponseDto> commentResponseDtoList = new ArrayList<>();
         for(Comment comment : comments) {
-            CommentResponseDto commentResponseDto = CommentResponseDto.builder()
-                    .id(comment.getId())
-                    .nickname(comment.getMember().getNickname())
-                    .content(comment.getContent())
-                    .createdAt(Time.serializePostDate(comment.getCreatedAt()))
-                    .modifiedAt(Time.serializePostDate(comment.getModifiedAt()))
-                    .build();
-            commentResponseDtoList.add(commentResponseDto);
+            if(!comment.getStatus().equals(CommentStatus.deleteByReport)) {
+                CommentResponseDto commentResponseDto = CommentResponseDto.builder()
+                        .id(comment.getId())
+                        .nickname(comment.getMember().getNickname())
+                        .content(comment.getContent())
+                        .createdAt(Time.serializePostDate(comment.getCreatedAt()))
+                        .modifiedAt(Time.serializePostDate(comment.getModifiedAt()))
+                        .build();
+                commentResponseDtoList.add(commentResponseDto);
+            }
         }
         return ResponseDto.success(commentResponseDtoList);
+    }
+
+    /**
+     * 댓글 신고
+     */
+    @Transactional
+    public ResponseDto<?> reportComment(Long commentId, HttpServletRequest request) {
+        ResponseDto<?> chkResponse = validateCheck(request);
+        if (!chkResponse.isSuccess())
+            return chkResponse;
+
+        // 멤버 조회
+        Member member = validateMember(request);
+        if (null == member) {
+            return ResponseDto.fail("INVALID_TOKEN");
+        }
+
+        // 댓글 불러오기
+        Comment comment = isPresentComment(commentId);
+        if (comment == null)
+            return ResponseDto.fail("해당 댓글이 없습니다.");
+        if (!comment.getStatus().toString().equals("normal"))
+            return ResponseDto.fail("삭제된 댓글입니다.");
+
+        // 댓글신고(ReportComment) 객체 생성
+        ReportComment report = new ReportComment(member.getId(), comment.getMember().getId(), commentId);
+        if (report.getToId().equals(report.getFromId())) {
+            return ResponseDto.fail("자신에게 신고할 수 없습니다.");
+        }
+        if (reportCommentRepository.findByFromIdAndToIdAndCommentId(member.getId(), comment.getMember().getId(), commentId).isPresent()) {
+            return ResponseDto.fail("중복 신고는 불가능합니다.");
+        }
+        reportCommentRepository.save(report);
+
+        // 신고횟수 적용(댓글)
+        int reportCnt = comment.addReportCnt();
+        if (reportCnt >= 10) {  // 누적 신고횟수 10 이상일 때 댓글 삭제
+            comment.inactivateByReport();
+            log.info("신고 10회 누적으로 게시글이 삭제되었습니다.");
+        }
+
+        // 신고횟수 적용(작성자)
+        Member postWriter = comment.getMember();
+        postWriter.addReportCnt();
+        if (reportCnt % 10 == 0) {  // 누적 신고횟수 10 누적 시마다 신용도 차감
+            postWriter.declineCredit(0.5);
+        }
+
+        return ResponseDto.success("신고가 정상적으로 처리되었습니다.");
     }
 
     //-- 모듈 --//
@@ -178,8 +235,17 @@ public class CommentService {
     /**
      * 댓글 호출
      */
+    @Transactional(readOnly = true)
     public Comment isPresentComment(Long commentId) {
         return commentRepository.findById(commentId).orElse(null);
+    }
+
+    /**
+     * 내가 쓴 댓글들 호출
+     */
+    @Transactional(readOnly = true)
+    public List<Comment> getCommentList(Member member) {
+        return commentRepository.findAllByMember(member);
     }
 
     /**

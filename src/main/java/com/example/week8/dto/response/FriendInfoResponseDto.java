@@ -12,5 +12,5 @@ public class FriendInfoResponseDto {
     private final String nicknameByOwner;
     private final String nicknameByFriend;
     private final String profileImgUrl;
-    private final double creditScore;//int로 정의하는게 맞지 않나?
+    private final String creditScore;//int로 정의하는게 맞지 않나?
 }

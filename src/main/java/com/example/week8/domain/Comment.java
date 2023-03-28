@@ -30,6 +30,8 @@ public class Comment extends Timestamped{
     @JoinColumn (name = "member_id")
     private Member member;
 
+    private int reportCnt;  // 신고받은 횟수
+
     @Column (nullable = false)
     @Enumerated (EnumType.STRING)
     private CommentStatus status;
@@ -48,6 +50,21 @@ public class Comment extends Timestamped{
 
     public void updateComment(String content) {
         this.content = content;
+    }
+
+    public void setTempMember(Member member) {
+        this.member = member;
+    }
+
+    // 신고 횟수 올리기
+    public int addReportCnt() {
+        this.reportCnt++;
+        return reportCnt;
+    }
+
+    // 댓글 비활성화(by 신고)
+    public void inactivateByReport() {
+        this.status = CommentStatus.deleteByReport;
     }
 
 }

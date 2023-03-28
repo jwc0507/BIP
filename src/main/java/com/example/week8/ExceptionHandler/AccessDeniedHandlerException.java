@@ -1,4 +1,4 @@
-package com.example.week8.security;
+package com.example.week8.ExceptionHandler;
 
 import com.example.week8.dto.response.ResponseDto;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,5 +1,6 @@
 package com.example.week8.controller;
 
+import com.example.week8.domain.UserDetailsImpl;
 import com.example.week8.dto.request.AuthRequestDto;
 import com.example.week8.dto.request.DuplicationRequestDto;
 import com.example.week8.dto.request.EmailLoginRequestDto;
@@ -11,6 +12,8 @@ import com.example.week8.service.NaverOauthService;
 import com.example.week8.service.SmsService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
+import org.json.simple.parser.ParseException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,14 +46,26 @@ public class MemberController {
 
     // 카카오 로그인
     @RequestMapping (value = "/api/member/kakaologin", method = RequestMethod.GET)
-    public ResponseDto<?> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) throws JsonProcessingException {
-        return kakaoOauthService.kakaoLogin(code, response);
+    public ResponseDto<?> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response, HttpServletRequest request) throws JsonProcessingException {
+        return kakaoOauthService.kakaoLogin(code, response, request);
+    }
+
+    // 카카오 로그아웃 (연동해제)
+    @RequestMapping (value = "/api/member/kakaologout", method = RequestMethod.GET)
+    public ResponseDto<?> kakaoLogout(@RequestParam("code") String code) throws JsonProcessingException {
+        return kakaoOauthService.kakaoLogout(code);
     }
 
     // 네이버 로그인
     @RequestMapping (value = "/api/member/naverlogin", method = RequestMethod.GET)
-    public ResponseDto<?> naverlogin(@RequestParam("code") String code,@RequestParam("state") String state, HttpServletResponse response) throws JsonProcessingException {
+    public ResponseDto<?> naverlogin(@RequestParam("code") String code, @RequestParam("state") String state, HttpServletResponse response) throws JsonProcessingException {
         return naverOauthService.naverlogin(code, state, response);
+    }
+
+    // 네이버 로그아웃 (연동해제)
+    @RequestMapping (value = "/api/member/naverlogout", method = RequestMethod.GET)
+    public ResponseDto<?> naverLogout(@RequestParam("code") String code, @RequestParam("state") String state) throws JsonProcessingException {
+        return naverOauthService.naverLogout(code, state);
     }
 
     // 회원가입
@@ -81,6 +96,18 @@ public class MemberController {
     @RequestMapping (value = "/api/member/auth/test", method = RequestMethod.POST)
     public ResponseDto<?> sendAuthCode(@RequestBody @Valid AuthRequestDto requestDto) {
         return memberService.sendAuthCode(requestDto);
+    }
+
+    // 로그인 체크용 요청 (내용 없음)
+    @RequestMapping (value = "/api/member/check/login", method = RequestMethod.GET)
+    public ResponseDto<?> chkLogin( @AuthenticationPrincipal UserDetailsImpl userDetail) {
+        return memberService.chkLogin(userDetail);
+    }
+
+    // 토큰 재발급
+    @RequestMapping (value = "/api/member/reissue", method = RequestMethod.GET)
+    public ResponseDto<?> getNewAccessToken(HttpServletRequest request, HttpServletResponse response) throws ParseException {
+        return memberService.reissue(request, response);
     }
 
     // 전화번호 중복 확인

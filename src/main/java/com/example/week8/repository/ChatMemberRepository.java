@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface ChatMemberRepository extends JpaRepository<ChatMember, Long> {
+public interface ChatMemberRepository extends JpaRepository<ChatMember, Long>, ChatMemberCustomRepository{
     Optional<ChatMember> findByMemberAndChatRoom(Member member, ChatRoom chatRoom);
-    List<ChatMember> findAllByChatRoom(ChatRoom chatRoom);
+    List<ChatMember> findAllByMember(Member member);
 }

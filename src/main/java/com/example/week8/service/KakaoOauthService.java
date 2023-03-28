@@ -4,6 +4,7 @@ import com.example.week8.domain.Member;
 import com.example.week8.domain.UserDetailsImpl;
 import com.example.week8.domain.enums.Authority;
 import com.example.week8.dto.KakaoMemberInfoDto;
+import com.example.week8.dto.SignupInfoDto;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.response.OauthLoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -13,10 +14,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,19 +30,26 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 
 @RequiredArgsConstructor
 @Service
+@Transactional
+@Slf4j
 public class KakaoOauthService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
 
     @Transactional
-    public ResponseDto<?> kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+    public ResponseDto<?> kakaoLogin(String code, HttpServletResponse response, HttpServletRequest request) throws JsonProcessingException {
+
+       log.info(request.getRequestURI());
+       log.info(String.valueOf(request.getRequestURL()));
+
         // 1. "인가 코드"로 전체 response 요청
-        String accessToken = getAccessToken(code);
+        String accessToken = getAccessToken(code, "login");
 
         // 2. accessToken을 이용해 카카오 api호출하여 response 받기(사용자 정보 json받아서 id, email, nickname 빼기)
         KakaoMemberInfoDto kakaoMemberInfo = getkakaoMemberInfo(accessToken);
@@ -61,7 +71,52 @@ public class KakaoOauthService {
 
     }
 
-    private String getAccessToken(String code) throws JsonProcessingException {
+    // 로그인 연동 해제
+    @Transactional
+    public ResponseDto<?> kakaoLogout(String code) throws JsonProcessingException{
+        // 1. 받은 code와 state로 accesstoken 받기
+        String accessToken = getAccessToken(code, "logout");
+        // 2. 로그인연동 해제
+        return ResponseDto.success(doLogout(accessToken));
+    }
+
+    // 연동 해제 요청 실행
+    private String doLogout(String accessToken) throws JsonProcessingException {
+        HttpHeaders logoutHeaders = new HttpHeaders();
+        logoutHeaders.add("Content-type", "application/x-www-form-urlencoded");
+        logoutHeaders.add("Authorization", "Bearer "+accessToken);
+
+        MultiValueMap<String, String> logoutRequestParam = new LinkedMultiValueMap<>();
+
+        HttpEntity<MultiValueMap<String, String>> logoutRequest = new HttpEntity<>(logoutRequestParam, logoutHeaders);
+        RestTemplate rt = new RestTemplate();
+        rt.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        ResponseEntity<String> logoutResponse = rt.exchange(
+                "https://kapi.kakao.com/v1/user/unlink",
+                HttpMethod.POST,
+                logoutRequest,
+                String.class
+        );
+        String responseBody = logoutResponse.getBody();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        return jsonNode.get("id").asText();
+    }
+
+    private String getAccessToken(String code, String mode) throws JsonProcessingException {
+
+        String redirectUrl;
+        if (mode.equals("login")) {
+//            redirectUrl = "https://localhost/api/member/kakaologin";
+//            redirectUrl = "http://localhost:3000/login/kakao";
+            redirectUrl = "https://berryimportantpromise.com/login/kakao";
+        }
+        else {
+//            redirectUrl = "https://localhost/api/member/kakaologout";
+//            redirectUrl = "http://localhost:3000/logout/kakao";
+            redirectUrl = "https://berryimportantpromise.com/logout/kakao";
+        }
+
         // HTTP Header 생성
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
@@ -70,8 +125,7 @@ public class KakaoOauthService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "610f7f90999f8f182434e3cc03ad6415");
-        body.add("redirect_uri", "http://localhost:3000/login/kakao");
-        //  body.add("redirect_uri", "http://localhost:8080/api/member/kakaologin");
+        body.add("redirect_uri", redirectUrl);
         body.add("code", code);
 
         // HTTP 요청 보내기
@@ -114,7 +168,11 @@ public class KakaoOauthService {
         Long id = jsonNode.get("id").asLong();
         String nickname = jsonNode.get("properties").get("nickname").asText();
         String email = jsonNode.get("kakao_account").get("email").asText();
-        String imgUrl = jsonNode.get("kakao_account").get("profile").get("profile_image_url").asText();
+        String imgUrl = null;
+        try {
+            imgUrl = jsonNode.get("kakao_account").get("profile").get("profile_image_url").asText();
+        } catch (Exception ignored) {
+        }
         return KakaoMemberInfoDto.builder()
                 .id(id)
                 .nickname(nickname)
@@ -122,6 +180,7 @@ public class KakaoOauthService {
                 .imageUrl(imgUrl)
                 .build();
     }
+
 
     private Member registerKakaoUserIfNeeded(KakaoMemberInfoDto kakaoMemberInfo) {
         // DB 에 중복된 Kakao Id 가 있는지 확인
@@ -142,17 +201,13 @@ public class KakaoOauthService {
                 chkExistMember = true;
             }
             if (!chkExistMember) {
-                kakaoUser = Member.builder()
+                kakaoUser = new Member(SignupInfoDto.builder()
                         .kakaoId(kakaoId)
+                        .imgUrl(imageUrl)
                         .email(email)
-                        .profileImageUrl(imageUrl)
-                        .point(1000000)
-                        .credit(100.0)
-                        .pointOnDay(0L)
-                        .numOfDone(0)
-                        .password("@")
-                        .userRole(Authority.valueOf("ROLE_MEMBER"))
-                        .build();
+                        .phoneNumber(null)
+                        .role(Authority.ROLE_MEMBER)
+                        .build());
             } else {
                 kakaoUser.setKakaoId(kakaoId);
                 kakaoUser.setEmail(email);
@@ -176,4 +231,3 @@ public class KakaoOauthService {
     }
 
 }
-

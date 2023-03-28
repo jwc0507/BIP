@@ -4,6 +4,7 @@ import com.example.week8.domain.Member;
 import com.example.week8.domain.UserDetailsImpl;
 import com.example.week8.domain.enums.Authority;
 import com.example.week8.dto.NaverMemberInfoDto;
+import com.example.week8.dto.SignupInfoDto;
 import com.example.week8.dto.TokenDto;
 import com.example.week8.dto.response.OauthLoginResponseDto;
 import com.example.week8.dto.response.ResponseDto;
@@ -31,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class NaverOauthService {
 
     private final MemberRepository memberRepository;
@@ -55,10 +57,45 @@ public class NaverOauthService {
         naverMember.chkFirstLogin();
 
         return ResponseDto.success(OauthLoginResponseDto.builder()
-                        .nickname(naverMember.getNickname())
+                .nickname(naverMember.getNickname())
                 .phoneNumber(naverMember.getPhoneNumber())
                 .email(naverMember.getEmail())
                 .build());
+    }
+
+    // 로그인 연동 해제
+    @Transactional
+    public ResponseDto<?> naverLogout(String code, String state) throws JsonProcessingException{
+        // 1. 받은 code와 state로 accesstoken 받기
+        String accessToken = getAccessToken(code, state);
+        // 2. 로그인연동 해제
+        return ResponseDto.success(doLogout(accessToken));
+    }
+
+    // 연동 해제 요청 실행
+    private String doLogout(String accessToken) throws JsonProcessingException {
+        HttpHeaders logoutHeaders = new HttpHeaders();
+        logoutHeaders.add("Content-type", "application/x-www-form-urlencoded");
+
+        MultiValueMap<String, String> logoutRequestParam = new LinkedMultiValueMap<>();
+        logoutRequestParam.add("grant_type", "delete");
+        logoutRequestParam.add("client_id", "z6KYvnNk_EXQGnwgQo3u");
+        logoutRequestParam.add("client_secret", "EyjWue7YLp");
+        logoutRequestParam.add("access_token", accessToken);
+        logoutRequestParam.add("service_provider", "NAVER");    // api랑 다름 이거 안붙이면 invaild_provider 에러발생함.
+
+        HttpEntity<MultiValueMap<String, String>> logoutRequest = new HttpEntity<>(logoutRequestParam, logoutHeaders);
+        RestTemplate rt = new RestTemplate();
+        ResponseEntity<String> logoutResponse = rt.exchange(
+                "https://nid.naver.com/oauth2.0/token",
+                HttpMethod.POST,
+                logoutRequest,
+                String.class
+        );
+        String responseBody = logoutResponse.getBody();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        return jsonNode.get("result").asText();
     }
 
 
@@ -111,15 +148,16 @@ public class NaverOauthService {
 
         String id = jsonNode.get("response").get("id").asText();
         String email = jsonNode.get("response").get("email").asText();
-        String imgUrl = jsonNode.get("response").get("profile_image").asText();
-        String mobile = jsonNode.get("response").get("mobile").asText();
-
-        String phoneNumber = mobile.replaceAll("-", "");
+        String imgUrl = null;
+        try {
+            imgUrl = jsonNode.get("response").get("profile_image").asText();
+        }
+        catch (Exception ignored){
+        }
         return NaverMemberInfoDto.builder()
                 .id(id)
                 .email(email)
                 .imageUrl(imgUrl)
-                .phoneNumber(phoneNumber)
                 .build();
     }
 
@@ -130,42 +168,27 @@ public class NaverOauthService {
         if (naverMember == null) {
             String email = memberInfoDto.getEmail();
             String imgUrl = memberInfoDto.getImageUrl();
-            String phoneNumber = memberInfoDto.getPhoneNumber();
 
             boolean chkExistMember = false;
 
-            // 같은 폰번호로 가입된 사람이 있는가?
-            Member chkMember = memberRepository.findByPhoneNumber(phoneNumber).orElse(null);
-            if (chkMember != null) {
-                naverMember = chkMember;
-                chkExistMember = true;
-            }
             // 같은 이메일로 가입된 사람이 있는가?
-            chkMember = memberRepository.findByEmail(email).orElse(null);
+            Member chkMember = memberRepository.findByEmail(email).orElse(null);
             if (chkMember != null) {
                 naverMember = chkMember;
                 chkExistMember = true;
             }
             if (!chkExistMember) {
-                naverMember = Member.builder()
+                naverMember = new Member(SignupInfoDto.builder()
                         .naverId(naverId)
+                        .imgUrl(imgUrl)
                         .email(email)
-                        .profileImageUrl(imgUrl)
-                        .phoneNumber(phoneNumber)
-                        .point(1000000)
-                        .credit(100.0)
-                        .firstLogin(true)
-                        .pointOnDay(0L)
-                        .numOfDone(0)
-                        .numOfSelfEvent(0)
-                        .password("@")
-                        .userRole(Authority.valueOf("ROLE_MEMBER"))
-                        .build();
+                        .role(Authority.ROLE_MEMBER)
+                        .build());
             } else {
                 naverMember.setNaverId(naverId);
                 if (naverMember.getEmail() == null)
                     naverMember.setEmail(email);
-                naverMember.setPhoneNumber(phoneNumber);
+                naverMember.setPhoneNumber(null);
                 if (naverMember.getProfileImageUrl() == null)
                     naverMember.setProfileImageUrl(imgUrl);
             }

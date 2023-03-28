@@ -1,17 +1,25 @@
 package com.example.week8.service;
 
 
+import com.example.week8.domain.Event;
+import com.example.week8.domain.WeatherInfo;
+import com.example.week8.domain.enums.EventStatus;
 import com.example.week8.dto.response.ResponseDto;
 import com.example.week8.dto.response.WeatherResponseDto;
+import com.example.week8.repository.EventRepository;
+import com.example.week8.repository.WeatherInfoRepository;
 import com.example.week8.utils.OpenWeather;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -23,28 +31,14 @@ public class WeatherService {
     @Value("${weather.accessKey}")
     private String apiKey;
     private final String BASE_URL = "http://api.openweathermap.org/data/2.5/weather";
+    private final EventRepository eventRepository;
+    private final WeatherInfoRepository weatherInfoRepository;
 
     // 날씨 단건조회
     public ResponseDto<?> getLocalWeather(String coordinate) {
-        String[] splitCoordinate = coordinate.split(",");
-
-        if(coordinate.isEmpty())
-            return ResponseDto.fail("좌표값 없음");
-
-        double lat = Double.parseDouble(splitCoordinate[0]);
-        double lon = Double.parseDouble(splitCoordinate[1]);
-        OpenWeather response;
-        StringBuilder urlBuilder = new StringBuilder(BASE_URL);
-        try {
-            urlBuilder.append("?" + URLEncoder.encode("lat", "UTF-8") + "=" + lat);
-            urlBuilder.append("&" + URLEncoder.encode("lon") + "=" + lon);
-            urlBuilder.append("&" + URLEncoder.encode("appid", "UTF-8") + "=" + apiKey);
-
-            RestTemplate restTemplate = new RestTemplate();
-            response = restTemplate.getForObject(urlBuilder.toString(), OpenWeather.class);
-        } catch (Exception e) {
-            return ResponseDto.fail(e);
-        }
+        OpenWeather response = sendApi(coordinate);
+        if(response == null)
+            return ResponseDto.fail("날씨 가져오기 오류");
         String name = response.getName();
         if(Objects.equals(name, ""))
             name = "주변 대도시 정보 없음";
@@ -60,6 +54,115 @@ public class WeatherService {
                 .build());
 
     }
+
+    @Transactional
+    public void updateLocalWeatherInfoList() {
+        LocalDateTime now = LocalDateTime.now().withNano(0);
+        List<Event> events = eventRepository.findAllByEventStatusAndEventDateTimeGreaterThanEqual(EventStatus.ONGOING, now);
+        for(Event event : events) {
+            updateLocalWeatherInfo(event, event.getCoordinate());
+        }
+    }
+
+    @Transactional
+    public void saveLocalWeatherInfoList() {
+        LocalDateTime now = LocalDateTime.now().withNano(0);
+        List<Event> events = eventRepository.findAllByEventStatusAndEventDateTimeGreaterThanEqual(EventStatus.ONGOING, now);
+        for(Event event : events) {
+            saveLocalWeatherInfo(event, event.getCoordinate());
+        }
+    }
+
+    private OpenWeather sendApi(String coordinate) {
+        String[] splitCoordinate = coordinate.split(",");
+
+        if(coordinate.isEmpty()) {
+            log.info("좌표값 없음");
+            return null;
+        }
+
+        double lat = Double.parseDouble(splitCoordinate[0]);
+        double lon = Double.parseDouble(splitCoordinate[1]);
+        OpenWeather response;
+        StringBuilder urlBuilder = new StringBuilder(BASE_URL);
+        try {
+            urlBuilder.append("?" + URLEncoder.encode("lat", "UTF-8") + "=" + lat);
+            urlBuilder.append("&" + URLEncoder.encode("lon") + "=" + lon);
+            urlBuilder.append("&" + URLEncoder.encode("appid", "UTF-8") + "=" + apiKey);
+
+            RestTemplate restTemplate = new RestTemplate();
+            response = restTemplate.getForObject(urlBuilder.toString(), OpenWeather.class);
+        } catch (Exception e) {
+            log.info("날씨정보 요청 실패");
+            return null;
+        }
+        return response;
+    }
+
+    @Transactional
+    public void updateLocalWeatherInfo(Event event, String coordinate) {
+        OpenWeather response = sendApi(coordinate);
+        String name = response.getName();
+        if(Objects.equals(name, ""))
+            name = "주변 대도시 정보 없음";
+        event.getWeather().update(WeatherResponseDto.builder()
+                .name(name)
+                .temperature(convertFaToCel(response.getMain().getTemp()) + "°C")
+                .maxTemp(convertFaToCel(response.getMain().getTemp_max()) + "°C")
+                .minTemp(convertFaToCel(response.getMain().getTemp_min()) + "°C")
+                .probability(response.getClouds().getAll() + "%")
+                .icon(response.getWeather().get(0).getIcon())
+                .sky(convertSky(response.getWeather().get(0).getMain()))
+                .skyDesc(response.getWeather().get(0).getDescription())
+                .build());
+    }
+
+    @Transactional
+    public WeatherInfo saveLocalWeatherInfo(Event event, String coordinate) {
+        OpenWeather response = sendApi(coordinate);
+        String name = response.getName();
+        if(Objects.equals(name, ""))
+            name = "주변 대도시 정보 없음";
+        WeatherInfo weatherInfo = WeatherInfo.builder()
+                .event(event)
+                .name(name)
+                .temperature(convertFaToCel(response.getMain().getTemp()) + "°C")
+                .maxTemp(convertFaToCel(response.getMain().getTemp_max()) + "°C")
+                .minTemp(convertFaToCel(response.getMain().getTemp_min()) + "°C")
+                .probability(response.getClouds().getAll() + "%")
+                .icon(response.getWeather().get(0).getIcon())
+                .sky(convertSky(response.getWeather().get(0).getMain()))
+                .skyDesc(response.getWeather().get(0).getDescription())
+                .build();
+        weatherInfoRepository.save(weatherInfo);
+
+        return weatherInfo;
+    }
+
+    @Transactional
+    public void deleteWeatherInfo(Event event) {
+        if(event.getWeather() == null)
+            return;
+        weatherInfoRepository.delete(event.getWeather());
+    }
+
+    @Transactional
+    public WeatherResponseDto getWeatherInfo(Event event) {
+        WeatherInfo weatherInfo = event.getWeather();
+        if(weatherInfo==null)
+            return null;
+        return WeatherResponseDto.builder()
+                .name(weatherInfo.getName())
+                .temperature(weatherInfo.getTemperature())
+                .maxTemp(weatherInfo.getMaxTemp())
+                .minTemp(weatherInfo.getMinTemp())
+                .probability(weatherInfo.getProbability())
+                .icon(weatherInfo.getIcon())
+                .sky(weatherInfo.getSky())
+                .skyDesc(weatherInfo.getSkyDesc())
+                .build();
+    }
+
 
     private String convertFaToCel(float fahrenheit) {
         return String.format("%.1f", (fahrenheit - 273.15f) * 100 / 100.0f);
