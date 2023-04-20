@@ -7,6 +7,8 @@
 
 <p align="center">실제 배포사이트 [BIP](https://berryimportantpromise.com/intro) 를 클릭해서 확인해주세요. </p>
 
+![화면 캡처 2023-04-20 171057](https://user-images.githubusercontent.com/80738030/233302944-9545aea9-4c83-4b5e-a8a7-98516578993e.png)
+
 ***
 
 ### 프로젝트간략 설명
@@ -240,4 +242,4 @@ api명세서 : https://www.notion.so/2de1c1447f4347e896223a9964c69463?v=4057a04a
 - 에러 사항 : 프론트의 개발환경 (localhost:3000)에서 로그인 요청이 허용되지 않던 점
 - SOLVE : api web서비스 부분을 잘못 이해하고 있었음. be의 서버주소를 적는 것이 아닌 실제 서비스가 동작할 부분의 주소를 적어야함. localhost:3000을 서비스 url로 지정해주어 해결함.
 
-![화면 캡처 2023-04-20 171057](https://user-images.githubusercontent.com/80738030/233302944-9545aea9-4c83-4b5e-a8a7-98516578993e.png)
+
