@@ -5,7 +5,7 @@
 
 <p align="center"><img src="https://user-images.githubusercontent.com/110073865/197106872-529c8866-01b5-474c-8397-3edf86906bf3.png"></p>
 
-<p align="center">실제 배포사이트 [BIP](https://berryimportantpromise.com/intro) 를 클릭해서 확인해주세요. </p>
+
 
 ![화면 캡처 2023-04-20 171057](https://user-images.githubusercontent.com/80738030/233302944-9545aea9-4c83-4b5e-a8a7-98516578993e.png)
 
