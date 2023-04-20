@@ -240,4 +240,4 @@ api명세서 : https://www.notion.so/2de1c1447f4347e896223a9964c69463?v=4057a04a
 - 에러 사항 : 프론트의 개발환경 (localhost:3000)에서 로그인 요청이 허용되지 않던 점
 - SOLVE : api web서비스 부분을 잘못 이해하고 있었음. be의 서버주소를 적는 것이 아닌 실제 서비스가 동작할 부분의 주소를 적어야함. localhost:3000을 서비스 url로 지정해주어 해결함.
 
-![image](https://user-images.githubusercontent.com/80738030/233302495-990304c7-1d45-4faa-af3b-4d1a3d77be21.png)
+![화면 캡처 2023-04-20 171057](https://user-images.githubusercontent.com/80738030/233302944-9545aea9-4c83-4b5e-a8a7-98516578993e.png)
